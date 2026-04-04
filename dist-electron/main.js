@@ -1,129 +1,40 @@
-import { BrowserWindow, app, ipcMain } from "electron";
-import { join } from "path";
-import Database from "better-sqlite3";
+import { BrowserWindow as e, app as t, ipcMain as n } from "electron";
+import { join as r } from "path";
+import i from "better-sqlite3";
 //#region electron/main.ts
-var DB_PATH = join(app.getPath("userData"), "psm.db");
-var db;
-function initDatabase() {
-	db = new Database(DB_PATH);
-	db.pragma("journal_mode = WAL");
-	db.pragma("foreign_keys = ON");
-	db.exec(`
-    CREATE TABLE IF NOT EXISTS psm_parameters (
-      par_id       INTEGER PRIMARY KEY AUTOINCREMENT,
-      par_quantity TEXT    NOT NULL,
-      par_tax      TEXT    NOT NULL,
-      version      INTEGER NOT NULL DEFAULT 1
-    );
-
-    CREATE TABLE IF NOT EXISTS psm_vehicles (
-      veh_id           INTEGER PRIMARY KEY AUTOINCREMENT,
-      veh_owner        TEXT,
-      veh_reference    TEXT    NOT NULL UNIQUE,
-      veh_plate        TEXT    NOT NULL UNIQUE,
-      veh_ingress_date TEXT    NOT NULL,
-      veh_egress_date  TEXT,
-      veh_status       TEXT    NOT NULL DEFAULT 'P'
-                               CHECK (veh_status IN ('P', 'S')),
-      veh_tax          TEXT    NOT NULL,
-      veh_version      INTEGER NOT NULL DEFAULT 1
-    );
-  `);
+var a = r(t.getPath("userData"), "psm.db"), o;
+function s() {
+	o = new i(a), o.pragma("journal_mode = WAL"), o.pragma("foreign_keys = ON"), o.exec("\n    CREATE TABLE IF NOT EXISTS psm_parameters (\n      par_id       INTEGER PRIMARY KEY AUTOINCREMENT,\n      par_quantity TEXT    NOT NULL,\n      par_tax      TEXT    NOT NULL,\n      version      INTEGER NOT NULL DEFAULT 1\n    );\n\n    CREATE TABLE IF NOT EXISTS psm_vehicles (\n      veh_id           INTEGER PRIMARY KEY AUTOINCREMENT,\n      veh_owner        TEXT,\n      veh_reference    TEXT    NOT NULL UNIQUE,\n      veh_plate        TEXT    NOT NULL UNIQUE,\n      veh_ingress_date TEXT    NOT NULL,\n      veh_egress_date  TEXT,\n      veh_status       TEXT    NOT NULL DEFAULT 'P'\n                               CHECK (veh_status IN ('P', 'S')),\n      veh_tax          TEXT    NOT NULL,\n      veh_version      INTEGER NOT NULL DEFAULT 1\n    );\n  ");
 }
-function createWindow() {
-	const win = new BrowserWindow({
+function c() {
+	let n = new e({
 		width: 1280,
 		height: 800,
 		minWidth: 800,
 		minHeight: 600,
 		webPreferences: {
-			preload: join(app.getAppPath(), "dist-electron", "preload.js"),
-			contextIsolation: true,
-			nodeIntegration: false
+			preload: r(t.getAppPath(), "dist-electron", "preload.js"),
+			contextIsolation: !0,
+			nodeIntegration: !1
 		},
 		titleBarStyle: "default",
-		show: false
+		show: !1
 	});
-	win.once("ready-to-show", () => win.show());
-	if (process.env.NODE_ENV === "development") {
-		win.loadURL("http://localhost:5173");
-		win.webContents.openDevTools();
-	} else win.loadFile(join(app.getAppPath(), "dist", "index.html"));
+	n.once("ready-to-show", () => n.show()), process.env.NODE_ENV === "development" ? (n.loadURL("http://localhost:5173"), n.webContents.openDevTools()) : n.loadFile(r(t.getAppPath(), "dist", "index.html"));
 }
-app.whenReady().then(() => {
-	initDatabase();
-	createWindow();
-	app.on("activate", () => {
-		if (BrowserWindow.getAllWindows().length === 0) createWindow();
+t.whenReady().then(() => {
+	s(), c(), t.on("activate", () => {
+		e.getAllWindows().length === 0 && c();
 	});
-});
-app.on("window-all-closed", () => {
-	db?.close();
-	if (process.platform !== "darwin") app.quit();
-});
-ipcMain.handle("parameters:getAll", () => {
-	return db.prepare("SELECT * FROM psm_parameters").all();
-});
-ipcMain.handle("parameters:getOne", (_e, id) => {
-	return db.prepare("SELECT * FROM psm_parameters WHERE par_id = ?").get(id);
-});
-ipcMain.handle("parameters:create", (_e, data) => {
-	return { id: db.prepare(`
-    INSERT INTO psm_parameters (par_quantity, par_tax, version)
-    VALUES (@par_quantity, @par_tax, @version)
-  `).run(data).lastInsertRowid };
-});
-ipcMain.handle("parameters:update", (_e, id, data) => {
-	return { changes: db.prepare(`
-    UPDATE psm_parameters
-    SET par_quantity = @par_quantity,
-        par_tax      = @par_tax,
-        version      = @version
-    WHERE par_id = @par_id
-  `).run({
-		...data,
-		par_id: id
-	}).changes };
-});
-ipcMain.handle("parameters:delete", (_e, id) => {
-	return { changes: db.prepare("DELETE FROM psm_parameters WHERE par_id = ?").run(id).changes };
-});
-ipcMain.handle("vehicles:getAll", () => {
-	return db.prepare("SELECT * FROM psm_vehicles ORDER BY veh_ingress_date DESC").all();
-});
-ipcMain.handle("vehicles:getActive", () => {
-	return db.prepare(`
-    SELECT * FROM psm_vehicles
-    WHERE veh_status = 'P'
-    ORDER BY veh_ingress_date DESC
-  `).all();
-});
-ipcMain.handle("vehicles:getOne", (_e, id) => {
-	return db.prepare("SELECT * FROM psm_vehicles WHERE veh_id = ?").get(id);
-});
-ipcMain.handle("vehicles:create", (_e, data) => {
-	return { id: db.prepare(`
-    INSERT INTO psm_vehicles
-      (veh_owner, veh_reference, veh_plate, veh_ingress_date, veh_tax, veh_version)
-    VALUES
-      (@veh_owner, @veh_reference, @veh_plate, @veh_ingress_date, @veh_tax, @veh_version)
-  `).run(data).lastInsertRowid };
-});
-ipcMain.handle("vehicles:checkout", (_e, id, egress_date) => {
-	return { changes: db.prepare(`
-    UPDATE psm_vehicles
-    SET veh_status      = 'S',
-        veh_egress_date = @egress_date,
-        veh_version     = veh_version + 1
-    WHERE veh_id = @id AND veh_status = 'P'
-  `).run({
-		egress_date,
-		id
-	}).changes };
-});
-ipcMain.handle("vehicles:delete", (_e, id) => {
-	return { changes: db.prepare("DELETE FROM psm_vehicles WHERE veh_id = ?").run(id).changes };
-});
+}), t.on("window-all-closed", () => {
+	o?.close(), process.platform !== "darwin" && t.quit();
+}), n.handle("parameters:getAll", () => o.prepare("SELECT * FROM psm_parameters").all()), n.handle("parameters:getOne", (e, t) => o.prepare("SELECT * FROM psm_parameters WHERE par_id = ?").get(t)), n.handle("parameters:create", (e, t) => ({ id: o.prepare("\n    INSERT INTO psm_parameters (par_quantity, par_tax, version)\n    VALUES (@par_quantity, @par_tax, @version)\n  ").run(t).lastInsertRowid })), n.handle("parameters:update", (e, t, n) => ({ changes: o.prepare("\n    UPDATE psm_parameters\n    SET par_quantity = @par_quantity,\n        par_tax      = @par_tax,\n        version      = @version\n    WHERE par_id = @par_id\n  ").run({
+	...n,
+	par_id: t
+}).changes })), n.handle("parameters:delete", (e, t) => ({ changes: o.prepare("DELETE FROM psm_parameters WHERE par_id = ?").run(t).changes })), n.handle("vehicles:getAll", () => o.prepare("SELECT * FROM psm_vehicles ORDER BY veh_ingress_date DESC").all()), n.handle("vehicles:getActive", () => o.prepare("\n    SELECT * FROM psm_vehicles\n    WHERE veh_status = 'P'\n    ORDER BY veh_ingress_date DESC\n  ").all()), n.handle("vehicles:getOne", (e, t) => o.prepare("SELECT * FROM psm_vehicles WHERE veh_id = ?").get(t)), n.handle("vehicles:create", (e, t) => ({ id: o.prepare("\n    INSERT INTO psm_vehicles\n      (veh_owner, veh_reference, veh_plate, veh_ingress_date, veh_tax, veh_version)\n    VALUES\n      (@veh_owner, @veh_reference, @veh_plate, @veh_ingress_date, @veh_tax, @veh_version)\n  ").run(t).lastInsertRowid })), n.handle("vehicles:checkout", (e, t, n) => ({ changes: o.prepare("\n    UPDATE psm_vehicles\n    SET veh_status      = 'S',\n        veh_egress_date = @egress_date,\n        veh_version     = veh_version + 1\n    WHERE veh_id = @id AND veh_status = 'P'\n  ").run({
+	egress_date: n,
+	id: t
+}).changes })), n.handle("vehicles:delete", (e, t) => ({ changes: o.prepare("DELETE FROM psm_vehicles WHERE veh_id = ?").run(t).changes }));
 //#endregion
 
 //# sourceMappingURL=main.js.map

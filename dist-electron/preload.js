@@ -1,20 +1,20 @@
-import { contextBridge, ipcRenderer } from "electron";
+import { contextBridge as e, ipcRenderer as t } from "electron";
 //#region electron/preload.ts
-contextBridge.exposeInMainWorld("electronAPI", {
+e.exposeInMainWorld("electronAPI", {
 	parameters: {
-		getAll: () => ipcRenderer.invoke("parameters:getAll"),
-		getOne: (id) => ipcRenderer.invoke("parameters:getOne", id),
-		create: (data) => ipcRenderer.invoke("parameters:create", data),
-		update: (id, data) => ipcRenderer.invoke("parameters:update", id, data),
-		delete: (id) => ipcRenderer.invoke("parameters:delete", id)
+		getAll: () => t.invoke("parameters:getAll"),
+		getOne: (e) => t.invoke("parameters:getOne", e),
+		create: (e) => t.invoke("parameters:create", e),
+		update: (e, n) => t.invoke("parameters:update", e, n),
+		delete: (e) => t.invoke("parameters:delete", e)
 	},
 	vehicles: {
-		getAll: () => ipcRenderer.invoke("vehicles:getAll"),
-		getActive: () => ipcRenderer.invoke("vehicles:getActive"),
-		getOne: (id) => ipcRenderer.invoke("vehicles:getOne", id),
-		create: (data) => ipcRenderer.invoke("vehicles:create", data),
-		checkout: (id, egress_date) => ipcRenderer.invoke("vehicles:checkout", id, egress_date),
-		delete: (id) => ipcRenderer.invoke("vehicles:delete", id)
+		getAll: () => t.invoke("vehicles:getAll"),
+		getActive: () => t.invoke("vehicles:getActive"),
+		getOne: (e) => t.invoke("vehicles:getOne", e),
+		create: (e) => t.invoke("vehicles:create", e),
+		checkout: (e, n) => t.invoke("vehicles:checkout", e, n),
+		delete: (e) => t.invoke("vehicles:delete", e)
 	}
 });
 //#endregion
