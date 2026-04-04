@@ -1,0 +1,80 @@
+name: 🚀 Nueva Funcionalidad
+description: Sugiere una nueva función o mejora para el sistema
+title: "[FEAT] "
+labels: ["enhancement"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Nueva Funcionalidad
+        Describe la funcionalidad que necesitas o propones.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 🎯 Problema o necesidad
+      description: ¿Qué problema resuelve esta funcionalidad?
+      placeholder: "Actualmente no hay forma de ver el historial de vehículos que ya salieron..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: 💡 Solución propuesta
+      description: ¿Cómo imaginas que debería funcionar?
+      placeholder: "Una pantalla con tabla que muestre todos los vehículos con estado 'S', con filtro por fecha..."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: module
+    attributes:
+      label: 📦 Módulo relacionado
+      options:
+        - Registro de Vehículos
+        - Salida de Vehículos
+        - Parámetros del Sistema
+        - Reportes
+        - Base de Datos
+        - Interfaz / UI
+        - Nuevo módulo
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 📊 Prioridad
+      options:
+        - "Alta - Necesaria para operar"
+        - "Media - Mejora importante"
+        - "Baja - Sería útil tenerla"
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: ✅ Criterios de aceptación
+      description: ¿Cómo sabremos que está correctamente implementada?
+      placeholder: |
+        - [ ] Se puede ver la lista de vehículos con estado 'S'
+        - [ ] Se puede filtrar por fecha de egreso
+        - [ ] Se puede exportar la lista
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 🔄 Alternativas consideradas
+      description: ¿Hay otras formas de resolver esto?
+
+  - type: textarea
+    id: context
+    attributes:
+      label: 📝 Contexto adicional
+      description: Mockups, referencias, o cualquier información extra.

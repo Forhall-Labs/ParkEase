@@ -1,0 +1,118 @@
+name: 🐛 Reporte de Error
+description: Reporta un error o fallo en el sistema de parqueo
+title: "[BUG] "
+labels: ["bug", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Reporte de Error
+        Completa la información a continuación para ayudarnos a reproducir y corregir el problema.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 📋 Descripción del error
+      description: Explica claramente qué está fallando.
+      placeholder: "Al registrar un vehículo con placa duplicada, la app se cierra en lugar de mostrar un error..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 🔄 Pasos para reproducir
+      description: Detalla los pasos exactos para reproducir el error.
+      placeholder: |
+        1. Abrir la app
+        2. Ir a 'Registrar Vehículo'
+        3. Ingresar placa 'ABC123' (que ya existe)
+        4. Hacer clic en 'Guardar'
+        5. La app se cierra
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: ✅ Comportamiento esperado
+      description: ¿Qué debería pasar?
+      placeholder: "Debería mostrar un mensaje de error indicando que la placa ya está registrada."
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: ❌ Comportamiento actual
+      description: ¿Qué está pasando realmente?
+      placeholder: "La aplicación se cierra sin mostrar ningún mensaje."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: module
+    attributes:
+      label: 📦 Módulo afectado
+      description: ¿En qué parte del sistema ocurre el error?
+      options:
+        - Registro de Vehículos
+        - Salida de Vehículos
+        - Parámetros del Sistema
+        - Base de Datos (SQLite)
+        - Interfaz / UI
+        - Generación de Reportes
+        - Otro
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: 🚨 Severidad
+      options:
+        - "Crítico - El sistema no funciona"
+        - "Alto - Funcionalidad principal afectada"
+        - "Medio - Funcionalidad secundaria afectada"
+        - "Bajo - Error visual o cosmético"
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: 📌 Versión de la app
+      placeholder: "v1.0.0"
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: 💻 Sistema operativo
+      placeholder: "Windows 10 / Windows 11"
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: 📸 Capturas de pantalla
+      description: Si aplica, agrega capturas que ayuden a entender el problema.
+      placeholder: "Arrastra y suelta imágenes aquí..."
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 📄 Logs o mensajes de error
+      description: Copia aquí cualquier mensaje de error que hayas visto.
+      render: shell
+      placeholder: "Error: UNIQUE constraint failed: psm_vehicles.veh_plate"
+
+  - type: textarea
+    id: context
+    attributes:
+      label: 📝 Contexto adicional
+      description: Cualquier otra información relevante.
