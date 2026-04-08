@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { SafeUser } from '../types/electron-api';
 
 export interface LoginForm {
@@ -13,9 +13,26 @@ const INITIAL_FORM: LoginForm = {
 
 export function useLogin() {
   const [form, setForm] = useState<LoginForm>(INITIAL_FORM);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<SafeUser | null>(null);
+
+  useEffect(() => {
+    restoreSession();
+  }, []);
+
+  async function restoreSession() {
+    try {
+      const savedUser = await window.electronAPI?.session?.restore();
+      if (savedUser) {
+        setCurrentUser(savedUser);
+      }
+    } catch {
+      // No session to restore
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   function setField<K extends keyof LoginForm>(field: K, value: LoginForm[K]) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -46,6 +63,11 @@ export function useLogin() {
 
       setCurrentUser(response.user);
       setForm(INITIAL_FORM);
+
+      // Save session
+      if (response.user) {
+        await window.electronAPI?.session?.save(response.user);
+      }
     } catch (err) {
       setCurrentUser(null);
       const message = err instanceof Error ? err.message : String(err);
