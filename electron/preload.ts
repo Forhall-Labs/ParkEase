@@ -2,14 +2,14 @@ import { contextBridge, ipcRenderer } from 'electron';
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
-export interface PsmParameter {
+export interface Parameter {
   par_id?: number;
   par_quantity: string;
   par_tax: string;
   version: number;
 }
 
-export interface PsmVehicle {
+export interface Vehicle {
   veh_id?: number;
   veh_owner?: string;
   veh_reference: string;
@@ -21,71 +21,212 @@ export interface PsmVehicle {
   veh_version: number;
 }
 
+export interface SafeUser {
+  user_id?: number;
+  user_name: string;
+  user_lastname: string;
+  user_username: string;
+  user_email: string;
+  user_status: 'A' | 'I';
+  user_version: number;
+}
+
+export interface LoginDto {
+  user_username: string;
+  user_password: string;
+}
+
+export interface LoginResponse {
+  success: boolean;
+  user?: SafeUser;
+  message?: string;
+}
+
+export interface CreateUserDto {
+  user_name: string;
+  user_lastname: string;
+  user_username: string;
+  user_password: string;
+  user_email: string;
+}
+
+export interface UpdateUserDto {
+  user_name?: string;
+  user_lastname?: string;
+  user_username?: string;
+  user_email?: string;
+  user_status?: 'A' | 'I';
+}
+
+export interface CreateVehicleDto {
+  veh_owner?: string;
+  veh_reference: string;
+  veh_plate: string;
+  veh_ingress_date: string;
+  veh_tax: string;
+  veh_version: number;
+}
+
+export interface UpdateVehicleDto {
+  veh_owner?: string;
+  veh_reference?: string;
+  veh_plate?: string;
+  veh_ingress_date?: string;
+  veh_egress_date?: string;
+  veh_status?: 'P' | 'S';
+  veh_tax?: string;
+  veh_version?: number;
+}
+
+export interface CreateParameterDto {
+  par_quantity: string;
+  par_tax: string;
+  version: number;
+}
+
+export interface UpdateParameterDto {
+  par_quantity?: string;
+  par_tax?: string;
+  version?: number;
+}
+
+export interface MutationResult {
+  success: boolean;
+  message?: string;
+  id?: number;
+}
+
 // ─── API expuesta a React ─────────────────────────────────────────────────────
 
 contextBridge.exposeInMainWorld('electronAPI', {
+  // ── Usuarios ─────────────────────────────────────────────────────────────────
+  users: {
+    getAll: (): Promise<SafeUser[]> => ipcRenderer.invoke('users:getAll'),
 
-  // ── Parámetros ──────────────────────────────────────────────────────────────
-  parameters: {
-    getAll: (): Promise<PsmParameter[]> =>
-      ipcRenderer.invoke('parameters:getAll'),
+    getOne: (id: number): Promise<SafeUser | undefined> => ipcRenderer.invoke('users:getOne', id),
 
-    getOne: (id: number): Promise<PsmParameter | undefined> =>
-      ipcRenderer.invoke('parameters:getOne', id),
+    login: (dto: LoginDto): Promise<LoginResponse> => ipcRenderer.invoke('users:login', dto),
 
-    create: (data: Omit<PsmParameter, 'par_id'>): Promise<{ id: number }> =>
-      ipcRenderer.invoke('parameters:create', data),
+    create: (dto: CreateUserDto): Promise<MutationResult> =>
+      ipcRenderer.invoke('users:create', dto),
 
-    update: (id: number, data: Omit<PsmParameter, 'par_id'>): Promise<{ changes: number }> =>
-      ipcRenderer.invoke('parameters:update', id, data),
+    update: (id: number, dto: UpdateUserDto): Promise<MutationResult> =>
+      ipcRenderer.invoke('users:update', id, dto),
 
-    delete: (id: number): Promise<{ changes: number }> =>
-      ipcRenderer.invoke('parameters:delete', id),
+    changePassword: (
+      id: number,
+      currentPassword: string,
+      newPassword: string
+    ): Promise<MutationResult> =>
+      ipcRenderer.invoke('users:changePassword', id, currentPassword, newPassword),
+
+    deactivate: (id: number): Promise<MutationResult> => ipcRenderer.invoke('users:deactivate', id),
+
+    delete: (id: number): Promise<MutationResult> => ipcRenderer.invoke('users:delete', id),
   },
 
   // ── Vehículos ────────────────────────────────────────────────────────────────
   vehicles: {
-    getAll: (): Promise<PsmVehicle[]> =>
-      ipcRenderer.invoke('vehicles:getAll'),
+    getAll: (): Promise<Vehicle[]> => ipcRenderer.invoke('vehicles:getAll'),
 
-    getActive: (): Promise<PsmVehicle[]> =>
-      ipcRenderer.invoke('vehicles:getActive'),
+    getActive: (): Promise<Vehicle[]> => ipcRenderer.invoke('vehicles:getActive'),
 
-    getOne: (id: number): Promise<PsmVehicle | undefined> =>
-      ipcRenderer.invoke('vehicles:getOne', id),
+    getOne: (id: number): Promise<Vehicle | undefined> => ipcRenderer.invoke('vehicles:getOne', id),
 
-    create: (data: Omit<PsmVehicle, 'veh_id' | 'veh_status' | 'veh_egress_date'>): Promise<{ id: number }> =>
-      ipcRenderer.invoke('vehicles:create', data),
+    create: (dto: CreateVehicleDto): Promise<MutationResult> =>
+      ipcRenderer.invoke('vehicles:create', dto),
 
-    checkout: (id: number, egress_date: string): Promise<{ changes: number }> =>
-      ipcRenderer.invoke('vehicles:checkout', id, egress_date),
+    checkout: (id: number): Promise<MutationResult> => ipcRenderer.invoke('vehicles:checkout', id),
 
-    delete: (id: number): Promise<{ changes: number }> =>
-      ipcRenderer.invoke('vehicles:delete', id),
+    update: (id: number, dto: UpdateVehicleDto): Promise<MutationResult> =>
+      ipcRenderer.invoke('vehicles:update', id, dto),
+
+    delete: (id: number): Promise<MutationResult> => ipcRenderer.invoke('vehicles:delete', id),
+
+    getStats: (): Promise<{ parkedCount: number; todayRevenue: number; todayVehicles: number }> =>
+      ipcRenderer.invoke('vehicles:getStats'),
+
+    getParkedCount: (): Promise<number> => ipcRenderer.invoke('vehicles:getParkedCount'),
+
+    getTodayRevenue: (): Promise<number> => ipcRenderer.invoke('vehicles:getTodayRevenue'),
+
+    getTodayVehicles: (): Promise<number> => ipcRenderer.invoke('vehicles:getTodayVehicles'),
   },
 
+  // ── Parámetros ───────────────────────────────────────────────────────────────
+  parameters: {
+    getAll: (): Promise<Parameter[]> => ipcRenderer.invoke('parameters:getAll'),
+
+    getOne: (id: number): Promise<Parameter | undefined> =>
+      ipcRenderer.invoke('parameters:getOne', id),
+
+    create: (dto: CreateParameterDto): Promise<MutationResult> =>
+      ipcRenderer.invoke('parameters:create', dto),
+
+    update: (id: number, dto: UpdateParameterDto): Promise<MutationResult> =>
+      ipcRenderer.invoke('parameters:update', id, dto),
+
+    delete: (id: number): Promise<MutationResult> => ipcRenderer.invoke('parameters:delete', id),
+  },
+
+  // ── Sesión ───────────────────────────────────────────────────────────────────
+  session: {
+    save: (user: SafeUser): Promise<{ success: boolean }> =>
+      ipcRenderer.invoke('session:save', user),
+
+    restore: (): Promise<SafeUser | null> => ipcRenderer.invoke('session:restore'),
+
+    clear: (): Promise<{ success: boolean }> => ipcRenderer.invoke('session:clear'),
+  },
 });
 
-// ─── Types para TypeScript en React ──────────────────────────────────────────
-// Esto le dice a TypeScript que window.electronAPI existe
+// ─── Types globales para TypeScript en React ──────────────────────────────────
 
 declare global {
   interface Window {
     electronAPI: {
-      parameters: {
-        getAll: () => Promise<PsmParameter[]>;
-        getOne: (id: number) => Promise<PsmParameter | undefined>;
-        create: (data: Omit<PsmParameter, 'par_id'>) => Promise<{ id: number }>;
-        update: (id: number, data: Omit<PsmParameter, 'par_id'>) => Promise<{ changes: number }>;
-        delete: (id: number) => Promise<{ changes: number }>;
+      users: {
+        getAll: () => Promise<SafeUser[]>;
+        getOne: (id: number) => Promise<SafeUser | undefined>;
+        login: (dto: LoginDto) => Promise<LoginResponse>;
+        create: (dto: CreateUserDto) => Promise<MutationResult>;
+        update: (id: number, dto: UpdateUserDto) => Promise<MutationResult>;
+        changePassword: (
+          id: number,
+          currentPassword: string,
+          newPassword: string
+        ) => Promise<MutationResult>;
+        deactivate: (id: number) => Promise<MutationResult>;
+        delete: (id: number) => Promise<MutationResult>;
       };
       vehicles: {
-        getAll: () => Promise<PsmVehicle[]>;
-        getActive: () => Promise<PsmVehicle[]>;
-        getOne: (id: number) => Promise<PsmVehicle | undefined>;
-        create: (data: Omit<PsmVehicle, 'veh_id' | 'veh_status' | 'veh_egress_date'>) => Promise<{ id: number }>;
-        checkout: (id: number, egress_date: string) => Promise<{ changes: number }>;
-        delete: (id: number) => Promise<{ changes: number }>;
+        getAll: () => Promise<Vehicle[]>;
+        getActive: () => Promise<Vehicle[]>;
+        getOne: (id: number) => Promise<Vehicle | undefined>;
+        create: (dto: CreateVehicleDto) => Promise<MutationResult>;
+        checkout: (id: number) => Promise<MutationResult>;
+        update: (id: number, dto: UpdateVehicleDto) => Promise<MutationResult>;
+        delete: (id: number) => Promise<MutationResult>;
+        getStats: () => Promise<{
+          parkedCount: number;
+          todayRevenue: number;
+          todayVehicles: number;
+        }>;
+        getParkedCount: () => Promise<number>;
+        getTodayRevenue: () => Promise<number>;
+        getTodayVehicles: () => Promise<number>;
+      };
+      parameters: {
+        getAll: () => Promise<Parameter[]>;
+        getOne: (id: number) => Promise<Parameter | undefined>;
+        create: (dto: CreateParameterDto) => Promise<MutationResult>;
+        update: (id: number, dto: UpdateParameterDto) => Promise<MutationResult>;
+        delete: (id: number) => Promise<MutationResult>;
+      };
+      session: {
+        save: (user: SafeUser) => Promise<{ success: boolean }>;
+        restore: () => Promise<SafeUser | null>;
+        clear: () => Promise<{ success: boolean }>;
       };
     };
   }
