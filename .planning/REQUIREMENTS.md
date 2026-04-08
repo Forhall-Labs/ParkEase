@@ -7,11 +7,11 @@
 
 ### User Management
 
-- [ ] **USR-01**: User can create new user accounts with username and password
-- [ ] **USR-02**: User can edit existing user account information
-- [ ] **USR-03**: User can delete user accounts
-- [ ] **USR-04**: User can authenticate with username and password
-- [ ] **USR-05**: User session persists across application restarts
+- [x] **USR-01**: User can create new user accounts with username and password
+- [x] **USR-02**: User can edit existing user account information
+- [x] **USR-03**: User can delete user accounts
+- [x] **USR-04**: User can authenticate with username and password
+- [x] **USR-05**: User session persists across application restarts
 
 ### Vehicle Entry
 
@@ -50,9 +50,9 @@
 
 ### Dashboard
 
-- [ ] **DASH-01**: Dashboard displays summary of current parked vehicles count
-- [ ] **DASH-02**: Dashboard displays today's revenue total
-- [ ] **DASH-03**: Dashboard displays total vehicles served today
+- [x] **DASH-01**: Dashboard displays summary of current parked vehicles count
+- [x] **DASH-02**: Dashboard displays today's revenue total
+- [x] **DASH-03**: Dashboard displays total vehicles served today
 
 ## v2 Requirements
 
@@ -79,39 +79,39 @@
 
 ## Traceability
 
-| Requirement | Phase   | Status  |
-| ----------- | ------- | ------- |
-| USR-01      | Phase 1 | Pending |
-| USR-02      | Phase 1 | Pending |
-| USR-03      | Phase 1 | Pending |
-| USR-04      | Phase 1 | Pending |
-| USR-05      | Phase 1 | Pending |
-| VEHI-01     | Phase 2 | Pending |
-| VEHI-02     | Phase 2 | Pending |
-| VEHI-03     | Phase 2 | Pending |
-| VEHI-04     | Phase 2 | Pending |
-| VEHI-05     | Phase 2 | Pending |
-| VEHI-06     | Phase 2 | Pending |
-| VEHI-07     | Phase 3 | Pending |
-| VEHI-08     | Phase 3 | Pending |
-| VEHI-09     | Phase 3 | Pending |
-| VEHI-10     | Phase 3 | Pending |
-| VEHI-11     | Phase 3 | Pending |
-| VEHI-12     | Phase 3 | Pending |
-| VEHI-13     | Phase 3 | Pending |
-| VEHI-14     | Phase 3 | Pending |
-| PARA-01     | Phase 2 | Pending |
-| PARA-02     | Phase 2 | Pending |
-| PARA-03     | Phase 2 | Pending |
-| REPT-01     | Phase 4 | Pending |
-| REPT-02     | Phase 4 | Pending |
-| REPT-03     | Phase 4 | Pending |
-| REPT-04     | Phase 4 | Pending |
-| REPT-05     | Phase 4 | Pending |
-| REPT-06     | Phase 4 | Pending |
-| DASH-01     | Phase 1 | Pending |
-| DASH-02     | Phase 1 | Pending |
-| DASH-03     | Phase 1 | Pending |
+| Requirement | Phase   | Status   |
+| ----------- | ------- | -------- |
+| USR-01      | Phase 1 | Complete |
+| USR-02      | Phase 1 | Complete |
+| USR-03      | Phase 1 | Complete |
+| USR-04      | Phase 1 | Complete |
+| USR-05      | Phase 1 | Complete |
+| VEHI-01     | Phase 2 | Pending  |
+| VEHI-02     | Phase 2 | Pending  |
+| VEHI-03     | Phase 2 | Pending  |
+| VEHI-04     | Phase 2 | Pending  |
+| VEHI-05     | Phase 2 | Pending  |
+| VEHI-06     | Phase 2 | Pending  |
+| VEHI-07     | Phase 3 | Pending  |
+| VEHI-08     | Phase 3 | Pending  |
+| VEHI-09     | Phase 3 | Pending  |
+| VEHI-10     | Phase 3 | Pending  |
+| VEHI-11     | Phase 3 | Pending  |
+| VEHI-12     | Phase 3 | Pending  |
+| VEHI-13     | Phase 3 | Pending  |
+| VEHI-14     | Phase 3 | Pending  |
+| PARA-01     | Phase 2 | Pending  |
+| PARA-02     | Phase 2 | Pending  |
+| PARA-03     | Phase 2 | Pending  |
+| REPT-01     | Phase 4 | Pending  |
+| REPT-02     | Phase 4 | Pending  |
+| REPT-03     | Phase 4 | Pending  |
+| REPT-04     | Phase 4 | Pending  |
+| REPT-05     | Phase 4 | Pending  |
+| REPT-06     | Phase 4 | Pending  |
+| DASH-01     | Phase 1 | Complete |
+| DASH-02     | Phase 1 | Complete |
+| DASH-03     | Phase 1 | Complete |
 
 **Coverage:**
 
