@@ -13,7 +13,7 @@ function App() {
 
   const [activePath, setActivePath] = useState('/dashboard');
 
-  const { form, isLoading, error, currentUser, setField, submitLogin } = useLogin();
+  const { form, isLoading, error, currentUser, setField, submitLogin, logout } = useLogin();
 
   const isLight = theme === 'light';
 
@@ -56,6 +56,7 @@ function App() {
         asideContent={<DashboardCardsPanel theme={theme} />}
         activePath={activePath}
         onNavigate={setActivePath}
+        onLogout={logout}
         theme={theme}
         onToggleTheme={toggleTheme}
       >
