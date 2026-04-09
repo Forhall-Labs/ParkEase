@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "npm run lint && tsc -b && vite build",
-    "build:win": "electron-builder --win",
+    "build:win": "electron-builder --win --publish never",
     "lint": "eslint .",
     "typecheck": "tsc -b --pretty false",
     "test:ci": "node scripts/ci-test-gate.mjs",
