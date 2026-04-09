@@ -1,14 +1,17 @@
-name: Build Windows .exe
+name: Build and Release Windows
 
 on:
   push:
     tags:
-      - 'v*'          # se dispara al crear un tag como v1.0.0
-  workflow_dispatch:  # también puedes dispararlo manualmente desde GitHub
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build-windows:
-    runs-on: windows-latest  # ← clave: usa un runner Windows para generar el .exe
+    runs-on: windows-latest
 
     steps:
       - name: Checkout
@@ -31,8 +34,39 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload artifact
+      - name: Package portable zip
+        shell: pwsh
+        run: |
+          $portableDir = "dist/win-unpacked"
+          if (!(Test-Path $portableDir)) {
+            throw "Portable directory not found: $portableDir"
+          }
+
+          $zipName = "psm-app-portable-${{ github.ref_name }}.zip"
+          if (Test-Path $zipName) {
+            Remove-Item $zipName -Force
+          }
+
+          Compress-Archive -Path "$portableDir/*" -DestinationPath $zipName
+
+      - name: Upload installer artifact
         uses: actions/upload-artifact@v4
         with:
-          name: psm-app-windows
+          name: psm-app-windows-installer
           path: dist/*.exe
+
+      - name: Upload portable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: psm-app-windows-portable
+          path: psm-app-portable-${{ github.ref_name }}.zip
+
+      - name: Create draft GitHub release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          tag_name: ${{ github.ref_name }}
+          files: |
+            dist/*.exe
+            psm-app-portable-${{ github.ref_name }}.zip

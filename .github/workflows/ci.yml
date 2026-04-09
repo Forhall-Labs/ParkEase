@@ -6,8 +6,11 @@ on:
   pull_request:
     branches: [main, dev]
 
+permissions:
+  contents: read
+
 jobs:
-  lint-and-test:
+  quality-gate:
     runs-on: ubuntu-latest
 
     steps:
@@ -23,8 +26,5 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Lint
-        run: npm run lint
-
-      - name: Type check
-        run: npx tsc --noEmit
+      - name: Run CI verification gate
+        run: npm run build && node scripts/ci-test-gate.mjs

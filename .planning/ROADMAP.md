@@ -94,6 +94,30 @@ Plans:
 - [ ] 10-01-PLAN.md — Modelo/IPC/migración para tarifas nombradas con default único y sin eliminación
 - [ ] 10-02-PLAN.md — UX de tarifas en Configuración + selección/fallback de tarifa en ingreso de vehículo
 
+### Phase 11: layout
+
+**Goal:** El shell global de escritorio mantiene sidebar fija, header con scroll natural y un ancho maximo de contenido consistente en las pantallas principales.
+**Requirements**: UIX-03
+**Depends on:** Phase 10
+**Plans:** 2 plans
+
+Plans:
+
+- [ ] 11-01-PLAN.md — Shell global con sidebar fija, header no sticky y contrato de ancho maximo unificado
+- [ ] 11-02-PLAN.md — Alineacion de pantallas principales al contrato de layout y verificacion visual integral
+
+### Phase 12: CI/CD
+
+**Goal:** Flujo CI/CD garantiza calidad bloqueante antes de merge y publica releases draft de Windows con instalador y portable zip por tags de versión.
+**Requirements**: CICD-01, CICD-02, CICD-03, CICD-04
+**Depends on:** Phase 11
+**Plans:** 2 plans
+
+Plans:
+
+- [ ] 12-01-PLAN.md — Gate de CI publicable (lint+tsc+build+test contract) y alineación de pre-push Husky
+- [ ] 12-02-PLAN.md — Release draft por tags con .exe + portable.zip, auto-asignación PR no bloqueante y runbook de branch protection
+
 ---
 
 _Roadmap updated: 2026-04-09 for milestone v1.1_

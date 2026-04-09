@@ -41,6 +41,13 @@
 - [ ] **THEM-01**: Light theme visual quality reaches parity with dark theme on key screens.
 - [ ] **THEM-02**: Theme contrast and readability meet baseline quality in both light and dark modes.
 
+### CI/CD
+
+- [ ] **CICD-01**: Pull requests and pushes to `main`/`dev` run a blocking CI quality gate with lint, type-check, build, and formal tests contract.
+- [ ] **CICD-02**: Local Husky pre-push remains mandatory and aligned with the same CI publishability gate.
+- [ ] **CICD-03**: Tags `v*` trigger Windows CD draft releases on GitHub with installer `.exe` and portable `.zip` assets.
+- [ ] **CICD-04**: Main branch merge governance requires approved PR flow, with PR assignment automation attempted and non-blocking human fallback.
+
 ## Future Requirements
 
 - **REPT-07**: Reports can be exported to PDF.
@@ -50,28 +57,32 @@
 
 ## Out of Scope (v1.1)
 
-| Feature | Reason |
-| --- | --- |
-| Cloud sync | Offline-first operation remains required |
-| Multi-location management | Current deployment is single-site |
-| Public API integrations | Not needed for this milestone |
-| Mobile app | Desktop-first delivery remains the target |
+| Feature                   | Reason                                    |
+| ------------------------- | ----------------------------------------- |
+| Cloud sync                | Offline-first operation remains required  |
+| Multi-location management | Current deployment is single-site         |
+| Public API integrations   | Not needed for this milestone             |
+| Mobile app                | Desktop-first delivery remains the target |
 
 ## Traceability
 
-| Requirement | Phase | Status |
-| --- | --- | --- |
-| UIX-01 | Phase 7 | Planned |
-| UIX-02 | Phase 6 | Planned |
-| UIX-03 | Phase 6 | Planned |
-| ACC-01 | Phase 8 | Planned |
-| ACC-02 | Phase 8 | Planned |
-| RESP-01 | Phase 7 | Planned |
-| RESP-02 | Phase 7 | Planned |
-| TOKN-01 | Phase 5 | Planned |
-| TOKN-02 | Phase 5 | Planned |
-| THEM-01 | Phase 9 | Planned |
-| THEM-02 | Phase 9 | Planned |
+| Requirement | Phase    | Status  |
+| ----------- | -------- | ------- |
+| UIX-01      | Phase 7  | Planned |
+| UIX-02      | Phase 6  | Planned |
+| UIX-03      | Phase 6  | Planned |
+| ACC-01      | Phase 8  | Planned |
+| ACC-02      | Phase 8  | Planned |
+| RESP-01     | Phase 7  | Planned |
+| RESP-02     | Phase 7  | Planned |
+| TOKN-01     | Phase 5  | Planned |
+| TOKN-02     | Phase 5  | Planned |
+| THEM-01     | Phase 9  | Planned |
+| THEM-02     | Phase 9  | Planned |
+| CICD-01     | Phase 12 | Planned |
+| CICD-02     | Phase 12 | Planned |
+| CICD-03     | Phase 12 | Planned |
+| CICD-04     | Phase 12 | Planned |
 
 ---
 

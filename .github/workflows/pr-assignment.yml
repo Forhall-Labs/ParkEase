@@ -1,0 +1,30 @@
+name: PR Auto Assignment
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+    branches: [main, dev]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  assign:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Attempt Copilot assignment
+        id: copilot_assign
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/assignees -f assignees[]=copilot-swe-agent
+
+      - name: Fallback to human review note
+        if: steps.copilot_assign.outcome != 'success'
+        run: |
+          {
+            echo "## PR assignment fallback"
+            echo "Automatic assignment to copilot-swe-agent failed; fallback to human review."
+            echo "Please assign a human reviewer manually in the Pull Request UI."
+          } >> "$GITHUB_STEP_SUMMARY"
