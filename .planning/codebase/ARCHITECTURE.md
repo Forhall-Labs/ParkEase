@@ -1,160 +1,153 @@
 # Architecture
 
-**Analysis Date:** 2026-04-08
+**Analysis Date:** 2026-04-09
 
 ## Pattern Overview
 
-**Overall:** Electron + React with Service-Repository Pattern
+**Overall:** Layered desktop application (Electron main + preload bridge + React renderer) with SQLite persistence.
 
 **Key Characteristics:**
-
-- Electron main process handles all data operations (no direct database access from renderer)
-- Service layer encapsulates business logic (login, validation, password hashing)
-- Repository layer handles raw SQL queries via better-sqlite3
-- IPC communication via contextBridge with type-safe API
-- Migration-based database schema management
+- Process boundary is explicit: renderer cannot access Node APIs directly; it uses `window.electronAPI` exposed from `electron/preload.ts`.
+- Main-process IPC handlers are organized by domain (`users`, `vehicles`, `parameters`, `session`, `settings`).
+- Backend domain logic follows handler -> service -> repository -> SQLite flow under `electron/`.
 
 ## Layers
 
-**Frontend (Renderer) - React:**
-
-- Purpose: UI rendering and user interaction
+**Renderer UI Layer:**
+- Purpose: Present UI, collect user input, and call bridge APIs.
 - Location: `src/`
-- Contains: Components, hooks, types, mock data
-- Depends on: `window.electronAPI` exposed via preload
-- Used by: End users via Electron BrowserWindow
+- Contains: React components, layout shell, hooks, i18n, shared types.
+- Depends on: `window.electronAPI`, browser APIs, React.
+- Used by: End users through Electron BrowserWindow.
+- Evidence: `src/main.tsx`, `src/App.tsx`, `src/layout/layout.tsx`, `src/components/UI/users.tsx`, `src/hooks/useLogin.ts`.
 
-**Electron Main Process:**
+**Preload Bridge Layer:**
+- Purpose: Define the safe contract between renderer and main process.
+- Location: `electron/preload.ts`
+- Contains: `contextBridge.exposeInMainWorld('electronAPI', ...)`, IPC invoke wrappers, DTO/type exports.
+- Depends on: Electron `ipcRenderer`.
+- Used by: Renderer (`src/*`) through global `window.electronAPI` type contract in `src/types/electron-api.d.ts`.
 
-- Purpose: Backend logic, database operations, window management
-- Location: `electron/`
-- Contains: Handlers, services, repositories, models, database
+**Main Process Orchestration Layer:**
+- Purpose: App lifecycle, window creation, DB bootstrap, and IPC registration.
+- Location: `electron/main.ts`
+- Contains: `app.whenReady`, `createWindow`, `register*Handlers` calls.
+- Depends on: Electron app/window APIs and all handler modules.
+- Used by: Electron runtime startup.
 
 **IPC Handler Layer:**
-
-- Purpose: Bridges IPC channel names to service functions
+- Purpose: Receive IPC calls, validate basic input shape, route to services.
 - Location: `electron/handlers/`
-- Contains: `user.handler.ts`, `vehicle.handler.ts`, `parameter.handler.ts`
-- Depends on: Service layer
-- Used by: Preload script (called via ipcRenderer.invoke)
+- Contains: Domain handlers for users, vehicles, parameters, settings, session.
+- Depends on: Domain services and shared models.
+- Used by: Preload-exposed API methods.
+- Evidence: `electron/handlers/user.handler.ts`, `electron/handlers/vehicle.handler.ts`, `electron/handlers/session.handler.ts`, `electron/handlers/setting.handler.ts`, `electron/handlers/parameter.handler.ts`.
 
 **Service Layer:**
-
-- Purpose: Business logic, validation, data transformation
+- Purpose: Business rules and domain-level validations.
 - Location: `electron/service/`
-- Contains: `user.service.ts`, `vehicle.service.ts`, `parameter.service.ts`
-- Depends on: Repository layer
-- Used by: Handler layer
+- Contains: Login/password logic, duplicate checks, checkout/report orchestration, setting operations.
+- Depends on: Repository functions and model types.
+- Used by: IPC handlers.
+- Evidence: `electron/service/user.service.ts`, `electron/service/vehicle.service.ts`, `electron/service/setting.service.ts`, `electron/service/parameter.service.ts`.
 
-**Repository Layer:**
-
-- Purpose: Raw SQL queries and database operations
+**Repository/Data Access Layer:**
+- Purpose: SQL statements and persistence operations.
 - Location: `electron/repositories/`
-- Contains: `user.repository.ts`, `vehcile.repository.ts`, `parameter.repository.ts`
-- Depends on: Database layer
-- Used by: Service layer
+- Contains: CRUD/read-model queries over `better-sqlite3`.
+- Depends on: DB singleton provider and model types.
+- Used by: Services.
+- Evidence: `electron/repositories/user.repository.ts`, `electron/repositories/parameter.repository.ts`, `electron/repositories/setting.repository.ts`, `electron/repositories/vehcile.repository.ts`.
 
 **Database Layer:**
-
-- Purpose: SQLite connection management and migrations
+- Purpose: Open DB file, configure pragmas, run migrations.
 - Location: `electron/database/db.ts`
-- Contains: Connection singleton, migration runner
-- Uses: `better-sqlite3`
-
-**Preload Layer:**
-
-- Purpose: Exposes safe IPC API to renderer
-- Location: `electron/preload.ts`
-- Contains: Type definitions, contextBridge API
-- Exposes: `window.electronAPI`
+- Contains: Singleton DB instance, migration registry (`001`..`004`), schema creation.
+- Depends on: Electron `app.getPath('userData')`, `better-sqlite3`.
+- Used by: Repositories and session handler.
 
 ## Data Flow
 
-**Login Flow:**
+**Flow: Login and Session Restore**
 
-1. User fills login form in React (`src/App.tsx`)
-2. `useLogin` hook calls `window.electronAPI.users.login(dto)` (preload bridge)
-3. `ipcRenderer.invoke('users:login', dto)` sends to main process
-4. `user.handler.ts` receives: `ipcMain.handle('users:login', ...)`
-5. Handler calls `login(dto)` from `user.service.ts`
-6. Service validates, hashes passwords with bcrypt, calls repository
-7. Repository executes SQL: `SELECT * FROM psm_users WHERE user_username = ?`
-8. Result flows back up through layers to React state
+1. UI captures credentials in `src/App.tsx` and `src/hooks/useLogin.ts`.
+2. Hook calls `window.electronAPI.users.login(...)` from preload contract (`electron/preload.ts`).
+3. Preload sends IPC invoke `users:login` to main process.
+4. `electron/handlers/user.handler.ts` routes to `login` in `electron/service/user.service.ts`.
+5. Service queries repository (`findUserByUsername`) in `electron/repositories/user.repository.ts`, validates status/password, and returns safe DTO.
+6. Renderer stores session by calling `window.electronAPI.session.save(...)`; `electron/handlers/session.handler.ts` persists single row in `psm_sessions`.
+7. On app load, `useLogin` calls `session:restore` to hydrate current user from SQLite-backed session table.
 
-**Vehicle Registration Flow:**
+**Flow: Vehicle Reporting**
 
-1. User submits vehicle form
-2. React calls `window.electronAPI.vehicles.create(dto)`
-3. IPC → handler → service → repository → database
-4. Service runs business logic (validations)
-5. Repository inserts: `INSERT INTO psm_vehicles ...`
-6. Returns `{ success: true, id: n }` to UI
+1. Reports UI requests report data via `window.electronAPI.vehicles.getReport(...)` (used by `src/components/UI/reports.tsx`).
+2. Preload invokes IPC `vehicles:getReport` (`electron/preload.ts`).
+3. `electron/handlers/vehicle.handler.ts` normalizes date and period.
+4. Handler delegates to `getReport` in `electron/service/vehicle.service.ts`.
+5. Service delegates SQL report query to `electron/repositories/vehcile.repository.ts`.
+6. Result DTO returns through IPC to renderer for table/chart rendering.
+
+**State Management:**
+- UI state is component-local with React hooks (`useState`, `useEffect`) in `src/App.tsx` and feature components.
+- Authentication/session state is persisted in SQLite table `psm_sessions` and restored at boot through IPC.
+- No centralized client-side state library is used.
 
 ## Key Abstractions
 
-**SafeUser:**
+**Electron API Contract (`window.electronAPI`):**
+- Purpose: Stable typed boundary for renderer-side calls.
+- Examples: `electron/preload.ts`, `src/types/electron-api.d.ts`.
+- Pattern: Namespace-by-domain (`users`, `vehicles`, `parameters`, `session`, `settings`) with Promise-based methods.
 
-- Purpose: User object without password field
-- Examples: `electron/models/user.model.ts`, `src/types/electron-api.d.ts`
-- Pattern: TypeScript utility type `Omit<User, 'user_password'>`
+**Domain DTOs and Models:**
+- Purpose: Define payload shape across IPC, service, and repository boundaries.
+- Examples: `electron/models/user.model.ts`, `electron/models/vehicle.model.ts`, `electron/models/parameter.model.ts`.
+- Pattern: `Create*Dto`, `Update*Dto`, result envelopes (`{ success, message, id }`).
 
-**DTOs (Data Transfer Objects):**
-
-- Purpose: Type-safe input for create/update operations
-- Examples: `CreateUserDto`, `UpdateUserDto`, `LoginDto`
-- Pattern: TypeScript interfaces in model files
-
-**MutationResult:**
-
-- Purpose: Standard response for write operations
-- Pattern: `{ success: boolean; message?: string; id?: number }`
+**Repository Query Modules:**
+- Purpose: Keep SQL out of handlers/services.
+- Examples: `electron/repositories/user.repository.ts`, `electron/repositories/vehcile.repository.ts`.
+- Pattern: One module per domain table and query set.
 
 ## Entry Points
 
-**Main Electron Process:**
-
+**Desktop App Entry Point:**
 - Location: `electron/main.ts`
-- Triggers: App launch via `app.whenReady()`
-- Responsibilities: Initialize database, register IPC handlers, create BrowserWindow
+- Triggers: Electron runtime startup.
+- Responsibilities: Start DB, register IPC handlers, create BrowserWindow, load Vite dev URL or built HTML.
 
-**React Entry:**
-
+**Renderer Entry Point:**
 - Location: `src/main.tsx`
-- Triggers: BrowserWindow loads React app
-- Responsibilities: Mount React root, render `<App />`
+- Triggers: BrowserWindow loads renderer bundle.
+- Responsibilities: Mount React root and render `App`.
 
-**App Component:**
-
-- Location: `src/App.tsx`
-- Triggers: User interaction (login), theme toggle
-- Responsibilities: Render login form or dashboard based on auth state
+**Security Boundary Entry Point:**
+- Location: `electron/preload.ts`
+- Triggers: BrowserWindow preload execution before renderer scripts.
+- Responsibilities: Expose minimal IPC API via `contextBridge`.
 
 ## Error Handling
 
-**Strategy:** Result objects with success flag and optional message
+**Strategy:** Return structured result objects for expected domain failures and use try/catch in handlers for non-critical failures.
 
 **Patterns:**
-
-- Service functions return `{ success: boolean; message?: string; id?: number }`
-- Login hook catches errors and sets error state for UI display
-- Preload checks for `window.electronAPI` existence before calling
+- Service-level validation returns `{ success: false, message }` (see `electron/service/user.service.ts` and `electron/service/vehicle.service.ts`).
+- Defensive fallback in handlers for aggregations/report input normalization (see `electron/handlers/vehicle.handler.ts`).
+- Startup failure path logs and exits app (`electron/main.ts`).
 
 ## Cross-Cutting Concerns
 
-**Logging:** Console logging in main process (`console.log`, `console.error`)
+**Logging:**
+- Uses `console.log` and `console.error` in main process startup/migrations (`electron/main.ts`, `electron/database/db.ts`).
 
 **Validation:**
-
-- Duplicate checking in service layer (username, email uniqueness)
-- Input validation in `useLogin` hook (required fields)
-- SQLite CHECK constraints for enum fields (user_status, vehicle status)
+- Implemented mainly in services (duplicate checks, status checks, password checks).
+- Lightweight handler-level normalization for report period/date (`electron/handlers/vehicle.handler.ts`).
 
 **Authentication:**
-
-- bcrypt password hashing in service layer
-- Legacy plaintext password support with auto-migration
-- Session stored in React state (no JWT - desktop app, single user context)
+- Username/password verification in `electron/service/user.service.ts` using `bcryptjs`.
+- Session persistence and restore in `electron/handlers/session.handler.ts` with SQLite table `psm_sessions`.
 
 ---
 
-_Architecture analysis: 2026-04-08_
+*Architecture analysis: 2026-04-09*

@@ -1,149 +1,139 @@
 # Codebase Concerns
 
-**Analysis Date:** 2026-04-08
+**Analysis Date:** 2026-04-09
 
 ## Tech Debt
 
-**Incomplete Feature - Mock Data in Production UI:**
+**[High] Build artifacts committed and not ignored (`dist-electron`)**
+- Issue: Generated Electron output is stored in source control and `.gitignore` does not exclude `dist-electron`.
+- Files: `.gitignore`, `dist-electron/main.js`, `dist-electron/preload.js`, `dist-electron/database/db.js`
+- Impact: Source/build drift risk, noisy diffs, accidental regression from stale generated code, larger review surface.
+- Fix approach: Add `dist-electron/` to `.gitignore`, remove generated artifacts from git, and regenerate only in CI/release.
 
-- Issue: The dashboard displays hardcoded mock data instead of real database records
-- Files: `src/components/vehiclesResumeTable.tsx`, `src/components/UI/dashboard.tsx`
-- Impact: Application appears functional but has no real vehicle management
-- Fix approach: Connect the IPC handlers to fetch real data from the database repositories
+**[High] Duplicate contract definitions for renderer-electron API**
+- Issue: API types are duplicated in two places with overlapping declarations.
+- Files: `electron/preload.ts`, `src/types/electron-api.d.ts`
+- Impact: Interface drift can produce runtime breakages that TypeScript does not catch across process boundary.
+- Fix approach: Keep a single shared type source (for example, under `shared/`), import into both preload and renderer.
 
-**Incomplete Feature - Dashboard Cards Panel:**
+**[Medium] Typo-based module naming debt (`vehcile`)**
+- Issue: Vehicle repository filename is misspelled and referenced broadly.
+- Files: `electron/repositories/vehcile.repository.ts`, `electron/service/vehicle.service.ts`, `dist-electron/repositories/vehcile.repository.js`
+- Impact: Reduced discoverability, higher onboarding friction, future rename risk across many imports.
+- Fix approach: Rename to `vehicle.repository.ts` with a coordinated symbol/file rename.
 
-- Issue: DashboardCardsPanel component is passed to Layout but never rendered
-- Files: `src/App.tsx` (line 36 passes asideContent, but Layout may not render it)
-- Impact: Statistics panel is missing from the main view
-- Fix approach: Verify Layout component renders the asideContent prop
-
-**Typo in Filename:**
-
-- Issue: Repository file has incorrect spelling
-- Files: `electron/repositories/vehcile.repository.ts` should be `vehicle.repository.ts`
-- Impact: Confusion and potential import errors
-- Fix approach: Rename the file to correct spelling
-
-**Incomplete Google Login Button:**
-
-- Issue: Google login button exists in UI but has no functionality
-- Files: `src/App.tsx` (lines 173-204)
-- Impact: Dead UI element that confuses users
-- Fix approach: Implement Google OAuth or remove the button
-
-## Security Considerations
-
-**Plain Text Password Fallback (Critical):**
-
-- Risk: Legacy plain text password comparison still active in login flow
-- Files: `electron/service/user.service.ts` (lines 73-83)
-- Current mitigation: Falls back to plain text comparison if password isn't bcrypt hash
-- Recommendations: Remove plain text fallback entirely after migrating all users to bcrypt
-
-**Insecure Password Migration Pattern:**
-
-- Risk: Successfully logging in with plain text auto-migrates to bcrypt without user confirmation
-- Files: `electron/service/user.service.ts` (lines 78-81)
-- Current mitigation: None
-- Recommendations: Require explicit password reset or force migration on next login with proper auth
-
-**No Rate Limiting on Authentication:**
-
-- Risk: Login endpoint has no protection against brute force attacks
-- Files: `electron/handlers/user.handler.ts`
-- Current mitigation: None
-- Recommendations: Add attempt tracking and lockout after N failed attempts
-
-**No Password Complexity Validation:**
-
-- Risk: Users can set weak passwords during registration
-- Files: `electron/service/user.service.ts`
-- Current mitigation: None
-- Recommendations: Enforce minimum length and complexity requirements
+**[Medium] Large UI/bridge files increase change risk**
+- Issue: Several files are very large and combine multiple responsibilities.
+- Files: `src/components/vehiclesResumeTable.tsx`, `src/components/UI/reports.tsx`, `src/components/UI/settings.tsx`, `electron/preload.ts`
+- Impact: Harder reviews, increased regression chance, brittle merges.
+- Fix approach: Split by feature slices (table sections/hooks/components), keep preload as thin bridge + per-domain modules.
 
 ## Known Bugs
 
-**Dashboard Shows Empty/Static Data:**
+**[High] Empty update payload can generate invalid SQL**
+- Symptoms: Update operations can construct `UPDATE ... SET  WHERE ...` when DTO has zero keys.
+- Files: `electron/repositories/user.repository.ts`, `electron/repositories/parameter.repository.ts`, `electron/repositories/vehcile.repository.ts`
+- Trigger: Any IPC caller sending an empty object to update handlers.
+- Workaround: Validate DTO non-empty in service/handler before invoking repository updates.
 
-- Symptoms: Table displays only mock data regardless of actual vehicle count
-- Files: `src/components/vehiclesResumeTable.tsx`
-- Trigger: Any interaction with the dashboard
-- Workaround: None - backend has handlers but frontend uses mock data
+**[Medium] Silent error swallowing in stats endpoints masks failures**
+- Symptoms: Dashboard endpoints return `0` values when SQL/runtime errors occur.
+- Files: `electron/handlers/vehicle.handler.ts`
+- Trigger: Any DB error during stats/revenue/today count queries.
+- Workaround: Log structured error and return explicit failure status instead of forcing zero.
 
-**Parameter Table Unused:**
+## Security Considerations
 
-- Issue: psm_parameters table exists in database but pricing/tax uses hardcoded values
-- Files: `electron/database/db.ts`, `electron/models/parameter.model.ts`
-- Impact: Can't change pricing without code changes
-- Fix approach: Integrate parameter service for dynamic pricing
+**[Critical] Legacy plaintext password acceptance remains enabled**
+- Risk: Accounts with plaintext passwords are still accepted during login fallback.
+- Files: `electron/service/user.service.ts`
+- Current mitigation: Passwords are migrated to bcrypt upon successful plaintext login.
+- Recommendations: Remove plaintext fallback behind one-time migration script; enforce bcrypt-only auth path.
+
+**[High] SQL field-name injection vector via dynamic update builders**
+- Risk: Dynamic SQL column list is built from untrusted object keys.
+- Files: `electron/repositories/user.repository.ts`, `electron/repositories/parameter.repository.ts`, `electron/repositories/vehcile.repository.ts`
+- Current mitigation: Values are parameterized, but column names are not allowlisted.
+- Recommendations: Use explicit allowlists for updatable fields and reject unknown keys before query construction.
+
+**[High] Session PII persisted locally in clear text**
+- Risk: Session table stores user identity and email in plain SQLite rows.
+- Files: `electron/handlers/session.handler.ts`, `electron/database/db.ts`
+- Current mitigation: Local-only DB path (`app.getPath('userData')`) and no password in session row.
+- Recommendations: Store minimal session token only, encrypt sensitive local payloads, and add expiration/rotation policy.
+
+**[Medium] Electron renderer sandbox is disabled**
+- Risk: Reduced defense-in-depth if renderer is compromised.
+- Files: `electron/main.ts`
+- Current mitigation: `contextIsolation: true` and `nodeIntegration: false` are enabled.
+- Recommendations: Enable `sandbox: true` and test preload compatibility.
 
 ## Performance Bottlenecks
 
-**Missing Database Indexes:**
+**[Medium] Repeated full scans for report/stat queries**
+- Problem: Queries filter using `DATE(veh_egress_date)` and no indexes are defined for egress/status filters.
+- Files: `electron/handlers/vehicle.handler.ts`, `electron/repositories/vehcile.repository.ts`, `electron/database/db.ts`
+- Cause: Function-wrapped date filtering and absent supporting indexes.
+- Improvement path: Add indexes on `veh_status`, `veh_egress_date`, and potentially computed/date-normalized column; avoid function-wrapped filter where possible.
 
-- Problem: Queries on veh_plate, veh_reference, user_username perform full table scans
-- Files: `electron/repositories/vehcile.repository.ts`, `electron/repositories/user.repository.ts`
-- Cause: No indexes on frequently queried unique columns
-- Improvement path: Add CREATE INDEX statements in migration system
-
-**No Pagination:**
-
-- Problem: findAllVehicles returns all records without limit
-- Files: `electron/repositories/vehcile.repository.ts`
-- Cause: No pagination support
-- Improvement path: Add limit/offset parameters to query methods
+**[Medium] Unpaginated fetches for growing datasets**
+- Problem: APIs load full tables for users/vehicles/parameters.
+- Files: `electron/repositories/user.repository.ts`, `electron/repositories/vehcile.repository.ts`, `electron/repositories/parameter.repository.ts`
+- Cause: `SELECT *` endpoints without pagination limits.
+- Improvement path: Add page/limit/sort contracts and UI pagination/virtualization.
 
 ## Fragile Areas
 
-**Dynamic SQL Generation:**
-
-- Why fragile: updateVehicle and updateUser use dynamic field construction
-- Files: `electron/repositories/vehcile.repository.ts` (lines 66-74), `electron/repositories/user.repository.ts` (lines 42-50)
-- Safe modification: Ensure UpdateDto only contains allowed fields, validate against model
-- Test coverage: Currently no tests exist
-
-**Database Singleton:**
-
-- Why fragile: Global db instance makes testing and concurrent access risky
+**[High] Migration application is not atomic per release boot**
 - Files: `electron/database/db.ts`
-- Safe modification: Use dependency injection for test databases
-- Test coverage: No tests to verify database behavior
+- Why fragile: Migration execution and migration-record inserts are not wrapped in a transaction.
+- Safe modification: Wrap per-migration or full migration batch in transaction and fail-fast with rollback.
+- Test coverage: No automated migration failure/recovery tests detected.
+
+**[High] Session save does delete-then-insert without transaction**
+- Files: `electron/handlers/session.handler.ts`
+- Why fragile: Failure between delete and insert can leave app without session unexpectedly.
+- Safe modification: Use transaction for clear+insert or `INSERT ... ON CONFLICT` strategy with single-row key.
+- Test coverage: No session persistence tests detected.
+
+## Scaling Limits
+
+**[Medium] Single local SQLite with synchronous access model**
+- Current capacity: Suitable for single-desktop, low concurrency, moderate dataset.
+- Limit: Large tables and report-heavy usage will degrade due to full scans and synchronous query model.
+- Scaling path: Add indexes and pagination now; if multi-user/remote requirements emerge, migrate to client-server API + managed DB.
 
 ## Dependencies at Risk
 
-**better-sqlite3:**
-
-- Risk: Native module requires electron-rebuild; may break on OS updates
-- Impact: Application won't start if native binding fails
-- Migration plan: Consider pure JS alternatives like sql.js or abstract via repository pattern
+**[Medium] Native Electron + `better-sqlite3` upgrade coupling**
+- Risk: Electron major updates can break native module rebuilds.
+- Impact: Build/runtime failures in packaged app.
+- Migration plan: Pin compatible Electron/native versions, add CI matrix for rebuild/package validation, keep `@electron/rebuild` path tested.
 
 ## Missing Critical Features
 
-**User Session Management:**
+**[High] No role-based authorization model across IPC commands**
+- Problem: IPC handlers expose full CRUD operations without role checks.
+- Blocks: Separation of duties, least-privilege operation, auditable admin-only actions.
 
-- Problem: No logout functionality; user persists in React state only
-- Blocks: Can't switch users or securely end session
-
-**Vehicle Actions Not Connected:**
-
-- Problem: Delete, checkout, and reprint buttons have no handlers
-- Blocks: Can't actually manage vehicles through the UI
-
-**No Ticket/PDF Generation:**
-
-- Problem: Reimpresión button exists but no printing service implemented
-- Blocks: Physical ticket generation for customers
+**[Medium] No explicit audit trail for destructive actions**
+- Problem: Deletes/updates are not audit-logged.
+- Blocks: Traceability for operational incidents and data disputes.
 
 ## Test Coverage Gaps
 
-**No Tests Exist:**
+**[Critical] Automated tests are effectively absent**
+- What's not tested: Auth flows, session persistence, repository update guards, IPC handlers, migration behavior, reporting queries.
+- Files: `package.json`, `electron/service/user.service.ts`, `electron/handlers/session.handler.ts`, `electron/database/db.ts`, `electron/handlers/vehicle.handler.ts`
+- Risk: Regressions ship undetected in security/correctness-critical paths.
+- Priority: High
 
-- What's not tested: Entire application - no unit, integration, or E2E tests
-- Files: All source files
-- Risk: Any refactoring or changes could break functionality silently
-- Priority: HIGH
+**[High] No integration tests for preload-to-IPC contracts**
+- What's not tested: `window.electronAPI` method signatures and runtime behavior across renderer/main boundary.
+- Files: `electron/preload.ts`, `src/types/electron-api.d.ts`, `electron/handlers/*.ts`
+- Risk: Runtime contract drift and broken UI operations after refactors.
+- Priority: High
 
 ---
 
-_Concerns audit: 2026-04-08_
+*Concerns audit: 2026-04-09*

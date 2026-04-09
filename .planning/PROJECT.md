@@ -2,100 +2,84 @@
 
 ## What This Is
 
-A Windows desktop application for managing a parking lot. Built with Vite + Electron for Windows deployment, using SQLite for local data storage with no internet requirement. Users can manage vehicle entries/exits, calculate parking fees with Costa Rican pricing rules, and generate reports.
+A desktop parking management application built with Electron + React + TypeScript, designed for offline operation with local SQLite storage. It covers user/session management, vehicle entry and exit flows, tariff configuration, and operational reporting.
 
 ## Core Value
 
-A simple, offline parking lot management system that handles vehicle tracking, automatic fee calculation with local currency rounding, and provides reporting capabilities.
+A simple, offline parking lot management system that handles vehicle tracking, automatic fee calculation with local currency rounding, and reporting capabilities for day-to-day operations.
 
 ## Requirements
 
 ### Validated
 
-- ✓ User login system — existing
-- ✓ Dashboard with summary display — existing
+- ✓ USR-01, USR-02, USR-03, USR-04, USR-05: User lifecycle + authentication flow
+- ✓ DASH-01, DASH-02, DASH-03: Dashboard occupancy/revenue/activity metrics
+- ✓ VEHI-01, VEHI-02, VEHI-03, VEHI-04, VEHI-05, VEHI-06: Vehicle entry and validation
+- ✓ PARA-01, PARA-02, PARA-03: Parameter configuration and persistence
+- ✓ VEHI-07, VEHI-08, VEHI-09, VEHI-10, VEHI-11, VEHI-12, VEHI-13, VEHI-14: Exit, fee calculation, payment completion
+- ✓ REPT-01, REPT-02, REPT-03, REPT-04, REPT-05, REPT-06: Daily/weekly/monthly/yearly reporting with totals and UI views
 
 ### Active
 
-- [ ] USR-01: User can create, edit, and delete user accounts
-- [ ] USR-02: User can authenticate with username and password
-- [ ] VEHI-01: User can register vehicle entry with Costa Rican plate format
-- [ ] VEHI-02: System stores entry date/time, owner name, and status "P" (Parked)
-- [ ] VEHI-03: User can select parked vehicle and record exit
-- [ ] VEHI-04: System calculates parking fee based on duration
-- [ ] VEHI-05: Pricing uses 10 colones per minute after first hour
-- [ ] VEHI-06: Hourly rate is stored in parameter table
-- [ ] VEHI-07: Fee is rounded to next 50 colones (Costa Rican rounding)
-- [ ] REPT-01: User can generate daily reports
-- [ ] REPT-02: User can generate weekly reports
-- [ ] REPT-03: User can generate monthly reports
-- [ ] REPT-04: User can generate yearly reports
+- [ ] No active v1 requirements pending.
 
 ### Out of Scope
 
-- Cloud/sync functionality — offline-only operation
-- Multiple parking locations — single location
-- API integrations — no external services
-- Mobile app — Windows desktop only
+- Cloud synchronization / multi-tenant access
+- Multi-location parking management
+- Public API integrations and online dependencies
+- Mobile client application
 
 ## Context
 
 **Technology Stack:**
 
-- Frontend: React 19 + Vite + TypeScript
-- Desktop: Electron 41
-- Database: SQLite (better-sqlite3)
-- UI: Material UI + TailwindCSS
-- Build: electron-builder for Windows .exe
+- Frontend: React + TypeScript + Tailwind CSS
+- Desktop: Electron (main, preload, renderer boundaries)
+- Database: SQLite via better-sqlite3
+- Build Tooling: Vite + TypeScript project references
+- Quality Gate: ESLint + TypeScript build checks
 
 **Plate Format Rules:**
 
-- Regular vehicles: 3 letters + 3-4 digits (e.g., BNX-799)
-- Motorcycles: MOT + 6 digits (e.g., MOT-123456)
-- Light trucks: CL + 6 digits (e.g., CL-123456)
+- Regular vehicles: 3 letters + 3-4 digits (example: BNX-799)
+- Motorcycles: MOT + 6 digits (example: MOT-123456)
+- Light trucks: CL + 6 digits (example: CL-123456)
 
 **Pricing Rules:**
 
-- First hour: Included in hourly rate from parameter table
+- First hour: Uses configured rate from parameters
 - After first hour: 10 colones per minute
-- Rounding: Round up to nearest 50 colones
-  - 820 → 850
-  - 970 → 1000
+- Rounding: Round up to nearest 50 colones (example: 820 -> 850)
 
 ## Constraints
 
-- **Tech**: Vite + Electron + SQLite — Already established in codebase
-- **Platform**: Windows desktop only — No cross-platform requirement
-- **Network**: Fully offline — No internet connectivity needed
-- **Data**: Local SQLite storage — Single-user desktop application
+- Offline-first local operation
+- Local SQLite database as source of truth
+- Desktop-first usage model
+- Keep IPC contract typed between preload and renderer
 
 ## Key Decisions
 
-| Decision             | Rationale                             | Outcome   |
-| -------------------- | ------------------------------------- | --------- |
-| SQLite for storage   | Simple, file-based, no setup required | — Pending |
-| Electron for desktop | Required for Windows .exe deployment  | — Pending |
-| Costa Rican rounding | Local currency convention             | — Pending |
+| Decision | Rationale | Outcome |
+| --- | --- | --- |
+| SQLite for storage | File-based, low-operational overhead, offline-ready | Implemented |
+| Electron architecture | Required desktop packaging and local process control | Implemented |
+| Typed preload bridge | Prevent renderer/main contract drift | Implemented |
+| Rolling report windows | Predictable period behavior from selected date | Implemented |
+| Costa Rican rounding model | Local billing expectation | Implemented |
 
 ## Evolution
 
-This document evolves at phase transitions and milestone boundaries.
+This document should evolve at phase transitions and milestone boundaries.
 
-**After each phase transition** (via `/gsd-transition`):
+**During new milestone planning:**
 
-1. Requirements invalidated? → Move to Out of Scope with reason
-2. Requirements validated? → Move to Validated with phase reference
-3. New requirements emerged? → Add to Active
-4. Decisions to log? → Add to Key Decisions
-5. "What This Is" still accurate? → Update if drifted
-
-**After each milestone** (via `/gsd-complete-milestone`):
-
-1. Full review of all sections
-2. Core Value check — still the right priority?
-3. Audit Out of Scope — reasons still valid?
-4. Update Context with current state
+1. Move newly approved items to Active.
+2. Keep completed scope in Validated with requirement IDs.
+3. Track architectural decisions that affect execution.
+4. Update constraints if runtime or deployment assumptions change.
 
 ---
 
-_Last updated: 2025-04-08 after project initialization_
+_Last updated: 2026-04-09 after v1 execution and planning artifact refresh_
