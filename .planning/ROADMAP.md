@@ -29,7 +29,9 @@
 	1. Semantic tokens for color, spacing, radius, and typography are defined and referenced in the codebase.
 	2. Primary milestone screens consume reusable primitives instead of ad-hoc local styling for repeated UI patterns.
 	3. New UI work in milestone scope can be composed from shared primitives without visual regression.
-**Plans**: TBD
+**Plans**: 2 plans
+- [ ] 05-01-PLAN.md - Semantic token foundation and token-backed primitive CSS layer
+- [ ] 05-02-PLAN.md - Reusable primitive components and adoption proof in Reports + Dashboard
 **UI hint**: yes
 
 ### Phase 6: Cross-Screen Visual Consistency
@@ -80,7 +82,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 5. Design Tokens and Primitives | 0/0 | Not started | - |
+| 5. Design Tokens and Primitives | 0/2 | Planned | - |
 | 6. Cross-Screen Visual Consistency | 0/0 | Not started | - |
 | 7. Responsive Layout Hardening | 0/0 | Not started | - |
 | 8. Accessibility Baseline | 0/0 | Not started | - |
