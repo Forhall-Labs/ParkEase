@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: milestone
 status: executing
-last_updated: "2026-04-09T19:54:14.854Z"
+last_updated: '2026-04-09T19:54:14.854Z'
 last_activity: 2026-04-09
 progress:
   total_phases: 6
@@ -38,6 +38,8 @@ Plan: 1 of 2
 ### Roadmap Evolution
 
 - Phase 10 added: quiero que agregues una fase para poder editar como se manejan los parametros, los parametros ahora deben de tener la opcion de poner por ejemplo, tarifa moto cuesta 600 colones, y cuando se ingresa un vehiculo poder seleccionar la tarifa que debamos usar
+- Phase 11 added: layout
+- Phase 12 added: CI/CD
 
 ## Notes
 
