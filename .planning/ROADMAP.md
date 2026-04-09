@@ -144,6 +144,13 @@
 5. Each report shows total vehicles and total revenue
 6. Reports are displayed in application UI
 
+### Plans
+
+**Plans:** 2 plans
+
+- [ ] 04-01-PLAN.md — Backend report query logic, rolling-window period rules, and typed IPC contract
+- [ ] 04-02-PLAN.md — Dedicated reports UI, navigation wiring, and in-app report rendering states
+
 ### Notes
 
 **UI hint:** yes
