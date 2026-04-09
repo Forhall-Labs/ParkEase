@@ -8,6 +8,19 @@ A desktop parking management application built with Electron + React + TypeScrip
 
 A simple, offline parking lot management system that handles vehicle tracking, automatic fee calculation with local currency rounding, and reporting capabilities for day-to-day operations.
 
+## Current Milestone: v1.1 UX Refinement and Consistency
+
+**Goal:** Improve visual quality, consistency, accessibility, and responsive behavior across the application.
+
+**Target features:**
+
+- Reports visual and interaction polish
+- Cross-screen UI consistency (Dashboard, Vehicles, Users, Parameters, Reports)
+- Accessibility improvements (focus states, contrast, keyboard usability, reduced motion)
+- Responsive layout hardening to avoid overlap and clipping
+- Design tokens and reusable UI primitives
+- Light theme quality pass
+
 ## Requirements
 
 ### Validated
@@ -21,7 +34,11 @@ A simple, offline parking lot management system that handles vehicle tracking, a
 
 ### Active
 
-- [ ] No active v1 requirements pending.
+- [ ] UIX-01 to UIX-03: Reports and cross-screen visual consistency improvements
+- [ ] ACC-01 to ACC-02: Accessibility baseline and keyboard usability improvements
+- [ ] RESP-01 to RESP-02: Responsive hardening for key views
+- [ ] TOKN-01 to TOKN-02: Shared design tokens and reusable component patterns
+- [ ] THEM-01: Light theme quality parity
 
 ### Out of Scope
 
@@ -82,4 +99,4 @@ This document should evolve at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-04-09 after v1 execution and planning artifact refresh_
+_Last updated: 2026-04-09 after milestone v1.1 initialization_
