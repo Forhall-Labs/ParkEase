@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: ux-refinement-and-consistency
-current_phase: null
-status: defining_requirements
-last_updated: "2026-04-09T19:05:00.000Z"
+current_phase: 5
+status: roadmap_created
+last_updated: "2026-04-09T19:25:00.000Z"
 progress:
-  total_phases: 0
+  total_phases: 5
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -20,17 +20,18 @@ progress:
 ## Current Position
 
 **Milestone:** v1.1 UX Refinement and Consistency
-**Phase:** Not started
+**Phase:** 5 of 9 (Design Tokens and Primitives)
 **Plan:** -
-**Status:** Defining requirements
-**Last activity:** 2026-04-09 - Milestone v1.1 started
+**Status:** Roadmap created, ready to plan
+**Last activity:** 2026-04-09 - Roadmap created for phases 5 to 9
 
 ## Accumulated Context
 
 - Milestone v1.0 execution is complete across 4 phases.
 - Reports backend and reports UI are implemented and active.
 - Codebase mapping was refreshed in `.planning/codebase/` on 2026-04-09.
-- Next work focuses on UX consistency, accessibility, responsive hardening, and design-system alignment.
+- Milestone v1.1 roadmap is defined with phases 5 to 9 and full requirement coverage.
+- Next work starts at Phase 5 planning (design tokens and reusable primitives).
 
 ## Notes
 
@@ -39,4 +40,4 @@ progress:
 
 ---
 
-_State reset: 2026-04-09 for milestone v1.1_
+_State updated: 2026-04-09 after milestone v1.1 roadmap creation_

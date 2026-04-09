@@ -61,17 +61,17 @@
 
 | Requirement | Phase | Status |
 | --- | --- | --- |
-| UIX-01 | TBD | Planned |
-| UIX-02 | TBD | Planned |
-| UIX-03 | TBD | Planned |
-| ACC-01 | TBD | Planned |
-| ACC-02 | TBD | Planned |
-| RESP-01 | TBD | Planned |
-| RESP-02 | TBD | Planned |
-| TOKN-01 | TBD | Planned |
-| TOKN-02 | TBD | Planned |
-| THEM-01 | TBD | Planned |
-| THEM-02 | TBD | Planned |
+| UIX-01 | Phase 7 | Planned |
+| UIX-02 | Phase 6 | Planned |
+| UIX-03 | Phase 6 | Planned |
+| ACC-01 | Phase 8 | Planned |
+| ACC-02 | Phase 8 | Planned |
+| RESP-01 | Phase 7 | Planned |
+| RESP-02 | Phase 7 | Planned |
+| TOKN-01 | Phase 5 | Planned |
+| TOKN-02 | Phase 5 | Planned |
+| THEM-01 | Phase 9 | Planned |
+| THEM-02 | Phase 9 | Planned |
 
 ---
 
