@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { getLanguage, t } from '../../i18n';
 import type { ReportPeriod, VehicleReportResult } from '../../types/electron-api';
+import { Button, Card, Input, SectionHeader, StatusBadge } from '../primitives';
 
 interface ReportsProps {
   theme?: 'dark' | 'light';
@@ -244,8 +245,9 @@ export function Reports({ theme = 'dark' }: ReportsProps) {
 
   return (
     <div className="ui-font-sans ui-stack-lg px-4 sm:px-6 lg:px-8">
-      <section
-        className={`surface-panel relative overflow-hidden ui-section-padding shadow-xl sm:p-6 ${isLight ? 'border-slate-200 bg-linear-to-br from-slate-50 via-white to-sky-50 shadow-slate-200/40' : 'border-slate-700/70 bg-linear-to-br from-slate-900 via-slate-900 to-blue-950/60 shadow-black/30'}`}
+      <Card
+        variant="panel"
+        className={`relative overflow-hidden ui-section-padding shadow-xl sm:p-6 ${isLight ? 'border-slate-200 bg-linear-to-br from-slate-50 via-white to-sky-50 shadow-slate-200/40' : 'border-slate-700/70 bg-linear-to-br from-slate-900 via-slate-900 to-blue-950/60 shadow-black/30'}`}
       >
         <div
           aria-hidden="true"
@@ -254,26 +256,18 @@ export function Reports({ theme = 'dark' }: ReportsProps) {
 
         <div className="relative z-10 grid gap-5 xl:grid-cols-12 xl:items-end">
           <div className="space-y-3 xl:col-span-4">
-            <p
-              className={`text-section-label tracking-[0.25em] ${isLight ? 'text-sky-700' : 'text-sky-300'}`}
-            >
-              {t('reports.title')}
-            </p>
-            <h2 className={`text-heading-lg ${isLight ? 'text-slate-900' : 'text-white'}`}>
-              {t('reports.description')}
-            </h2>
-            <div className="flex flex-wrap gap-2 pt-2">
-              <span
-                className={`inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${isLight ? 'border-sky-200 bg-sky-100 text-sky-800' : 'border-sky-300/30 bg-sky-500/10 text-sky-100'}`}
-              >
-                {t(`reports.periods.${period}`)}
-              </span>
-              <span
-                className={`inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] ${isLight ? 'border-amber-200 bg-amber-100 text-amber-800' : 'border-amber-300/30 bg-amber-500/10 text-amber-100'}`}
-              >
-                {report.totalVehicles} {t('reports.totalVehicles')}
-              </span>
-            </div>
+            <SectionHeader
+              label={t('reports.title')}
+              title={t('reports.description')}
+              badge={
+                <div className="flex flex-wrap gap-2 pt-2">
+                  <StatusBadge tone="info">{t(`reports.periods.${period}`)}</StatusBadge>
+                  <StatusBadge tone="warning">
+                    {report.totalVehicles} {t('reports.totalVehicles')}
+                  </StatusBadge>
+                </div>
+              }
+            />
           </div>
 
           <div
@@ -290,14 +284,16 @@ export function Reports({ theme = 'dark' }: ReportsProps) {
                   {REPORT_PERIODS.map((candidatePeriod) => {
                     const active = period === candidatePeriod;
                     return (
-                      <button
+                      <Button
                         key={candidatePeriod}
                         type="button"
                         onClick={() => handlePeriodChange(candidatePeriod)}
-                        className={`focus-ring rounded-xl border px-3 py-2 text-sm font-semibold transition duration-200 ease-out motion-reduce:transition-none ${active ? 'border-sky-400/60 bg-sky-500/15 text-sky-50 shadow-lg shadow-sky-950/15' : isLight ? 'border-slate-300 bg-slate-100 text-slate-700 hover:border-slate-400 hover:bg-slate-200' : 'border-slate-600/70 bg-slate-800/80 text-slate-300 hover:border-slate-400 hover:bg-slate-700 hover:text-white'}`}
+                        variant={active ? 'primary' : 'secondary'}
+                        size="sm"
+                        className={active ? 'shadow-lg shadow-sky-950/15' : ''}
                       >
                         {t(`reports.periods.${candidatePeriod}`)}
-                      </button>
+                      </Button>
                     );
                   })}
                 </div>
@@ -309,13 +305,17 @@ export function Reports({ theme = 'dark' }: ReportsProps) {
                 >
                   {t('reports.startDate')}
                 </span>
-                <input
+                <Input
                   type="date"
                   value={selectedRange.rangeStart}
                   onChange={(event) => handleStartDateChange(event.target.value)}
                   max={selectedRange.rangeEnd}
                   disabled={period === 'daily'}
-                  className={`focus-ring w-full rounded-xl border px-4 py-2 text-sm outline-none transition duration-200 ease-out motion-reduce:transition-none ${isLight ? 'border-slate-300 bg-slate-50 text-slate-900 disabled:bg-slate-100 disabled:text-slate-400' : 'border-slate-600/70 bg-slate-900/70 text-white disabled:bg-slate-800 disabled:text-slate-500'}`}
+                  className={
+                    isLight
+                      ? 'border-slate-300 bg-slate-50 text-slate-900 disabled:bg-slate-100 disabled:text-slate-400'
+                      : 'border-slate-600/70 bg-slate-900/70 text-white disabled:bg-slate-800 disabled:text-slate-500'
+                  }
                 />
               </label>
 
@@ -325,36 +325,42 @@ export function Reports({ theme = 'dark' }: ReportsProps) {
                 >
                   {t('reports.endDate')}
                 </span>
-                <input
+                <Input
                   type="date"
                   value={selectedRange.rangeEnd}
                   onChange={(event) => handleEndDateChange(event.target.value)}
                   min={selectedRange.rangeStart}
                   max={dateBounds.max}
-                  className={`focus-ring w-full rounded-xl border px-4 py-2 text-sm outline-none transition duration-200 ease-out motion-reduce:transition-none ${isLight ? 'border-slate-300 bg-slate-50 text-slate-900' : 'border-slate-600/70 bg-slate-900/70 text-white'}`}
+                  className={
+                    isLight
+                      ? 'border-slate-300 bg-slate-50 text-slate-900'
+                      : 'border-slate-600/70 bg-slate-900/70 text-white'
+                  }
                 />
               </label>
 
               <div className="flex items-end justify-end gap-2 sm:col-span-2 lg:col-span-12">
-                <button
+                <Button
                   type="button"
                   onClick={handleRefreshReport}
-                  className="ui-button-primary focus-ring whitespace-nowrap transition duration-200 ease-out hover:-translate-y-0.5 motion-reduce:transform-none motion-reduce:transition-none"
+                  variant="primary"
+                  className="whitespace-nowrap hover:-translate-y-0.5 motion-reduce:transform-none"
                 >
                   {t('reports.refresh')}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   onClick={handleResetFilters}
-                  className={`ui-button-secondary focus-ring whitespace-nowrap transition duration-200 ease-out ${isLight ? 'border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200' : 'border-slate-600/70 bg-slate-800/80 text-slate-300 hover:border-slate-400 hover:bg-slate-700 hover:text-white'} motion-reduce:transition-none`}
+                  variant="secondary"
+                  className={`whitespace-nowrap ${isLight ? 'border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200' : 'border-slate-600/70 bg-slate-800/80 text-slate-300 hover:border-slate-400 hover:bg-slate-700 hover:text-white'}`}
                 >
                   {t('reports.reset')}
-                </button>
+                </Button>
               </div>
             </div>
           </div>
         </div>
-      </section>
+      </Card>
 
       {loading ? (
         <div
@@ -387,9 +393,9 @@ export function Reports({ theme = 'dark' }: ReportsProps) {
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {summaryCards.map((card) => (
-              <article
+              <Card
                 key={card.id}
-                className={`surface-card bg-linear-to-br p-5 shadow-lg transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-xl motion-reduce:transform-none motion-reduce:transition-none ${tileToneClasses[card.tone]}`}
+                className={`bg-linear-to-br p-5 shadow-lg transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-xl motion-reduce:transform-none motion-reduce:transition-none ${tileToneClasses[card.tone]}`}
               >
                 <p
                   className={`text-[11px] font-semibold uppercase tracking-[0.2em] ${isLight ? 'text-slate-600' : 'text-slate-400'}`}
@@ -404,12 +410,12 @@ export function Reports({ theme = 'dark' }: ReportsProps) {
                 <p className={`mt-2 text-sm ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
                   {card.detail}
                 </p>
-              </article>
+              </Card>
             ))}
           </div>
 
-          <section
-            className={`overflow-hidden rounded-3xl border shadow-xl ${isLight ? 'border-slate-200 bg-white' : 'border-slate-700/80 bg-slate-900/70'}`}
+          <Card
+            className={`overflow-hidden rounded-3xl shadow-xl ${isLight ? 'border-slate-200 bg-white' : 'border-slate-700/80 bg-slate-900/70'}`}
           >
             <div
               className={`flex flex-wrap items-center justify-between gap-3 border-b px-5 py-4 ${isLight ? 'border-slate-200 bg-slate-50' : 'border-slate-700/80 bg-slate-950/30'}`}
@@ -417,11 +423,14 @@ export function Reports({ theme = 'dark' }: ReportsProps) {
               <h3 className={`text-lg font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>
                 {t('reports.details')}
               </h3>
-              <span
-                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${isLight ? 'bg-slate-200 text-slate-700' : 'bg-slate-700/70 text-slate-200'}`}
+              <StatusBadge
+                tone="neutral"
+                className={
+                  isLight ? 'bg-slate-200 text-slate-700' : 'bg-slate-700/70 text-slate-200'
+                }
               >
                 {report.rows.length} {t('reports.totalVehicles')}
-              </span>
+              </StatusBadge>
             </div>
 
             <div className="overflow-x-auto">
@@ -522,7 +531,7 @@ export function Reports({ theme = 'dark' }: ReportsProps) {
                 </tbody>
               </table>
             </div>
-          </section>
+          </Card>
         </>
       )}
     </div>
