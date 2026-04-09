@@ -15,6 +15,14 @@
 
 ---
 
+## Phase 3: Vehicle Exit & Payment
+
+### Plans
+
+- [ ] 03-01-PLAN.md — Vehicle exit with fee calculation and checkout modal
+
+---
+
 ## Phase 1: User Management & Dashboard
 
 **Goal:** Complete user authentication system with full CRUD operations and enhance dashboard with real-time statistics.
