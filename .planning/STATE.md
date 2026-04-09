@@ -1,10 +1,9 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.1
-milestone_name: ux-refinement-and-consistency
-current_phase: 05
-status: phase_planned
-last_updated: "2026-04-09T18:59:44.850Z"
+milestone_name: milestone
+status: executing
+last_updated: '2026-04-09T19:03:12.424Z'
 last_activity: 2026-04-09
 progress:
   total_phases: 5
@@ -20,10 +19,12 @@ progress:
 
 ## Current Position
 
+Phase: 05 (design-tokens-and-primitives) — EXECUTING
+Plan: 1 of 2
 **Milestone:** v1.1 UX Refinement and Consistency
 **Phase:** 5 of 9 (Design Tokens and Primitives)
 **Plan:** -
-**Status:** Ready to execute
+**Status:** Executing Phase 05
 **Last activity:** 2026-04-09
 
 ## Accumulated Context
@@ -33,6 +34,10 @@ progress:
 - Codebase mapping was refreshed in `.planning/codebase/` on 2026-04-09.
 - Milestone v1.1 roadmap is defined with phases 5 to 9 and full requirement coverage.
 - Phase 5 has executable plans for token foundation and primitive adoption proofs.
+
+### Roadmap Evolution
+
+- Phase 10 added: quiero que agregues una fase para poder editar como se manejan los parametros, los parametros ahora deben de tener la opcion de poner por ejemplo, tarifa moto cuesta 600 colones, y cuando se ingresa un vehiculo poder seleccionar la tarifa que debamos usar
 
 ## Notes
 
