@@ -39,8 +39,11 @@
 **Depends on**: Phase 5
 **Requirements**: UIX-02, UIX-03
 **Success Criteria** (what must be TRUE): 1. Dashboard, Vehicles, Users, Parameters, and Reports share consistent header, card, and control treatment. 2. Reports transaction table hierarchy makes row content and key values readable at a glance. 3. Spacing and control alignment are uniform across the main sections of each primary view.
-**Plans**: TBD
-**UI hint**: yes
+**Plans**: 2 plans
+
+- [ ] 06-01-PLAN.md - Base visual contracts for header/actions and reports table scanability
+- [ ] 06-02-PLAN.md - Cross-screen alignment for Dashboard, Vehicles, Users, and Settings with visual verification
+      **UI hint**: yes
 
 ### Phase 7: Responsive Layout Hardening
 
