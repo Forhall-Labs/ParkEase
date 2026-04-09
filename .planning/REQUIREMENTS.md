@@ -15,12 +15,12 @@
 
 ### Vehicle Entry
 
-- [ ] **VEHI-01**: User can register vehicle entry with Costa Rican plate format (BNX-799 for regular, MOT-123456 for motorcycle, CL-123456 for light truck)
-- [ ] **VEHI-02**: System stores entry date and time automatically
-- [ ] **VEHI-03**: User can enter owner name when registering vehicle
-- [ ] **VEHI-04**: System sets vehicle status to "P" (Parked) upon entry
-- [ ] **VEHI-05**: User can view list of all currently parked vehicles
-- [ ] **VEHI-06**: System validates plate format based on vehicle type
+- [x] **VEHI-01**: User can register vehicle entry with Costa Rican plate format (BNX-799 for regular, MOT-123456 for motorcycle, CL-123456 for light truck)
+- [x] **VEHI-02**: System stores entry date and time automatically
+- [x] **VEHI-03**: User can enter owner name when registering vehicle
+- [x] **VEHI-04**: System sets vehicle status to "P" (Parked) upon entry
+- [x] **VEHI-05**: User can view list of all currently parked vehicles
+- [x] **VEHI-06**: System validates plate format based on vehicle type
 
 ### Vehicle Exit & Payment
 
@@ -35,9 +35,9 @@
 
 ### Parameters
 
-- [ ] **PARA-01**: Hourly rate is stored in parameter table and can be configured
-- [ ] **PARA-02**: First hour cost is stored in parameter table and can be configured
-- [ ] **PARA-03**: User can view and edit parameter values
+- [x] **PARA-01**: Hourly rate is stored in parameter table and can be configured
+- [x] **PARA-02**: First hour cost is stored in parameter table and can be configured
+- [x] **PARA-03**: User can view and edit parameter values
 
 ### Reports
 
@@ -86,12 +86,12 @@
 | USR-03      | Phase 1 | Complete |
 | USR-04      | Phase 1 | Complete |
 | USR-05      | Phase 1 | Complete |
-| VEHI-01     | Phase 2 | Pending  |
-| VEHI-02     | Phase 2 | Pending  |
-| VEHI-03     | Phase 2 | Pending  |
-| VEHI-04     | Phase 2 | Pending  |
-| VEHI-05     | Phase 2 | Pending  |
-| VEHI-06     | Phase 2 | Pending  |
+| VEHI-01     | Phase 2 | Complete |
+| VEHI-02     | Phase 2 | Complete |
+| VEHI-03     | Phase 2 | Complete |
+| VEHI-04     | Phase 2 | Complete |
+| VEHI-05     | Phase 2 | Complete |
+| VEHI-06     | Phase 2 | Complete |
 | VEHI-07     | Phase 3 | Pending  |
 | VEHI-08     | Phase 3 | Pending  |
 | VEHI-09     | Phase 3 | Pending  |
@@ -100,9 +100,9 @@
 | VEHI-12     | Phase 3 | Pending  |
 | VEHI-13     | Phase 3 | Pending  |
 | VEHI-14     | Phase 3 | Pending  |
-| PARA-01     | Phase 2 | Pending  |
-| PARA-02     | Phase 2 | Pending  |
-| PARA-03     | Phase 2 | Pending  |
+| PARA-01     | Phase 2 | Complete |
+| PARA-02     | Phase 2 | Complete |
+| PARA-03     | Phase 2 | Complete |
 | REPT-01     | Phase 4 | Pending  |
 | REPT-02     | Phase 4 | Pending  |
 | REPT-03     | Phase 4 | Pending  |
