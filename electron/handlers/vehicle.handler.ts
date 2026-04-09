@@ -8,6 +8,9 @@ import {
   vehicleCheckout,
   editVehicle,
   removeVehicle,
+  getReport,
+  type ReportPeriod,
+  type VehicleReportResult,
 } from '../service/vehicle.service.js';
 import { CreateVehicleDto, UpdateVehicleDto } from '../models/vehicle.model.js';
 
@@ -15,6 +18,24 @@ export interface DashboardStats {
   parkedCount: number;
   todayRevenue: number;
   todayVehicles: number;
+}
+
+function normalizeReportDate(selectedDate?: string): string {
+  if (!selectedDate) {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  const parsed = new Date(`${selectedDate}T00:00:00Z`);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  return parsed.toISOString().slice(0, 10);
+}
+
+function isReportPeriod(value: unknown): value is ReportPeriod {
+  return value === 'daily' || value === 'weekly' || value === 'monthly' || value === 'yearly';
 }
 
 export function registerVehicleHandlers(): void {
@@ -34,8 +55,8 @@ export function registerVehicleHandlers(): void {
     return registerVehicle(dto);
   });
 
-  ipcMain.handle('vehicles:checkout', (_e, id: number) => {
-    return vehicleCheckout(id);
+  ipcMain.handle('vehicles:checkout', (_e, id: number, total?: string) => {
+    return vehicleCheckout(id, total);
   });
 
   ipcMain.handle('vehicles:update', (_e, id: number, dto: UpdateVehicleDto) => {
@@ -148,5 +169,12 @@ export function registerVehicleHandlers(): void {
     } catch {
       return 0;
     }
+  });
+
+  ipcMain.handle('vehicles:getReport', (_e, period: unknown, selectedDate?: string): VehicleReportResult => {
+    const safePeriod: ReportPeriod = isReportPeriod(period) ? period : 'daily';
+    const safeDate = normalizeReportDate(selectedDate);
+
+    return getReport(safePeriod, safeDate);
   });
 }

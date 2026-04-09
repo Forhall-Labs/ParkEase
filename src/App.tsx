@@ -2,16 +2,24 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useLogin } from './hooks/useLogin';
 import { Layout } from './layout/layout';
-import { Dashboard, DashboardCardsPanel } from './components/UI/dashboard';
+import { Dashboard, DashboardCardsPanel, Vehicles } from './components/UI/dashboard';
 import { Users } from './components/UI/users';
+import { Settings } from './components/UI/settings';
+import { Reports } from './components/UI/reports';
+import { initI18n, t } from './i18n';
 
 function App() {
+  useEffect(() => {
+    initI18n();
+  }, []);
+
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     const savedTheme = localStorage.getItem('app-theme');
     return savedTheme === 'light' ? 'light' : 'dark';
   });
 
   const [activePath, setActivePath] = useState('/dashboard');
+  const [quickAddVehicleToken, setQuickAddVehicleToken] = useState(0);
 
   const { form, isLoading, error, currentUser, setField, submitLogin, logout } = useLogin();
 
@@ -31,20 +39,35 @@ function App() {
   }
 
   if (currentUser) {
+    const showStats = false;
+
     const renderContent = () => {
       switch (activePath) {
         case '/usuarios':
           return <Users theme={theme} />;
         case '/vehiculos':
-          return <Dashboard theme={theme} />;
-        case '/parametros':
           return (
-            <div className={isLight ? 'text-slate-900' : 'text-white'}>
-              Parámetros - En construcción
-            </div>
+            <Vehicles
+              theme={theme}
+              triggerQuickAddToken={quickAddVehicleToken}
+              onQuickAddHandled={() => setQuickAddVehicleToken(0)}
+            />
           );
+        case '/reportes':
+          return <Reports theme={theme} />;
+        case '/configuracion':
+          return <Settings theme={theme} onThemeChange={setTheme} />;
         default:
-          return <Dashboard theme={theme} />;
+          return (
+            <Dashboard
+              theme={theme}
+              onGoToVehicles={() => setActivePath('/vehiculos')}
+              onQuickAddVehicle={() => {
+                setQuickAddVehicleToken((current) => current + 1);
+                setActivePath('/vehiculos');
+              }}
+            />
+          );
       }
     };
 
@@ -53,14 +76,25 @@ function App() {
         userName={currentUser.user_name}
         title="ParkEase"
         subtitle="Panel de gestión"
-        asideContent={<DashboardCardsPanel theme={theme} />}
+        showWelcomeBanner={activePath === '/dashboard' || activePath === '/'}
+        asideContent={showStats ? <DashboardCardsPanel theme={theme} /> : undefined}
         activePath={activePath}
         onNavigate={setActivePath}
         onLogout={logout}
         theme={theme}
-        onToggleTheme={toggleTheme}
       >
-        {renderContent()}
+        {activePath === '/dashboard' || activePath === '/' ? (
+          <Dashboard
+            theme={theme}
+            onGoToVehicles={() => setActivePath('/vehiculos')}
+            onQuickAddVehicle={() => {
+              setQuickAddVehicleToken((current) => current + 1);
+              setActivePath('/vehiculos');
+            }}
+          />
+        ) : (
+          renderContent()
+        )}
       </Layout>
     );
   }
@@ -92,7 +126,7 @@ function App() {
               : 'border-white/10 bg-slate-950/40 text-slate-100 hover:bg-slate-900/80'
           }`}
         >
-          {isLight ? 'Modo oscuro' : 'Modo claro'}
+          {isLight ? t('settings.theme.dark') : t('settings.theme.light')}
         </button>
       </div>
 
@@ -116,7 +150,7 @@ function App() {
                 <h1
                   className={`text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl ${isLight ? 'text-slate-900' : 'text-white'}`}
                 >
-                  Bienvenido a ParkEase
+                  {t('login.welcome')}
                 </h1>
               </div>
             </div>
@@ -137,10 +171,10 @@ function App() {
                 <h2
                   className={`text-2xl font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}
                 >
-                  Iniciar sesión
+                  {t('login.login')}
                 </h2>
                 <p className={`text-sm ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-                  Ingresa tus credenciales para continuar.
+                  {t('login.enterCredentials')}
                 </p>
               </div>
 
@@ -157,7 +191,7 @@ function App() {
                   <span
                     className={`text-sm font-medium ${isLight ? 'text-slate-700' : 'text-slate-200'}`}
                   >
-                    Usuario
+                    {t('login.username')}
                   </span>
                   <input
                     placeholder="usuario"
@@ -176,7 +210,7 @@ function App() {
                   <span
                     className={`text-sm font-medium ${isLight ? 'text-slate-700' : 'text-slate-200'}`}
                   >
-                    Contraseña
+                    {t('login.password')}
                   </span>
                   <input
                     type="password"
@@ -213,7 +247,7 @@ function App() {
                     <path d="M15 12H3" />
                     <path d="M21 3v18" />
                   </svg>
-                  {isLoading ? 'Entrando...' : 'Entrar'}
+                  {isLoading ? t('login.loggingIn') : t('login.enter')}
                 </button>
                 <button
                   type="button"

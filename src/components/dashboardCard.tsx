@@ -1,12 +1,11 @@
 import React from 'react';
-import { Card, StatusBadge } from './primitives';
+import { Card } from './primitives';
 
 interface CardProps {
   title: string;
   info: string;
   image?: string;
   detail?: string;
-  accent?: 'cyan' | 'amber' | 'emerald';
   theme?: 'dark' | 'light';
 }
 
@@ -15,17 +14,10 @@ export const DashboardCard: React.FC<CardProps> = ({
   info,
   image,
   detail,
-  accent = 'cyan',
   theme = 'dark',
 }) => {
   const fallbackLabel = title.slice(0, 1).toUpperCase();
   const isLight = theme === 'light';
-
-  const accentTone = {
-    cyan: 'info' as const,
-    amber: 'warning' as const,
-    emerald: 'success' as const,
-  };
 
   return (
     <Card
@@ -35,10 +27,6 @@ export const DashboardCard: React.FC<CardProps> = ({
           : 'border-white/10 bg-linear-to-br from-slate-900/90 via-slate-900/70 to-slate-800/80 shadow-slate-950/30 hover:border-cyan-400/20 hover:shadow-slate-950/50'
       }`}
     >
-      <div className="absolute right-4 top-4">
-        <StatusBadge tone={accentTone[accent]}>{title}</StatusBadge>
-      </div>
-
       <div className="relative flex items-start gap-3 sm:gap-4">
         <div
           className={`flex h-11 w-11 flex-none items-center justify-center rounded-2xl border p-2 sm:h-12 sm:w-12 ${

@@ -1,11 +1,13 @@
 import { contextBridge, ipcRenderer } from 'electron';
+import type { ReportPeriod, VehicleReportResult } from './service/vehicle.service.js';
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
 export interface Parameter {
   par_id?: number;
-  par_quantity: string;
-  par_tax: string;
+  par_name: string;
+  par_amount: string;
+  par_is_default: number;
   version: number;
 }
 
@@ -79,14 +81,16 @@ export interface UpdateVehicleDto {
 }
 
 export interface CreateParameterDto {
-  par_quantity: string;
-  par_tax: string;
+  par_name: string;
+  par_amount: string;
+  par_is_default: number;
   version: number;
 }
 
 export interface UpdateParameterDto {
-  par_quantity?: string;
-  par_tax?: string;
+  par_name?: string;
+  par_amount?: string;
+  par_is_default?: number;
   version?: number;
 }
 
@@ -95,6 +99,8 @@ export interface MutationResult {
   message?: string;
   id?: number;
 }
+
+export type { ReportPeriod, VehicleReportResult };
 
 // ─── API expuesta a React ─────────────────────────────────────────────────────
 
@@ -136,7 +142,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     create: (dto: CreateVehicleDto): Promise<MutationResult> =>
       ipcRenderer.invoke('vehicles:create', dto),
 
-    checkout: (id: number): Promise<MutationResult> => ipcRenderer.invoke('vehicles:checkout', id),
+    checkout: (id: number, total?: string): Promise<MutationResult> =>
+      ipcRenderer.invoke('vehicles:checkout', id, total),
 
     update: (id: number, dto: UpdateVehicleDto): Promise<MutationResult> =>
       ipcRenderer.invoke('vehicles:update', id, dto),
@@ -151,6 +158,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getTodayRevenue: (): Promise<number> => ipcRenderer.invoke('vehicles:getTodayRevenue'),
 
     getTodayVehicles: (): Promise<number> => ipcRenderer.invoke('vehicles:getTodayVehicles'),
+
+    getReport: (period: ReportPeriod, selectedDate: string): Promise<VehicleReportResult> =>
+      ipcRenderer.invoke('vehicles:getReport', period, selectedDate),
   },
 
   // ── Parámetros ───────────────────────────────────────────────────────────────
@@ -160,13 +170,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getOne: (id: number): Promise<Parameter | undefined> =>
       ipcRenderer.invoke('parameters:getOne', id),
 
+    getDefault: (): Promise<Parameter | undefined> => ipcRenderer.invoke('parameters:getDefault'),
+
     create: (dto: CreateParameterDto): Promise<MutationResult> =>
       ipcRenderer.invoke('parameters:create', dto),
 
     update: (id: number, dto: UpdateParameterDto): Promise<MutationResult> =>
       ipcRenderer.invoke('parameters:update', id, dto),
 
-    delete: (id: number): Promise<MutationResult> => ipcRenderer.invoke('parameters:delete', id),
+    setDefault: (id: number): Promise<MutationResult> =>
+      ipcRenderer.invoke('parameters:setDefault', id),
   },
 
   // ── Sesión ───────────────────────────────────────────────────────────────────
@@ -177,6 +190,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
     restore: (): Promise<SafeUser | null> => ipcRenderer.invoke('session:restore'),
 
     clear: (): Promise<{ success: boolean }> => ipcRenderer.invoke('session:clear'),
+  },
+
+  settings: {
+    getAll: (): Promise<{ set_key: string; set_value: string }[]> =>
+      ipcRenderer.invoke('settings:getAll'),
+
+    get: (key: string): Promise<string | undefined> => ipcRenderer.invoke('settings:get', key),
+
+    save: (key: string, value: string): Promise<{ success: boolean }> =>
+      ipcRenderer.invoke('settings:save', key, value),
   },
 });
 
@@ -204,7 +227,7 @@ declare global {
         getActive: () => Promise<Vehicle[]>;
         getOne: (id: number) => Promise<Vehicle | undefined>;
         create: (dto: CreateVehicleDto) => Promise<MutationResult>;
-        checkout: (id: number) => Promise<MutationResult>;
+        checkout: (id: number, total?: string) => Promise<MutationResult>;
         update: (id: number, dto: UpdateVehicleDto) => Promise<MutationResult>;
         delete: (id: number) => Promise<MutationResult>;
         getStats: () => Promise<{
@@ -215,18 +238,25 @@ declare global {
         getParkedCount: () => Promise<number>;
         getTodayRevenue: () => Promise<number>;
         getTodayVehicles: () => Promise<number>;
+        getReport: (period: ReportPeriod, selectedDate: string) => Promise<VehicleReportResult>;
       };
       parameters: {
         getAll: () => Promise<Parameter[]>;
         getOne: (id: number) => Promise<Parameter | undefined>;
+        getDefault: () => Promise<Parameter | undefined>;
         create: (dto: CreateParameterDto) => Promise<MutationResult>;
         update: (id: number, dto: UpdateParameterDto) => Promise<MutationResult>;
-        delete: (id: number) => Promise<MutationResult>;
+        setDefault: (id: number) => Promise<MutationResult>;
       };
       session: {
         save: (user: SafeUser) => Promise<{ success: boolean }>;
         restore: () => Promise<SafeUser | null>;
         clear: () => Promise<{ success: boolean }>;
+      };
+      settings: {
+        getAll: () => Promise<{ set_key: string; set_value: string }[]>;
+        get: (key: string) => Promise<string | undefined>;
+        save: (key: string, value: string) => Promise<{ success: boolean }>;
       };
     };
   }

@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, screen } from 'electron';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { initDatabase } from './database/db.js';
@@ -6,6 +6,7 @@ import { registerUserHandlers } from './handlers/user.handler.js';
 import { registerVehicleHandlers } from './handlers/vehicle.handler.js';
 import { registerParameterHandlers } from './handlers/parameter.handler.js';
 import { registerSessionHandlers } from './handlers/session.handler.js';
+import { registerSettingHandlers } from './handlers/setting.handler.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -13,11 +14,15 @@ const __dirname = dirname(__filename);
 // ─── Ventana principal ────────────────────────────────────────────────────────
 
 function createWindow(): void {
+  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+
   const win = new BrowserWindow({
-    width: 1280,
-    height: 800,
+    width,
+    height,
     minWidth: 800,
     minHeight: 600,
+    resizable: true,
+    maximizable: true,
     webPreferences: {
       preload: join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -26,6 +31,10 @@ function createWindow(): void {
     },
     titleBarStyle: 'default',
     show: false,
+  });
+
+  win.webContents.on('did-finish-load', () => {
+    win.webContents.setZoomFactor(1);
   });
 
   win.once('ready-to-show', () => win.show());
@@ -51,6 +60,7 @@ app
     registerVehicleHandlers();
     registerParameterHandlers();
     registerSessionHandlers();
+    registerSettingHandlers();
 
     createWindow();
 

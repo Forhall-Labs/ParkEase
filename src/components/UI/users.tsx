@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import type { SafeUser, CreateUserDto, UpdateUserDto } from '../../types/electron-api';
+import { t } from '../../i18n';
+import { Button, Card, SectionHeader } from '../primitives';
+import { ConfirmModal, ModalShell } from './Modal';
 
 interface UsersProps {
   theme?: 'dark' | 'light';
@@ -20,6 +23,7 @@ export function Users({ theme = 'dark' }: UsersProps) {
     user_password: '',
     user_email: '',
   });
+  const [deleteCandidateId, setDeleteCandidateId] = useState<number | null>(null);
 
   const isLight = theme === 'light';
 
@@ -62,13 +66,11 @@ export function Users({ theme = 'dark' }: UsersProps) {
   }
 
   async function handleDelete(id: number) {
-    if (confirm('¿Está seguro de eliminar este usuario?')) {
-      try {
-        await window.electronAPI?.users?.delete(id);
-        loadUsers();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Error al eliminar usuario');
-      }
+    try {
+      await window.electronAPI?.users?.delete(id);
+      loadUsers();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al eliminar usuario');
     }
   }
 
@@ -103,22 +105,21 @@ export function Users({ theme = 'dark' }: UsersProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className={`text-xl font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>
-            Gestión de Usuarios
-          </h2>
-          <p className={`text-sm ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-            Administra los usuarios del sistema
-          </p>
-        </div>
-        <button
-          onClick={openNewModal}
-          className="rounded-2xl bg-cyan-400 px-4 py-2 font-semibold text-slate-950 transition hover:bg-cyan-300"
-        >
-          + Nuevo Usuario
-        </button>
-      </div>
+      <Card
+        variant="panel"
+        className={`ui-section-padding ${isLight ? 'border-stone-200 bg-white' : 'border-white/10 bg-slate-900/60'}`}
+      >
+        <SectionHeader
+          label={t('users.title')}
+          title={t('users.title')}
+          subtitle={t('users.description')}
+          action={
+            <Button type="button" onClick={openNewModal} variant="filled">
+              + {t('users.addUser')}
+            </Button>
+          }
+        />
+      </Card>
 
       {error && (
         <div
@@ -130,7 +131,7 @@ export function Users({ theme = 'dark' }: UsersProps) {
 
       {loading ? (
         <div className={`text-center py-8 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-          Cargando...
+          {t('common.loading')}
         </div>
       ) : (
         <div
@@ -142,27 +143,27 @@ export function Users({ theme = 'dark' }: UsersProps) {
                 <th
                   className={`px-4 py-3 text-left text-sm font-semibold ${isLight ? 'text-slate-700' : 'text-slate-300'}`}
                 >
-                  Usuario
+                  {t('users.username')}
                 </th>
                 <th
                   className={`px-4 py-3 text-left text-sm font-semibold ${isLight ? 'text-slate-700' : 'text-slate-300'}`}
                 >
-                  Nombre
+                  {t('users.name')}
                 </th>
                 <th
                   className={`px-4 py-3 text-left text-sm font-semibold ${isLight ? 'text-slate-700' : 'text-slate-300'}`}
                 >
-                  Email
+                  {t('users.email')}
                 </th>
                 <th
                   className={`px-4 py-3 text-left text-sm font-semibold ${isLight ? 'text-slate-700' : 'text-slate-300'}`}
                 >
-                  Estado
+                  {t('users.status')}
                 </th>
                 <th
                   className={`px-4 py-3 text-right text-sm font-semibold ${isLight ? 'text-slate-700' : 'text-slate-300'}`}
                 >
-                  Acciones
+                  {t('users.actions')}
                 </th>
               </tr>
             </thead>
@@ -173,7 +174,7 @@ export function Users({ theme = 'dark' }: UsersProps) {
                     colSpan={5}
                     className={`px-4 py-8 text-center ${isLight ? 'text-slate-500' : 'text-slate-500'}`}
                   >
-                    No hay usuarios registrados
+                    {t('users.noUsers')}
                   </td>
                 </tr>
               ) : (
@@ -199,26 +200,25 @@ export function Users({ theme = 'dark' }: UsersProps) {
                             : 'bg-red-100 text-red-700'
                         }`}
                       >
-                        {user.user_status === 'A' ? 'Activo' : 'Inactivo'}
+                        {user.user_status === 'A' ? t('users.active') : t('users.inactive')}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <button
+                      <Button
                         onClick={() => openEditModal(user)}
-                        className={`mr-2 rounded-lg px-3 py-1 text-sm transition ${
-                          isLight
-                            ? 'bg-stone-100 hover:bg-stone-200 text-slate-700'
-                            : 'bg-slate-700 hover:bg-slate-600 text-white'
-                        }`}
+                        variant="outlined"
+                        size="sm"
+                        className="mr-2"
                       >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => user.user_id && handleDelete(user.user_id)}
-                        className="rounded-lg bg-rose-100 px-3 py-1 text-sm font-semibold text-rose-700 transition hover:bg-rose-200"
+                        {t('users.edit')}
+                      </Button>
+                      <Button
+                        onClick={() => setDeleteCandidateId(user.user_id ?? null)}
+                        variant="danger"
+                        size="sm"
                       >
-                        Eliminar
-                      </button>
+                        {t('users.delete')}
+                      </Button>
                     </td>
                   </tr>
                 ))
@@ -228,111 +228,123 @@ export function Users({ theme = 'dark' }: UsersProps) {
         </div>
       )}
 
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div
-            className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl ${isLight ? 'border-stone-200 bg-white' : 'border-white/10 bg-slate-900'}`}
-          >
-            <h3
-              className={`mb-4 text-xl font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}
-            >
-              {editingUser ? 'Editar Usuario' : 'Nuevo Usuario'}
-            </h3>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label
-                    className={`block text-sm font-medium ${isLight ? 'text-slate-700' : 'text-slate-300'}`}
-                  >
-                    Nombre
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.user_name}
-                    onChange={(e) => setFormData({ ...formData, user_name: e.target.value })}
-                    required
-                    className={`mt-1 w-full rounded-xl border px-3 py-2 ${isLight ? 'border-stone-200 bg-white text-slate-900' : 'border-white/10 bg-slate-800 text-white'}`}
-                  />
-                </div>
-                <div>
-                  <label
-                    className={`block text-sm font-medium ${isLight ? 'text-slate-700' : 'text-slate-300'}`}
-                  >
-                    Apellido
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.user_lastname}
-                    onChange={(e) => setFormData({ ...formData, user_lastname: e.target.value })}
-                    required
-                    className={`mt-1 w-full rounded-xl border px-3 py-2 ${isLight ? 'border-stone-200 bg-white text-slate-900' : 'border-white/10 bg-slate-800 text-white'}`}
-                  />
-                </div>
-              </div>
-              <div>
-                <label
-                  className={`block text-sm font-medium ${isLight ? 'text-slate-700' : 'text-slate-300'}`}
-                >
-                  Usuario
-                </label>
-                <input
-                  type="text"
-                  value={formData.user_username}
-                  onChange={(e) => setFormData({ ...formData, user_username: e.target.value })}
-                  required
-                  className={`mt-1 w-full rounded-xl border px-3 py-2 ${isLight ? 'border-stone-200 bg-white text-slate-900' : 'border-white/10 bg-slate-800 text-white'}`}
-                />
-              </div>
-              <div>
-                <label
-                  className={`block text-sm font-medium ${isLight ? 'text-slate-700' : 'text-slate-300'}`}
-                >
-                  Contraseña {editingUser && '(dejar vacío para mantener)'}
-                </label>
-                <input
-                  type="password"
-                  value={formData.user_password}
-                  onChange={(e) => setFormData({ ...formData, user_password: e.target.value })}
-                  required={!editingUser}
-                  className={`mt-1 w-full rounded-xl border px-3 py-2 ${isLight ? 'border-stone-200 bg-white text-slate-900' : 'border-white/10 bg-slate-800 text-white'}`}
-                />
-              </div>
-              <div>
-                <label
-                  className={`block text-sm font-medium ${isLight ? 'text-slate-700' : 'text-slate-300'}`}
-                >
-                  Email
-                </label>
-                <input
-                  type="email"
-                  value={formData.user_email}
-                  onChange={(e) => setFormData({ ...formData, user_email: e.target.value })}
-                  required
-                  className={`mt-1 w-full rounded-xl border px-3 py-2 ${isLight ? 'border-stone-200 bg-white text-slate-900' : 'border-white/10 bg-slate-800 text-white'}`}
-                />
-              </div>
-              <div className="flex justify-end gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowModal(false);
-                    resetForm();
-                  }}
-                  className={`rounded-xl border px-4 py-2 font-semibold transition ${isLight ? 'border-stone-200 text-slate-700 hover:bg-stone-100' : 'border-white/10 text-white hover:bg-white/10'}`}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="rounded-xl bg-cyan-400 px-4 py-2 font-semibold text-slate-950 transition hover:bg-cyan-300"
-                >
-                  {editingUser ? 'Guardar' : 'Crear'}
-                </button>
-              </div>
-            </form>
+      <ModalShell
+        open={showModal}
+        onClose={() => {
+          setShowModal(false);
+          resetForm();
+        }}
+        className={`p-6 ${isLight ? 'border-stone-200 bg-white' : 'border-white/10 bg-slate-900'}`}
+      >
+        <h3 className={`mb-4 text-xl font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>
+          {editingUser ? t('userForm.editTitle') : t('userForm.newTitle')}
+        </h3>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label
+                className={`block text-sm font-medium ${isLight ? 'text-slate-700' : 'text-slate-300'}`}
+              >
+                {t('userForm.name')}
+              </label>
+              <input
+                type="text"
+                value={formData.user_name}
+                onChange={(e) => setFormData({ ...formData, user_name: e.target.value })}
+                required
+                className={`mt-1 w-full rounded-xl border px-3 py-2 ${isLight ? 'border-stone-200 bg-white text-slate-900' : 'border-white/10 bg-slate-800 text-white'}`}
+              />
+            </div>
+            <div>
+              <label
+                className={`block text-sm font-medium ${isLight ? 'text-slate-700' : 'text-slate-300'}`}
+              >
+                {t('userForm.lastname')}
+              </label>
+              <input
+                type="text"
+                value={formData.user_lastname}
+                onChange={(e) => setFormData({ ...formData, user_lastname: e.target.value })}
+                required
+                className={`mt-1 w-full rounded-xl border px-3 py-2 ${isLight ? 'border-stone-200 bg-white text-slate-900' : 'border-white/10 bg-slate-800 text-white'}`}
+              />
+            </div>
           </div>
-        </div>
-      )}
+          <div>
+            <label
+              className={`block text-sm font-medium ${isLight ? 'text-slate-700' : 'text-slate-300'}`}
+            >
+              {t('userForm.username')}
+            </label>
+            <input
+              type="text"
+              value={formData.user_username}
+              onChange={(e) => setFormData({ ...formData, user_username: e.target.value })}
+              required
+              className={`mt-1 w-full rounded-xl border px-3 py-2 ${isLight ? 'border-stone-200 bg-white text-slate-900' : 'border-white/10 bg-slate-800 text-white'}`}
+            />
+          </div>
+          <div>
+            <label
+              className={`block text-sm font-medium ${isLight ? 'text-slate-700' : 'text-slate-300'}`}
+            >
+              {t('userForm.password')} {editingUser && t('userForm.passwordHint')}
+            </label>
+            <input
+              type="password"
+              value={formData.user_password}
+              onChange={(e) => setFormData({ ...formData, user_password: e.target.value })}
+              required={!editingUser}
+              className={`mt-1 w-full rounded-xl border px-3 py-2 ${isLight ? 'border-stone-200 bg-white text-slate-900' : 'border-white/10 bg-slate-800 text-white'}`}
+            />
+          </div>
+          <div>
+            <label
+              className={`block text-sm font-medium ${isLight ? 'text-slate-700' : 'text-slate-300'}`}
+            >
+              {t('userForm.email')}
+            </label>
+            <input
+              type="email"
+              value={formData.user_email}
+              onChange={(e) => setFormData({ ...formData, user_email: e.target.value })}
+              required
+              className={`mt-1 w-full rounded-xl border px-3 py-2 ${isLight ? 'border-stone-200 bg-white text-slate-900' : 'border-white/10 bg-slate-800 text-white'}`}
+            />
+          </div>
+          <div className="flex justify-end gap-3 pt-4">
+            <Button
+              type="button"
+              onClick={() => {
+                setShowModal(false);
+                resetForm();
+              }}
+              variant="text"
+            >
+              {t('common.cancel')}
+            </Button>
+            <Button type="submit" variant="filled">
+              {editingUser ? t('userForm.save') : t('userForm.create')}
+            </Button>
+          </div>
+        </form>
+      </ModalShell>
+
+      <ConfirmModal
+        open={deleteCandidateId !== null}
+        onClose={() => setDeleteCandidateId(null)}
+        onConfirm={() => {
+          if (deleteCandidateId !== null) {
+            void handleDelete(deleteCandidateId);
+          }
+          setDeleteCandidateId(null);
+        }}
+        title={t('users.deleteUser')}
+        message="¿Está seguro de eliminar este usuario?"
+        confirmText={t('users.delete')}
+        cancelText={t('common.cancel')}
+        variant="danger"
+      />
     </div>
   );
 }

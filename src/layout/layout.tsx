@@ -3,16 +3,19 @@
 import type { ReactNode } from 'react';
 import { Sidebar, type Section } from '../components/UI/sidebar';
 import Clock from '../components/clock';
+import { t } from '../i18n';
 
 const defaultSections: Section[] = [
-  { label: 'Usuarios', path: '/usuarios' },
-  { label: 'Vehículos', path: '/vehiculos' },
-  { label: 'Parámetros', path: '/parametros' },
+  { label: t('nav.vehicles'), path: '/vehiculos' },
+  { label: t('nav.reports'), path: '/reportes' },
+  { label: t('nav.users'), path: '/usuarios' },
+  { label: t('nav.settings'), path: '/configuracion' },
 ];
 
 interface LayoutProps {
   children?: ReactNode;
   asideContent?: ReactNode;
+  showWelcomeBanner?: boolean;
   userName?: string;
   title?: string;
   subtitle?: string;
@@ -20,13 +23,13 @@ interface LayoutProps {
   activePath?: string;
   onNavigate?: (path: string) => void;
   theme?: 'dark' | 'light';
-  onToggleTheme?: () => void;
   onLogout?: () => void;
 }
 
 export function Layout({
   children,
   asideContent,
+  showWelcomeBanner = true,
   userName,
   title,
   subtitle,
@@ -34,7 +37,6 @@ export function Layout({
   activePath,
   onNavigate,
   theme = 'dark',
-  onToggleTheme,
   onLogout,
 }: LayoutProps) {
   const isLight = theme === 'light';
@@ -57,7 +59,7 @@ export function Layout({
       />
 
       <div className="relative flex min-h-screen flex-col lg:flex-row">
-        <div className="w-full lg:w-[320px] lg:flex-none">
+        <div className="w-full lg:sticky lg:top-0 lg:h-screen lg:w-[296px] lg:flex-none xl:w-[312px]">
           <Sidebar
             userName={userName}
             title={title}
@@ -70,71 +72,78 @@ export function Layout({
           />
         </div>
 
-        <section className="relative flex min-h-screen flex-1 flex-col gap-4 p-3 sm:gap-6 sm:p-6 lg:p-8">
-          <div
-            className={`rounded-4xl border p-5 shadow-2xl backdrop-blur-xl sm:p-6 ${
-              isLight
-                ? 'border-stone-200 bg-stone-50 shadow-stone-200/20'
-                : 'border-white/10 bg-white/8 shadow-slate-950/40'
-            }`}
-          >
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div className="space-y-2">
-                <h1
-                  className={`text-2xl font-semibold tracking-tight sm:text-3xl lg:text-4xl ${isLight ? 'text-slate-900' : 'text-white'}`}
-                >
-                  Bienvenido a {title ?? 'ParkEase'},<span>{userName}</span> !
-                </h1>
-              </div>
+        <section className="relative flex min-h-screen flex-1 flex-col p-3 sm:p-6 lg:p-8">
+          <div className="mx-auto flex w-full max-w-[1180px] flex-1 flex-col gap-4 sm:gap-6">
+            {showWelcomeBanner && (
+              <div
+                className={`rounded-4xl border p-5 shadow-2xl backdrop-blur-xl sm:p-6 ${
+                  isLight
+                    ? 'border-stone-200 bg-stone-50 shadow-stone-200/20'
+                    : 'border-white/10 bg-white/8 shadow-slate-950/40'
+                }`}
+              >
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="space-y-2">
+                    <p
+                      className={`text-xs uppercase tracking-[0.2em] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}
+                    >
+                      Panel principal
+                    </p>
+                    <h1
+                      className={`text-2xl font-semibold tracking-tight sm:text-3xl lg:text-4xl ${isLight ? 'text-slate-900' : 'text-white'}`}
+                    >
+                      Bienvenido,{' '}
+                      <span className={isLight ? 'text-cyan-700' : 'text-cyan-300'}>
+                        {userName}
+                      </span>
+                    </h1>
+                    <p className={`text-sm ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
+                      {title ?? 'ParkEase'} listo para gestionar tus movimientos del dia.
+                    </p>
+                  </div>
 
-              <div className="flex flex-wrap gap-3">
-                <div
-                  className={`rounded-2xl border px-4 py-3 ${
-                    isLight ? 'border-stone-200 bg-stone-50' : 'border-white/10 bg-slate-950/40'
-                  }`}
-                >
-                  <p
-                    className={`mt-1 text-sm font-medium ${isLight ? 'text-cyan-700' : 'text-cyan-200'}`}
-                  >
-                    <Clock />
-                  </p>
+                  <div className="flex flex-wrap gap-3">
+                    <div
+                      className={`rounded-2xl border px-4 py-3 ${
+                        isLight ? 'border-stone-200 bg-stone-50' : 'border-white/10 bg-slate-950/40'
+                      }`}
+                    >
+                      <p
+                        className={`mt-1 text-sm font-medium ${isLight ? 'text-cyan-700' : 'text-cyan-200'}`}
+                      >
+                        <Clock />
+                      </p>
+                    </div>
+                  </div>
                 </div>
+              </div>
+            )}
 
-                <button
-                  type="button"
-                  onClick={onToggleTheme}
-                  className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition ${
+            <div
+              className={`grid gap-4 ${asideContent ? 'xl:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)]' : 'xl:grid-cols-[1fr]'}`}
+            >
+              <div
+                className={`min-w-0 rounded-4xl border p-4 shadow-xl backdrop-blur-xl sm:p-6 ${
+                  isLight
+                    ? 'border-stone-200 bg-stone-50 shadow-stone-200/20'
+                    : 'border-white/10 bg-slate-900/70 shadow-slate-950/30'
+                }`}
+              >
+                {children}
+              </div>
+
+              {asideContent && (
+                <aside
+                  className={`rounded-4xl border p-4 shadow-xl backdrop-blur-xl sm:p-6 xl:max-h-[calc(100vh-13rem)] xl:overflow-y-auto ${
                     isLight
-                      ? 'border-stone-300 bg-stone-600 text-white hover:bg-stone-500'
-                      : 'border-white/10 bg-slate-950/40 text-slate-100 hover:bg-slate-900/80'
+                      ? 'border-stone-200 bg-stone-50 shadow-stone-200/20'
+                      : 'border-white/10 bg-white/8 shadow-slate-950/30'
                   }`}
                 >
-                  {isLight ? 'Modo oscuro' : 'Modo claro'}
-                </button>
-              </div>
+                  {asideContent}
+                </aside>
+              )}
             </div>
-          </div>
-
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)]">
-            <div
-              className={`min-w-0 rounded-4xl border p-4 shadow-xl backdrop-blur-xl sm:p-6 ${
-                isLight
-                  ? 'border-stone-200 bg-stone-50 shadow-stone-200/20'
-                  : 'border-white/10 bg-slate-900/70 shadow-slate-950/30'
-              }`}
-            >
-              {children}
-            </div>
-
-            <aside
-              className={`rounded-4xl border p-4 shadow-xl backdrop-blur-xl sm:p-6 xl:max-h-[calc(100vh-13rem)] xl:overflow-y-auto ${
-                isLight
-                  ? 'border-stone-200 bg-stone-50 shadow-stone-200/20'
-                  : 'border-white/10 bg-white/8 shadow-slate-950/30'
-              }`}
-            >
-              {asideContent}
-            </aside>
           </div>
         </section>
       </div>

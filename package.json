@@ -9,6 +9,9 @@
     "build": "npm run lint && tsc -b && vite build",
     "build:win": "electron-builder --win",
     "lint": "eslint .",
+    "typecheck": "tsc -b --pretty false",
+    "test:ci": "node scripts/ci-test-gate.mjs",
+    "ci:verify": "npm run lint && npm run typecheck && npm run build && npm run test:ci",
     "preview": "vite preview",
     "prepare": "husky"
   },
@@ -19,6 +22,10 @@
     ]
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/material": "^9.0.0",
+    "bcryptjs": "^3.0.3",
     "better-sqlite3": "^12.8.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
@@ -29,6 +36,7 @@
     "@electron/rebuild": "^4.0.3",
     "@eslint/js": "^9.39.4",
     "@tailwindcss/vite": "^4.2.2",
+    "@types/bcryptjs": "^2.4.6",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^24.12.2",
     "@types/react": "^19.2.14",

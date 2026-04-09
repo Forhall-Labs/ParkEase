@@ -1,6 +1,109 @@
 import { getDatabase } from '../database/db.js';
 import { Vehicle, CreateVehicleDto, UpdateVehicleDto } from '../models/vehicle.model.js';
 
+export type ReportPeriod = 'daily' | 'weekly' | 'monthly' | 'yearly';
+
+export interface VehicleReportRow {
+  veh_id: number;
+  veh_plate: string;
+  veh_owner: string | null;
+  veh_ingress_date: string;
+  veh_egress_date: string;
+  veh_tax: string;
+}
+
+export interface VehicleReportResult {
+  period: ReportPeriod;
+  rangeStart: string;
+  rangeEnd: string;
+  totalVehicles: number;
+  totalRevenue: number;
+  rows: VehicleReportRow[];
+}
+
+const REPORT_WINDOW_DAYS: Record<ReportPeriod, number> = {
+  daily: 1,
+  weekly: 7,
+  monthly: 30,
+  yearly: 365,
+};
+
+function isReportPeriod(value: string): value is ReportPeriod {
+  return value === 'daily' || value === 'weekly' || value === 'monthly' || value === 'yearly';
+}
+
+function normalizeDate(value: string): string {
+  const parsed = new Date(`${value}T00:00:00Z`);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  return parsed.toISOString().slice(0, 10);
+}
+
+function getReportRange(period: ReportPeriod, selectedDate: string): { rangeStart: string; rangeEnd: string } {
+  const rangeEnd = normalizeDate(selectedDate);
+  const endDate = new Date(`${rangeEnd}T00:00:00Z`);
+  const windowDays = REPORT_WINDOW_DAYS[period];
+  const startDate = new Date(endDate);
+
+  startDate.setUTCDate(endDate.getUTCDate() - (windowDays - 1));
+
+  return {
+    rangeStart: startDate.toISOString().slice(0, 10),
+    rangeEnd,
+  };
+}
+
+export function findVehicleReport(period: string, selectedDate: string): VehicleReportResult {
+  const reportPeriod: ReportPeriod = isReportPeriod(period) ? period : 'daily';
+  const { rangeStart, rangeEnd } = getReportRange(reportPeriod, selectedDate);
+  const db = getDatabase();
+
+  const rows = db
+    .prepare(
+      `
+      SELECT
+        veh_id,
+        veh_plate,
+        veh_owner,
+        veh_ingress_date,
+        veh_egress_date,
+        veh_tax
+      FROM psm_vehicles
+      WHERE veh_status = 'S'
+        AND veh_egress_date IS NOT NULL
+        AND DATE(veh_egress_date) BETWEEN @rangeStart AND @rangeEnd
+      ORDER BY veh_egress_date DESC, veh_id DESC
+    `
+    )
+    .all({ rangeStart, rangeEnd }) as VehicleReportRow[];
+
+  const aggregates = db
+    .prepare(
+      `
+      SELECT
+        COUNT(*) AS totalVehicles,
+        COALESCE(SUM(CAST(veh_tax AS REAL)), 0) AS totalRevenue
+      FROM psm_vehicles
+      WHERE veh_status = 'S'
+        AND veh_egress_date IS NOT NULL
+        AND DATE(veh_egress_date) BETWEEN @rangeStart AND @rangeEnd
+    `
+    )
+    .get({ rangeStart, rangeEnd }) as { totalVehicles: number; totalRevenue: number } | undefined;
+
+  return {
+    period: reportPeriod,
+    rangeStart,
+    rangeEnd,
+    totalVehicles: aggregates?.totalVehicles ?? rows.length,
+    totalRevenue: Number(aggregates?.totalRevenue ?? 0),
+    rows,
+  };
+}
+
 export function findAllVehicles(): Vehicle[] {
   return getDatabase()
     .prepare('SELECT * FROM psm_vehicles ORDER BY veh_ingress_date DESC')

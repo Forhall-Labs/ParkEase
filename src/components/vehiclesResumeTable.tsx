@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useCallback, useMemo, useState, useEffect } from 'react';
 import {
   Paper,
   Table,
@@ -8,9 +8,10 @@ import {
   TableBody,
   TableCell,
 } from '@mui/material';
-import type { Vehicle, CreateVehicleDto } from '../types/electron-api';
+import type { Vehicle, CreateVehicleDto, Parameter } from '../types/electron-api';
 import { t } from '../i18n';
-import { ConfirmModal } from './UI/Modal';
+import { ConfirmModal, ModalShell } from './UI/Modal';
+import { Button, Card, Input, SectionHeader } from './primitives';
 
 interface PlateValidationResult {
   isValid: boolean;
@@ -51,9 +52,15 @@ function validatePlate(plate: string): PlateValidationResult {
 
 interface VehiclesTableProps {
   theme?: 'dark' | 'light';
+  triggerQuickAddToken?: number;
+  onQuickAddHandled?: () => void;
 }
 
-export function VehiclesTable({ theme = 'dark' }: VehiclesTableProps) {
+export function VehiclesTable({
+  theme = 'dark',
+  triggerQuickAddToken,
+  onQuickAddHandled,
+}: VehiclesTableProps) {
   const [searchFilter, setSearchFilter] = useState('');
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
@@ -75,6 +82,9 @@ export function VehiclesTable({ theme = 'dark' }: VehiclesTableProps) {
   }
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [tariffs, setTariffs] = useState<Parameter[]>([]);
+  const [selectedTariffId, setSelectedTariffId] = useState('');
+  const [defaultTariffId, setDefaultTariffId] = useState<number | null>(null);
   const [defaultRate, setDefaultRate] = useState('');
   const [checkoutModal, setCheckoutModal] = useState<{
     open: boolean;
@@ -105,9 +115,20 @@ export function VehiclesTable({ theme = 'dark' }: VehiclesTableProps) {
 
   async function loadParameters() {
     try {
-      const params = await window.electronAPI?.parameters?.getAll();
-      if (params && params.length > 0) {
-        setDefaultRate(params[0].par_quantity);
+      const [params, defaultTariff] = await Promise.all([
+        window.electronAPI?.parameters?.getAll(),
+        window.electronAPI?.parameters?.getDefault(),
+      ]);
+
+      const allTariffs = params || [];
+      setTariffs(allTariffs);
+
+      if (defaultTariff?.par_id) {
+        setDefaultTariffId(defaultTariff.par_id);
+        setDefaultRate(defaultTariff.par_amount);
+      } else {
+        setDefaultTariffId(null);
+        setDefaultRate('');
       }
     } catch (err) {
       console.error('Error loading parameters:', err);
@@ -151,12 +172,30 @@ export function VehiclesTable({ theme = 'dark' }: VehiclesTableProps) {
     try {
       setSaving(true);
       setError(null);
-      const result = await window.electronAPI?.vehicles?.create(formData);
+
+      const selectedTariff = tariffs.find((tariff) => String(tariff.par_id) === selectedTariffId);
+      const fallbackTariff = defaultTariffId
+        ? tariffs.find((tariff) => tariff.par_id === defaultTariffId)
+        : undefined;
+      const finalTariff = selectedTariff || fallbackTariff;
+
+      if (!finalTariff) {
+        setError(t('vehicles.noDefaultTariff'));
+        return;
+      }
+
+      const payload: CreateVehicleDto = {
+        ...formData,
+        veh_tax: finalTariff.par_amount,
+      };
+
+      const result = await window.electronAPI?.vehicles?.create(payload);
       if (result?.success) {
         setShowAddModal(false);
         resetForm();
+        setSelectedTariffId('');
         loadVehicles();
-        printReceipt(formData);
+        printReceipt(payload);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al registrar vehículo');
@@ -359,7 +398,7 @@ export function VehiclesTable({ theme = 'dark' }: VehiclesTableProps) {
     });
   }
 
-  function resetForm() {
+  const resetForm = useCallback(() => {
     setFormData({
       veh_plate: '',
       veh_reference: '',
@@ -368,9 +407,9 @@ export function VehiclesTable({ theme = 'dark' }: VehiclesTableProps) {
       veh_tax: '',
       veh_version: 1,
     });
-  }
+  }, []);
 
-  function openNewModal() {
+  const openNewModal = useCallback(() => {
     resetForm();
     setFormData((prev: CreateVehicleDto) => ({
       ...prev,
@@ -378,31 +417,47 @@ export function VehiclesTable({ theme = 'dark' }: VehiclesTableProps) {
       veh_reference: generateReference(),
       veh_tax: defaultRate,
     }));
+    setSelectedTariffId(defaultTariffId ? String(defaultTariffId) : '');
     setShowAddModal(true);
+  }, [defaultRate, defaultTariffId, resetForm]);
+
+  useEffect(() => {
+    if (!triggerQuickAddToken) {
+      return;
+    }
+
+    openNewModal();
+    onQuickAddHandled?.();
+  }, [triggerQuickAddToken, openNewModal, onQuickAddHandled]);
+
+  function formatTariffOption(tariff: Parameter): string {
+    const amount = Number(tariff.par_amount);
+    const formatted = Number.isFinite(amount)
+      ? amount.toLocaleString('es-CR', { style: 'currency', currency: 'CRC' })
+      : tariff.par_amount;
+
+    return `${tariff.par_name} - ${formatted}`;
   }
 
   return (
     <>
-      <div
-        className={`overflow-hidden rounded-3xl border p-4 shadow-xl backdrop-blur-xl sm:p-6 ${
-          isLight
-            ? 'border-stone-300 bg-stone-50 shadow-stone-200/20'
-            : 'border-white/10 bg-slate-900/70 shadow-slate-950/30'
+      <Card
+        variant="panel"
+        className={`ui-section-padding shadow-xl ${
+          isLight ? 'border-stone-300 bg-stone-50' : 'border-white/10 bg-slate-900/70'
         }`}
       >
-        <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h2
-            className={`text-lg font-semibold sm:text-xl ${isLight ? 'text-slate-900' : 'text-white'}`}
-          >
-            {t('vehicles.title')}
-          </h2>
-          <button
-            onClick={openNewModal}
-            className="rounded-xl bg-cyan-400 px-4 py-2 font-semibold text-slate-950 transition hover:bg-cyan-300"
-          >
-            + {t('vehicles.addVehicle')}
-          </button>
-        </div>
+        <SectionHeader
+          label={t('vehicles.title')}
+          title={t('vehicles.title')}
+          subtitle={t('vehicles.description')}
+          action={
+            <Button type="button" onClick={openNewModal} variant="filled">
+              + {t('vehicles.addVehicle')}
+            </Button>
+          }
+          className="mb-4"
+        />
 
         <div className="mb-4">
           <label className="block">
@@ -411,25 +466,25 @@ export function VehiclesTable({ theme = 'dark' }: VehiclesTableProps) {
             >
               {t('vehicles.searchFilter')}
             </span>
-            <input
+            <Input
               type="text"
               value={searchFilter}
               onChange={(event) => setSearchFilter(event.target.value)}
               placeholder="Búsqueda"
-              className={`w-full rounded-xl border px-3 py-2 text-sm outline-none transition focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20 ${
+              className={
                 isLight
-                  ? 'border-stone-300 bg-stone-50 text-slate-900 placeholder:text-slate-400'
+                  ? 'border-stone-300 bg-white text-slate-900 placeholder:text-slate-400'
                   : 'border-white/10 bg-slate-950/50 text-white placeholder:text-slate-500'
-              }`}
+              }
             />
           </label>
         </div>
 
         <Paper
-          className={`border! shadow-none! ${isLight ? 'bg-stone-50! border-stone-300!' : 'bg-slate-900/50! border-white/10!'}`}
+          className={`overflow-hidden border! shadow-none! ${isLight ? 'bg-stone-50! border-stone-300!' : 'bg-slate-900/50! border-white/10!'}`}
         >
           <TableContainer className="max-w-full overflow-x-auto">
-            <Table className="min-w-230">
+            <Table className="w-full min-w-[960px] lg:min-w-[1020px]">
               <TableHead>
                 <TableRow
                   className={
@@ -441,8 +496,8 @@ export function VehiclesTable({ theme = 'dark' }: VehiclesTableProps) {
                   <TableCell
                     className={
                       isLight
-                        ? 'text-slate-700! font-semibold! border-b! border-stone-300!'
-                        : 'text-cyan-200! font-semibold! border-b! border-white/10!'
+                        ? 'w-[15%] text-slate-700! font-semibold! border-b! border-stone-300!'
+                        : 'w-[15%] text-cyan-200! font-semibold! border-b! border-white/10!'
                     }
                   >
                     {t('vehicles.plate')}
@@ -450,8 +505,8 @@ export function VehiclesTable({ theme = 'dark' }: VehiclesTableProps) {
                   <TableCell
                     className={
                       isLight
-                        ? 'text-slate-700! font-semibold! border-b! border-stone-300!'
-                        : 'text-cyan-200! font-semibold! border-b! border-white/10!'
+                        ? 'w-[20%] text-slate-700! font-semibold! border-b! border-stone-300!'
+                        : 'w-[20%] text-cyan-200! font-semibold! border-b! border-white/10!'
                     }
                   >
                     {t('vehicles.owner')}
@@ -459,8 +514,8 @@ export function VehiclesTable({ theme = 'dark' }: VehiclesTableProps) {
                   <TableCell
                     className={
                       isLight
-                        ? 'text-slate-700! font-semibold! border-b! border-stone-300!'
-                        : 'text-cyan-200! font-semibold! border-b! border-white/10!'
+                        ? 'w-[22%] text-slate-700! font-semibold! border-b! border-stone-300!'
+                        : 'w-[22%] text-cyan-200! font-semibold! border-b! border-white/10!'
                     }
                   >
                     {t('vehicles.reference')}
@@ -468,8 +523,8 @@ export function VehiclesTable({ theme = 'dark' }: VehiclesTableProps) {
                   <TableCell
                     className={
                       isLight
-                        ? 'text-slate-700! font-semibold! border-b! border-stone-300!'
-                        : 'text-cyan-200! font-semibold! border-b! border-white/10!'
+                        ? 'w-[23%] text-slate-700! font-semibold! border-b! border-stone-300!'
+                        : 'w-[23%] text-cyan-200! font-semibold! border-b! border-white/10!'
                     }
                   >
                     {t('vehicles.ingressTime')}
@@ -477,8 +532,8 @@ export function VehiclesTable({ theme = 'dark' }: VehiclesTableProps) {
                   <TableCell
                     className={
                       isLight
-                        ? 'text-slate-700! font-semibold! border-b! border-stone-300! text-center'
-                        : 'text-cyan-200! font-semibold! border-b! border-white/10! text-center'
+                        ? 'w-[20%] text-slate-700! font-semibold! border-b! border-stone-300! text-center'
+                        : 'w-[20%] text-cyan-200! font-semibold! border-b! border-white/10! text-center'
                     }
                   >
                     {t('vehicles.actions')}
@@ -526,7 +581,8 @@ export function VehiclesTable({ theme = 'dark' }: VehiclesTableProps) {
                         }
                       >
                         <span
-                          className={`inline-block rounded-lg px-3 py-1 text-sm font-medium ${isLight ? 'bg-stone-100 text-slate-800' : 'bg-cyan-400/10 text-cyan-200'}`}
+                          className={`inline-block max-w-full truncate rounded-lg px-3 py-1 text-sm font-medium ${isLight ? 'bg-stone-100 text-slate-800' : 'bg-cyan-400/10 text-cyan-200'}`}
+                          title={vehicle.veh_plate}
                         >
                           {vehicle.veh_plate}
                         </span>
@@ -537,6 +593,7 @@ export function VehiclesTable({ theme = 'dark' }: VehiclesTableProps) {
                             ? 'text-slate-700! border-b! border-stone-200! py-4!'
                             : 'text-slate-200! border-b! border-white/5! py-4!'
                         }
+                        title={vehicle.veh_owner || '-'}
                       >
                         {vehicle.veh_owner || '-'}
                       </TableCell>
@@ -546,6 +603,7 @@ export function VehiclesTable({ theme = 'dark' }: VehiclesTableProps) {
                             ? 'text-slate-700! border-b! border-stone-200! py-4!'
                             : 'text-slate-200! border-b! border-white/5! py-4!'
                         }
+                        title={vehicle.veh_reference}
                       >
                         {vehicle.veh_reference}
                       </TableCell>
@@ -567,37 +625,31 @@ export function VehiclesTable({ theme = 'dark' }: VehiclesTableProps) {
                             : 'border-b! border-white/5! py-4!'
                         }
                       >
-                        <div className="flex flex-col items-stretch justify-center gap-2 sm:flex-row sm:items-center">
-                          <button
+                        <div className="flex flex-wrap items-center justify-center gap-2">
+                          <Button
                             onClick={() => handleCheckout(vehicle.veh_id!)}
-                            className={`rounded-lg border px-2 py-1 text-xs font-medium transition-colors sm:px-3 sm:text-sm ${
-                              isLight
-                                ? 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-                                : 'border-green-500/30 bg-green-500/20 text-green-300 hover:bg-green-500/30'
-                            }`}
+                            variant="filled"
+                            size="sm"
+                            className="min-w-[90px]"
                           >
                             {t('vehicles.checkout')}
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             onClick={() => printVehicleReceipt(vehicle)}
-                            className={`rounded-lg border px-2 py-1 text-xs font-medium transition-colors sm:px-3 sm:text-sm ${
-                              isLight
-                                ? 'border-sky-300 bg-sky-50 text-sky-700 hover:bg-sky-100'
-                                : 'border-blue-500/30 bg-blue-500/20 text-blue-300 hover:bg-blue-500/30'
-                            }`}
+                            variant="outlined"
+                            size="sm"
+                            className="min-w-[90px]"
                           >
                             {t('vehicles.reprint')}
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             onClick={() => handleDeleteVehicle(vehicle.veh_id!)}
-                            className={`rounded-lg border px-2 py-1 text-xs font-medium transition-colors sm:px-3 sm:text-sm ${
-                              isLight
-                                ? 'border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100'
-                                : 'border-red-500/30 bg-red-500/20 text-red-300 hover:bg-red-500/30'
-                            }`}
+                            variant="danger"
+                            size="sm"
+                            className="min-w-[90px]"
                           >
                             {t('vehicles.delete')}
-                          </button>
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -607,257 +659,249 @@ export function VehiclesTable({ theme = 'dark' }: VehiclesTableProps) {
             </Table>
           </TableContainer>
         </Paper>
-      </div>
+      </Card>
 
-      {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div
-            className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl ${isLight ? 'border-stone-200 bg-white' : 'border-white/10 bg-slate-900'}`}
-          >
-            <h3
-              className={`mb-4 text-xl font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}
+      <ModalShell
+        open={showAddModal}
+        onClose={() => {
+          setShowAddModal(false);
+          resetForm();
+        }}
+        className={`p-6 ${isLight ? 'border-stone-200 bg-white' : 'border-white/10 bg-slate-900'}`}
+      >
+        <h3 className={`mb-4 text-xl font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>
+          {t('vehicles.addVehicleTitle')}
+        </h3>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <p
+              className={`rounded-xl border px-3 py-2 text-sm ${isLight ? 'border-rose-300 bg-rose-50 text-rose-700' : 'border-rose-400/30 bg-rose-500/10 text-rose-200'}`}
             >
-              {t('vehicles.addVehicleTitle')}
-            </h3>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {error && (
-                <p
-                  className={`rounded-xl border px-3 py-2 text-sm ${isLight ? 'border-rose-300 bg-rose-50 text-rose-700' : 'border-rose-400/30 bg-rose-500/10 text-rose-200'}`}
-                >
-                  {error}
-                </p>
-              )}
-              <div>
-                <label
-                  className={`block text-sm font-medium ${isLight ? 'text-slate-700' : 'text-slate-300'}`}
-                >
-                  {t('vehicles.plateLabel')} *
-                </label>
-                <input
-                  type="text"
-                  value={formData.veh_plate}
-                  onChange={(e) => {
-                    const plate = e.target.value.toUpperCase();
-                    setFormData({ ...formData, veh_plate: plate });
-                    setPlateValidation(validatePlate(plate));
-                  }}
-                  onBlur={() => {
-                    if (formData.veh_plate) {
-                      setPlateValidation(validatePlate(formData.veh_plate));
-                    }
-                  }}
-                  required
-                  placeholder="ABC-123"
-                  className={`mt-1 w-full rounded-xl border px-3 py-2 ${isLight ? 'border-stone-200 bg-white text-slate-900' : 'border-white/10 bg-slate-800 text-white'}`}
-                />
-                {plateValidation && !plateValidation.isValid && (
-                  <p className="mt-1 text-xs text-rose-500">{plateValidation.errorMessage}</p>
-                )}
-              </div>
-              <div>
-                <label
-                  className={`block text-sm font-medium ${isLight ? 'text-slate-700' : 'text-slate-300'}`}
-                >
-                  {t('vehicles.ownerLabel')}
-                </label>
-                <input
-                  type="text"
-                  value={formData.veh_owner}
-                  onChange={(e) => setFormData({ ...formData, veh_owner: e.target.value })}
-                  placeholder="Nombre del propietario"
-                  className={`mt-1 w-full rounded-xl border px-3 py-2 ${isLight ? 'border-stone-200 bg-white text-slate-900' : 'border-white/10 bg-slate-800 text-white'}`}
-                />
-              </div>
-              <div className="flex justify-end gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowAddModal(false);
-                    resetForm();
-                  }}
-                  className={`rounded-xl border px-4 py-2 font-medium transition ${
-                    isLight
-                      ? 'border-stone-200 text-slate-700 hover:bg-stone-100'
-                      : 'border-white/10 text-slate-300 hover:bg-white/10'
-                  }`}
-                >
-                  {t('common.cancel')}
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving || (plateValidation ? !plateValidation.isValid : false)}
-                  className="rounded-xl bg-cyan-400 px-4 py-2 font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:opacity-50"
-                >
-                  {saving ? t('vehicles.registering') : t('vehicles.register')}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {checkoutModal.open && checkoutModal.vehicle && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div
-            className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl ${
-              isLight ? 'border-stone-200 bg-white' : 'border-white/10 bg-slate-900'
-            }`}
-          >
-            <h3
-              className={`mb-4 text-xl font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}
+              {error}
+            </p>
+          )}
+          <div>
+            <label
+              className={`block text-sm font-medium ${isLight ? 'text-slate-700' : 'text-slate-300'}`}
             >
-              {t('vehicles.confirmCheckout')}
-            </h3>
-
-            <div
-              className={`mb-4 rounded-xl border p-4 ${isLight ? 'border-stone-200 bg-stone-50' : 'border-white/10 bg-slate-800/50'}`}
-            >
-              <p className={`text-sm ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-                {t('vehicles.plate')}
-              </p>
-              <p className={`text-lg font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                {checkoutModal.vehicle.veh_plate}
-              </p>
-            </div>
-
-            <div className="mb-4 space-y-3">
-              <div
-                className={`rounded-xl border p-4 ${isLight ? 'border-stone-200 bg-stone-50' : 'border-white/10 bg-slate-800/50'}`}
-              >
-                <p
-                  className={`text-xs font-medium uppercase tracking-wide ${isLight ? 'text-slate-500' : 'text-slate-400'}`}
-                >
-                  {t('vehicles.ingressTime')}
-                </p>
-                <p
-                  className={`mt-1 text-sm font-medium ${isLight ? 'text-slate-900' : 'text-white'}`}
-                >
-                  {checkoutModal.vehicle?.veh_ingress_date
-                    ? formatDateTime(checkoutModal.vehicle.veh_ingress_date)
-                    : '-'}
-                </p>
-              </div>
-
-              <div
-                className={`rounded-xl border p-4 ${isLight ? 'border-stone-200 bg-stone-50' : 'border-white/10 bg-slate-800/50'}`}
-              >
-                <p
-                  className={`text-xs font-medium uppercase tracking-wide ${isLight ? 'text-slate-500' : 'text-slate-400'}`}
-                >
-                  {t('vehicles.exitTime')}
-                </p>
-                <p
-                  className={`mt-1 text-sm font-medium ${isLight ? 'text-slate-900' : 'text-white'}`}
-                >
-                  {checkoutModal.breakdown
-                    ? formatDateTime(checkoutModal.breakdown.exitTime.toISOString())
-                    : formatDateTime(new Date().toISOString())}
-                </p>
-              </div>
-
-              {checkoutModal.breakdown && (
-                <div
-                  className={`rounded-xl border p-4 ${isLight ? 'border-stone-200 bg-stone-50' : 'border-white/10 bg-slate-800/50'}`}
-                >
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className={isLight ? 'text-slate-600' : 'text-slate-400'}>
-                        {t('vehicles.duration') || 'Duración'}
-                      </span>
-                      <span className={isLight ? 'text-slate-900' : 'text-white'}>
-                        {checkoutModal.breakdown.durationMinutes} min
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className={isLight ? 'text-slate-600' : 'text-slate-400'}>
-                        {t('vehicles.firstHour') || 'Primera hora'}
-                      </span>
-                      <span className={isLight ? 'text-slate-900' : 'text-white'}>
-                        ₡{checkoutModal.breakdown.firstHourCost.toLocaleString()}
-                      </span>
-                    </div>
-                    {checkoutModal.breakdown.additionalMinutes > 0 && (
-                      <>
-                        <div className="flex justify-between">
-                          <span className={isLight ? 'text-slate-600' : 'text-slate-400'}>
-                            {t('vehicles.additionalMinutes') || 'Minutos adicionales'}
-                          </span>
-                          <span className={isLight ? 'text-slate-900' : 'text-white'}>
-                            {checkoutModal.breakdown.additionalMinutes} × ₡10
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className={isLight ? 'text-slate-600' : 'text-slate-400'}>
-                            {t('vehicles.additionalCost') || 'Costo adicional'}
-                          </span>
-                          <span className={isLight ? 'text-slate-900' : 'text-white'}>
-                            ₡{checkoutModal.breakdown.additionalCost.toLocaleString()}
-                          </span>
-                        </div>
-                      </>
-                    )}
-                    <div
-                      className={`border-t ${isLight ? 'border-stone-200' : 'border-white/10'} pt-2 flex justify-between`}
-                    >
-                      <span className={isLight ? 'text-slate-600' : 'text-slate-400'}>
-                        {t('vehicles.subtotal') || 'Subtotal'}
-                      </span>
-                      <span className={isLight ? 'text-slate-900' : 'text-white'}>
-                        ₡{checkoutModal.breakdown.subtotal.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="flex justify-between font-semibold">
-                      <span className="text-cyan-200">
-                        {t('vehicles.totalRounded') || 'Total (redondeado)'}
-                      </span>
-                      <span className="text-cyan-400">
-                        ₡{checkoutModal.breakdown.roundedTotal.toLocaleString()}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className={`rounded-xl border border-cyan-400/30 bg-cyan-400/10 p-4`}>
-                <p className={`text-xs font-medium uppercase tracking-wide text-cyan-200`}>
-                  {t('vehicles.totalToPay')}
-                </p>
-                <input
-                  type="number"
-                  value={checkoutModal.customTotal || ''}
-                  onChange={(e) =>
-                    setCheckoutModal({ ...checkoutModal, customTotal: e.target.value })
-                  }
-                  className={`mt-1 w-full rounded-lg border border-cyan-400/30 bg-slate-900 px-3 py-2 text-2xl font-bold text-cyan-400 outline-none focus:border-cyan-400`}
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3 pt-4">
-              <button
-                type="button"
-                onClick={() =>
-                  setCheckoutModal({ open: false, vehicle: null, breakdown: undefined })
+              {t('vehicles.plateLabel')} *
+            </label>
+            <input
+              type="text"
+              value={formData.veh_plate}
+              onChange={(e) => {
+                const plate = e.target.value.toUpperCase();
+                setFormData({ ...formData, veh_plate: plate });
+                setPlateValidation(validatePlate(plate));
+              }}
+              onBlur={() => {
+                if (formData.veh_plate) {
+                  setPlateValidation(validatePlate(formData.veh_plate));
                 }
-                className={`rounded-xl border px-4 py-2 font-medium transition ${
-                  isLight
-                    ? 'border-stone-200 text-slate-700 hover:bg-stone-100'
-                    : 'border-white/10 text-slate-300 hover:bg-white/10'
-                }`}
-              >
-                {t('common.cancel')}
-              </button>
-              <button
-                type="button"
-                onClick={confirmCheckout}
-                className="rounded-xl bg-emerald-400 px-4 py-2 font-semibold text-slate-950 transition hover:bg-emerald-300"
-              >
-                {t('vehicles.confirmCheckout')}
-              </button>
+              }}
+              required
+              placeholder="ABC-123"
+              className={`mt-1 w-full rounded-xl border px-3 py-2 ${isLight ? 'border-stone-200 bg-white text-slate-900' : 'border-white/10 bg-slate-800 text-white'}`}
+            />
+            {plateValidation && !plateValidation.isValid && (
+              <p className="mt-1 text-xs text-rose-500">{plateValidation.errorMessage}</p>
+            )}
+          </div>
+          <div>
+            <label
+              className={`block text-sm font-medium ${isLight ? 'text-slate-700' : 'text-slate-300'}`}
+            >
+              {t('vehicles.ownerLabel')}
+            </label>
+            <input
+              type="text"
+              value={formData.veh_owner}
+              onChange={(e) => setFormData({ ...formData, veh_owner: e.target.value })}
+              placeholder="Nombre del propietario"
+              className={`mt-1 w-full rounded-xl border px-3 py-2 ${isLight ? 'border-stone-200 bg-white text-slate-900' : 'border-white/10 bg-slate-800 text-white'}`}
+            />
+          </div>
+          <div>
+            <label
+              className={`block text-sm font-medium ${isLight ? 'text-slate-700' : 'text-slate-300'}`}
+            >
+              {t('vehicles.tariffLabel')}
+            </label>
+            <select
+              value={selectedTariffId}
+              onChange={(e) => setSelectedTariffId(e.target.value)}
+              className={`mt-1 w-full rounded-xl border px-3 py-2 ${isLight ? 'border-stone-200 bg-white text-slate-900' : 'border-white/10 bg-slate-800 text-white'}`}
+            >
+              <option value="">{t('vehicles.tariffAutoDefault')}</option>
+              {tariffs.map((tariff) => (
+                <option key={tariff.par_id} value={String(tariff.par_id)}>
+                  {formatTariffOption(tariff)}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex justify-end gap-3 pt-4">
+            <Button
+              type="button"
+              onClick={() => {
+                setShowAddModal(false);
+                resetForm();
+              }}
+              variant="text"
+            >
+              {t('common.cancel')}
+            </Button>
+            <Button
+              type="submit"
+              disabled={saving || (plateValidation ? !plateValidation.isValid : false)}
+              variant="filled"
+            >
+              {saving ? t('vehicles.registering') : t('vehicles.register')}
+            </Button>
+          </div>
+        </form>
+      </ModalShell>
+
+      <ModalShell
+        open={checkoutModal.open && Boolean(checkoutModal.vehicle)}
+        onClose={() => setCheckoutModal({ open: false, vehicle: null, breakdown: undefined })}
+        className={`p-6 ${isLight ? 'border-stone-200 bg-white' : 'border-white/10 bg-slate-900'}`}
+      >
+        <h3 className={`mb-4 text-xl font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>
+          {t('vehicles.confirmCheckout')}
+        </h3>
+
+        <div
+          className={`mb-4 rounded-xl border p-4 ${isLight ? 'border-stone-200 bg-stone-50' : 'border-white/10 bg-slate-800/50'}`}
+        >
+          <p className={`text-sm ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+            {t('vehicles.plate')}
+          </p>
+          <p className={`text-lg font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>
+            {checkoutModal.vehicle?.veh_plate ?? '-'}
+          </p>
+        </div>
+
+        <div className="mb-4 space-y-3">
+          <div
+            className={`rounded-xl border p-4 ${isLight ? 'border-stone-200 bg-stone-50' : 'border-white/10 bg-slate-800/50'}`}
+          >
+            <p
+              className={`text-xs font-medium uppercase tracking-wide ${isLight ? 'text-slate-500' : 'text-slate-400'}`}
+            >
+              {t('vehicles.ingressTime')}
+            </p>
+            <p className={`mt-1 text-sm font-medium ${isLight ? 'text-slate-900' : 'text-white'}`}>
+              {checkoutModal.vehicle?.veh_ingress_date
+                ? formatDateTime(checkoutModal.vehicle.veh_ingress_date)
+                : '-'}
+            </p>
+          </div>
+
+          <div
+            className={`rounded-xl border p-4 ${isLight ? 'border-stone-200 bg-stone-50' : 'border-white/10 bg-slate-800/50'}`}
+          >
+            <p
+              className={`text-xs font-medium uppercase tracking-wide ${isLight ? 'text-slate-500' : 'text-slate-400'}`}
+            >
+              {t('vehicles.exitTime')}
+            </p>
+            <p className={`mt-1 text-sm font-medium ${isLight ? 'text-slate-900' : 'text-white'}`}>
+              {checkoutModal.breakdown
+                ? formatDateTime(checkoutModal.breakdown.exitTime.toISOString())
+                : formatDateTime(new Date().toISOString())}
+            </p>
+          </div>
+
+          {checkoutModal.breakdown && (
+            <div
+              className={`rounded-xl border p-4 ${isLight ? 'border-stone-200 bg-stone-50' : 'border-white/10 bg-slate-800/50'}`}
+            >
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className={isLight ? 'text-slate-600' : 'text-slate-400'}>
+                    {t('vehicles.duration') || 'Duración'}
+                  </span>
+                  <span className={isLight ? 'text-slate-900' : 'text-white'}>
+                    {checkoutModal.breakdown.durationMinutes} min
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className={isLight ? 'text-slate-600' : 'text-slate-400'}>
+                    {t('vehicles.firstHour') || 'Primera hora'}
+                  </span>
+                  <span className={isLight ? 'text-slate-900' : 'text-white'}>
+                    ₡{checkoutModal.breakdown.firstHourCost.toLocaleString()}
+                  </span>
+                </div>
+                {checkoutModal.breakdown.additionalMinutes > 0 && (
+                  <>
+                    <div className="flex justify-between">
+                      <span className={isLight ? 'text-slate-600' : 'text-slate-400'}>
+                        {t('vehicles.additionalMinutes') || 'Minutos adicionales'}
+                      </span>
+                      <span className={isLight ? 'text-slate-900' : 'text-white'}>
+                        {checkoutModal.breakdown.additionalMinutes} × ₡10
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className={isLight ? 'text-slate-600' : 'text-slate-400'}>
+                        {t('vehicles.additionalCost') || 'Costo adicional'}
+                      </span>
+                      <span className={isLight ? 'text-slate-900' : 'text-white'}>
+                        ₡{checkoutModal.breakdown.additionalCost.toLocaleString()}
+                      </span>
+                    </div>
+                  </>
+                )}
+                <div
+                  className={`border-t ${isLight ? 'border-stone-200' : 'border-white/10'} pt-2 flex justify-between`}
+                >
+                  <span className={isLight ? 'text-slate-600' : 'text-slate-400'}>
+                    {t('vehicles.subtotal') || 'Subtotal'}
+                  </span>
+                  <span className={isLight ? 'text-slate-900' : 'text-white'}>
+                    ₡{checkoutModal.breakdown.subtotal.toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex justify-between font-semibold">
+                  <span className="text-cyan-200">
+                    {t('vehicles.totalRounded') || 'Total (redondeado)'}
+                  </span>
+                  <span className="text-cyan-400">
+                    ₡{checkoutModal.breakdown.roundedTotal.toLocaleString()}
+                  </span>
+                </div>
+              </div>
             </div>
+          )}
+
+          <div className={`rounded-xl border border-cyan-400/30 bg-cyan-400/10 p-4`}>
+            <p className={`text-xs font-medium uppercase tracking-wide text-cyan-200`}>
+              {t('vehicles.totalToPay')}
+            </p>
+            <input
+              type="number"
+              value={checkoutModal.customTotal || ''}
+              onChange={(e) => setCheckoutModal({ ...checkoutModal, customTotal: e.target.value })}
+              className={`mt-1 w-full rounded-lg border border-cyan-400/30 bg-slate-900 px-3 py-2 text-2xl font-bold text-cyan-400 outline-none focus:border-cyan-400`}
+            />
           </div>
         </div>
-      )}
+
+        <div className="flex justify-end gap-3 pt-4">
+          <Button
+            type="button"
+            onClick={() => setCheckoutModal({ open: false, vehicle: null, breakdown: undefined })}
+            variant="text"
+          >
+            {t('common.cancel')}
+          </Button>
+          <Button type="button" onClick={confirmCheckout} variant="filled">
+            {t('vehicles.confirmCheckout')}
+          </Button>
+        </div>
+      </ModalShell>
 
       <ConfirmModal
         open={showDeleteModal}

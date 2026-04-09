@@ -75,20 +75,23 @@ export interface UpdateVehicleDto {
 
 export interface Parameter {
   par_id?: number;
-  par_quantity: string;
-  par_tax: string;
+  par_name: string;
+  par_amount: string;
+  par_is_default: number;
   version: number;
 }
 
 export interface CreateParameterDto {
-  par_quantity: string;
-  par_tax: string;
+  par_name: string;
+  par_amount: string;
+  par_is_default: number;
   version: number;
 }
 
 export interface UpdateParameterDto {
-  par_quantity?: string;
-  par_tax?: string;
+  par_name?: string;
+  par_amount?: string;
+  par_is_default?: number;
   version?: number;
 }
 
@@ -96,6 +99,26 @@ export interface DashboardStats {
   parkedCount: number;
   todayRevenue: number;
   todayVehicles: number;
+}
+
+export type ReportPeriod = 'daily' | 'weekly' | 'monthly' | 'yearly';
+
+export interface VehicleReportRow {
+  veh_id: number;
+  veh_plate: string;
+  veh_owner: string | null;
+  veh_ingress_date: string;
+  veh_egress_date: string;
+  veh_tax: string;
+}
+
+export interface VehicleReportResult {
+  period: ReportPeriod;
+  rangeStart: string;
+  rangeEnd: string;
+  totalVehicles: number;
+  totalRevenue: number;
+  rows: VehicleReportRow[];
 }
 
 declare global {
@@ -120,25 +143,32 @@ declare global {
         getActive: () => Promise<Vehicle[]>;
         getOne: (id: number) => Promise<Vehicle | undefined>;
         create: (dto: CreateVehicleDto) => Promise<MutationResult>;
-        checkout: (id: number) => Promise<MutationResult>;
+        checkout: (id: number, total?: string) => Promise<MutationResult>;
         update: (id: number, dto: UpdateVehicleDto) => Promise<MutationResult>;
         delete: (id: number) => Promise<MutationResult>;
         getStats: () => Promise<DashboardStats>;
         getParkedCount: () => Promise<number>;
         getTodayRevenue: () => Promise<number>;
         getTodayVehicles: () => Promise<number>;
+        getReport: (period: ReportPeriod, selectedDate: string) => Promise<VehicleReportResult>;
       };
       parameters: {
         getAll: () => Promise<Parameter[]>;
         getOne: (id: number) => Promise<Parameter | undefined>;
+        getDefault: () => Promise<Parameter | undefined>;
         create: (dto: CreateParameterDto) => Promise<MutationResult>;
         update: (id: number, dto: UpdateParameterDto) => Promise<MutationResult>;
-        delete: (id: number) => Promise<MutationResult>;
+        setDefault: (id: number) => Promise<MutationResult>;
       };
       session: {
         save: (user: SafeUser) => Promise<{ success: boolean }>;
         restore: () => Promise<SafeUser | null>;
         clear: () => Promise<{ success: boolean }>;
+      };
+      settings: {
+        getAll: () => Promise<{ set_key: string; set_value: string }[]>;
+        get: (key: string) => Promise<string | undefined>;
+        save: (key: string, value: string) => Promise<{ success: boolean }>;
       };
     };
   }

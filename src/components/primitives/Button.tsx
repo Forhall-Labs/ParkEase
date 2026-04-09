@@ -1,7 +1,9 @@
 import type { MouseEventHandler, ReactNode } from 'react';
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
+type ButtonVariant = 'filled' | 'outlined' | 'text' | 'danger' | 'primary' | 'secondary' | 'ghost';
 type ButtonSize = 'sm' | 'md' | 'lg';
+
+type TonalButtonVariant = 'filled' | 'outlined' | 'text' | 'danger';
 
 interface ButtonProps {
   children: ReactNode;
@@ -13,15 +15,21 @@ interface ButtonProps {
   className?: string;
 }
 
-const variantClasses: Record<ButtonVariant, string> = {
-  primary:
-    'ui-button-primary border-[color:var(--color-border-default)] bg-[color:var(--color-feedback-warning)] text-[color:var(--color-accent-contrast)] hover:brightness-105',
-  secondary:
-    'ui-button-secondary border-[color:var(--color-border-default)] bg-[color:var(--color-surface-muted)] text-[color:var(--color-text-primary)] hover:brightness-110',
-  ghost:
-    'border border-[color:var(--color-border-default)] bg-transparent text-[color:var(--color-text-secondary)] hover:bg-[color:var(--color-surface-muted)]',
-  danger:
-    'border border-transparent bg-[color:var(--color-feedback-danger)] text-white hover:brightness-110',
+const legacyVariantMap: Record<ButtonVariant, TonalButtonVariant> = {
+  filled: 'filled',
+  outlined: 'outlined',
+  text: 'text',
+  danger: 'danger',
+  primary: 'filled',
+  secondary: 'outlined',
+  ghost: 'text',
+};
+
+const variantClasses: Record<TonalButtonVariant, string> = {
+  filled: 'ui-button-filled',
+  outlined: 'ui-button-outlined',
+  text: 'ui-button-text',
+  danger: 'ui-button-danger',
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -39,14 +47,16 @@ export function Button({
   onClick,
   className,
 }: ButtonProps) {
+  const tonalVariant = legacyVariantMap[variant];
+
   return (
     <button
       type={type}
       disabled={disabled}
       onClick={onClick}
       className={[
-        'focus-ring inline-flex items-center justify-center rounded-xl font-semibold transition duration-200 ease-out motion-reduce:transition-none',
-        variantClasses[variant],
+        'focus-ring inline-flex items-center justify-center rounded-xl border font-semibold transition duration-200 ease-out motion-reduce:transition-none',
+        variantClasses[tonalVariant],
         sizeClasses[size],
         disabled ? 'cursor-not-allowed opacity-60' : '',
         className ?? '',
