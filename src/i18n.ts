@@ -56,6 +56,17 @@ export const translations = {
       noVehicles: 'No hay vehículos en parqueo.',
       registering: 'Registrando...',
       register: 'Registrar',
+      reprint: 'Reimprimir',
+      confirmDelete: '¿Está seguro de eliminar este vehículo?',
+      deleteVehicle: 'Eliminar Vehículo',
+      confirmDeleteMessage:
+        '¿Está seguro de que desea eliminar este vehículo? Esta acción no se puede deshacer.',
+      duration: 'Duración',
+      firstHour: 'Primera hora',
+      additionalMinutes: 'Minutos adicionales',
+      additionalCost: 'Costo adicional',
+      subtotal: 'Subtotal',
+      totalRounded: 'Total (redondeado)',
     },
     validation: {
       plateRequired: 'La placa es requerida',
@@ -133,7 +144,13 @@ export const translations = {
       save: 'Guardar',
     },
     settings: {
+      title: 'Configuración',
       description: 'Administra las preferencias del sistema',
+      tabs: {
+        general: 'General',
+        parking: 'Parqueo',
+        rates: 'Tarifas',
+      },
       theme: {
         label: 'Tema',
         light: 'Claro',
@@ -231,6 +248,17 @@ export const translations = {
       noVehicles: 'No vehicles in parking.',
       registering: 'Registering...',
       register: 'Register',
+      reprint: 'Reprint',
+      confirmDelete: 'Are you sure you want to delete this vehicle?',
+      deleteVehicle: 'Delete Vehicle',
+      confirmDeleteMessage:
+        'Are you sure you want to delete this vehicle? This action cannot be undone.',
+      duration: 'Duration',
+      firstHour: 'First hour',
+      additionalMinutes: 'Additional minutes',
+      additionalCost: 'Additional cost',
+      subtotal: 'Subtotal',
+      totalRounded: 'Total (rounded)',
     },
     validation: {
       plateRequired: 'Plate is required',
@@ -378,7 +406,8 @@ export function getLanguage(): Language {
 
 export function t(path: string): string {
   const keys = path.split('.');
-  let value: unknown = translations[currentLanguage];
+  const lang = getLanguage();
+  let value: unknown = translations[lang];
 
   for (const key of keys) {
     if (value && typeof value === 'object' && key in value) {

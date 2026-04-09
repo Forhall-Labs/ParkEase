@@ -10,6 +10,7 @@ import {
 } from '@mui/material';
 import type { Vehicle, CreateVehicleDto } from '../types/electron-api';
 import { t } from '../i18n';
+import { ConfirmModal } from './UI/Modal';
 
 interface PlateValidationResult {
   isValid: boolean;
@@ -56,7 +57,9 @@ export function VehiclesTable({ theme = 'dark' }: VehiclesTableProps) {
   const [searchFilter, setSearchFilter] = useState('');
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [vehicleToDelete, setVehicleToDelete] = useState<number | null>(null);
   const [formData, setFormData] = useState<CreateVehicleDto>({
     veh_plate: '',
     veh_reference: '',
@@ -77,6 +80,16 @@ export function VehiclesTable({ theme = 'dark' }: VehiclesTableProps) {
     open: boolean;
     vehicle: Vehicle | null;
     customTotal?: string;
+    breakdown?: {
+      entryTime: Date;
+      exitTime: Date;
+      durationMinutes: number;
+      firstHourCost: number;
+      additionalMinutes: number;
+      additionalCost: number;
+      subtotal: number;
+      roundedTotal: number;
+    };
   }>({
     open: false,
     vehicle: null,
@@ -140,7 +153,7 @@ export function VehiclesTable({ theme = 'dark' }: VehiclesTableProps) {
       setError(null);
       const result = await window.electronAPI?.vehicles?.create(formData);
       if (result?.success) {
-        setShowModal(false);
+        setShowAddModal(false);
         resetForm();
         loadVehicles();
         printReceipt(formData);
@@ -156,11 +169,30 @@ export function VehiclesTable({ theme = 'dark' }: VehiclesTableProps) {
     const printWindow = window.open('', '_blank', 'width=400,height=600');
     if (!printWindow) return;
 
+    const lang = localStorage.getItem('app-language') || 'es';
+    const isEnglish = lang === 'en';
+
+    const labels = {
+      title: isEnglish ? 'Parking Receipt' : 'Recibo de Parqueo',
+      subtitle: isEnglish ? 'Parqueo Parroquial San Marcos' : 'Parqueo Parroquial San Marcos',
+      plate: isEnglish ? 'Plate' : 'Placa',
+      owner: isEnglish ? 'Owner' : 'Propietario',
+      entryDate: isEnglish ? 'Entry Date' : 'Fecha Ingreso',
+      entryTime: isEnglish ? 'Entry Time' : 'Hora Ingreso',
+      rate: isEnglish ? 'Rate' : 'Tarifa',
+      reference: isEnglish ? 'Reference' : 'Referencia',
+      exitTime: isEnglish ? 'Exit Time' : 'Hora de Salida',
+      exitTimeValue: isEnglish ? 'To be defined' : 'Por definir',
+      footer: isEnglish
+        ? 'Thank you for using ParkEase\nKeep this receipt'
+        : 'Gracias por usar ParkEase\nConserve este recibo',
+    };
+
     const content = `
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Recibo de Parqueo</title>
+        <title>${labels.title}</title>
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
           body { font-family: 'Courier New', monospace; padding: 20px; width: 280px; }
@@ -173,48 +205,47 @@ export function VehiclesTable({ theme = 'dark' }: VehiclesTableProps) {
           .label { color: #64748b; }
           .value { font-weight: bold; }
           .total { font-size: 16px; font-weight: bold; color: #0891b2; margin-top: 10px; }
-          .footer { text-align: center; margin-top: 20px; font-size: 10px; color: #94a3b8; }
+          .footer { text-align: center; margin-top: 20px; font-size: 10px; color: #94a3b8; white-space: pre-line; }
         </style>
       </head>
       <body>
         <div class="header">
           <div class="logo">🅿️ ParkEase</div>
-          <div class="title">Recibo de Ingreso</div>
-          <div class="subtitle">Parqueo Parroquial San Marcos</div>
+          <div class="title">${labels.title}</div>
+          <div class="subtitle">${labels.subtitle}</div>
         </div>
         <div class="divider"></div>
         <div class="row">
-          <span class="label">Placa:</span>
+          <span class="label">${labels.plate}:</span>
           <span class="value">${data.veh_plate}</span>
         </div>
         <div class="row">
-          <span class="label">Propietario:</span>
+          <span class="label">${labels.owner}:</span>
           <span class="value">${data.veh_owner || 'N/A'}</span>
         </div>
         <div class="row">
-          <span class="label">Fecha Ingreso:</span>
+          <span class="label">${labels.entryDate}:</span>
           <span class="value">${new Date(data.veh_ingress_date).toLocaleDateString('es-CR')}</span>
         </div>
         <div class="row">
-          <span class="label">Hora Ingreso:</span>
+          <span class="label">${labels.entryTime}:</span>
           <span class="value">${new Date(data.veh_ingress_date).toLocaleTimeString('es-CR')}</span>
         </div>
         <div class="row">
-          <span class="label">Tarifa:</span>
+          <span class="label">${labels.rate}:</span>
           <span class="value">${data.veh_tax ? parseFloat(data.veh_tax).toLocaleString('es-CR', { style: 'currency', currency: 'CRC' }) : 'N/A'}</span>
         </div>
         <div class="row">
-          <span class="label">Referencia:</span>
+          <span class="label">${labels.reference}:</span>
           <span class="value">${data.veh_reference}</span>
         </div>
         <div class="divider"></div>
         <div class="row">
-          <span class="label">Hora de Salida:</span>
-          <span class="value">Por definir</span>
+          <span class="label">${labels.exitTime}:</span>
+          <span class="value">${labels.exitTimeValue}</span>
         </div>
         <div class="footer">
-          Gracias por usar ParkEase<br/>
-          Conserve este recibo
+          ${labels.footer}
         </div>
         <script>
           window.onload = function() {
@@ -229,13 +260,46 @@ export function VehiclesTable({ theme = 'dark' }: VehiclesTableProps) {
     printWindow.document.close();
   }
 
+  function printVehicleReceipt(vehicle: Vehicle) {
+    printReceipt({
+      veh_plate: vehicle.veh_plate,
+      veh_reference: vehicle.veh_reference,
+      veh_owner: vehicle.veh_owner || '',
+      veh_ingress_date: vehicle.veh_ingress_date,
+      veh_tax: vehicle.veh_tax,
+      veh_version: vehicle.veh_version,
+    });
+  }
+
   async function handleCheckout(id: number) {
     const vehicle = vehicles.find((v) => v.veh_id === id);
     if (vehicle) {
-      const rate = vehicle.veh_tax || defaultRate;
-      const total = calculateTotalValue(vehicle.veh_ingress_date, rate);
-      setCheckoutModal({ open: true, vehicle, customTotal: total.toString() });
+      const rate = parseFloat(vehicle.veh_tax || defaultRate) || 0;
+      const breakdown = calculateFeeBreakdown(vehicle.veh_ingress_date, rate);
+      setCheckoutModal({
+        open: true,
+        vehicle,
+        customTotal: breakdown.roundedTotal.toString(),
+        breakdown,
+      });
     }
+  }
+
+  async function handleDeleteVehicle(id: number) {
+    setVehicleToDelete(id);
+    setShowDeleteModal(true);
+  }
+
+  async function confirmDeleteVehicle() {
+    if (vehicleToDelete === null) return;
+    try {
+      await window.electronAPI?.vehicles?.delete(vehicleToDelete);
+      loadVehicles();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('common.error'));
+    }
+    setShowDeleteModal(false);
+    setVehicleToDelete(null);
   }
 
   async function confirmCheckout() {
@@ -252,12 +316,40 @@ export function VehiclesTable({ theme = 'dark' }: VehiclesTableProps) {
     }
   }
 
-  function calculateTotalValue(ingressDate: string, tax: string): number {
-    const ingress = new Date(ingressDate);
-    const now = new Date();
-    const hours = Math.ceil((now.getTime() - ingress.getTime()) / (1000 * 60 * 60));
-    const rate = parseFloat(tax) || 0;
-    return hours * rate;
+  function calculateFeeBreakdown(
+    ingressDate: string,
+    hourlyRate: number
+  ): {
+    entryTime: Date;
+    exitTime: Date;
+    durationMinutes: number;
+    firstHourCost: number;
+    additionalMinutes: number;
+    additionalCost: number;
+    subtotal: number;
+    roundedTotal: number;
+  } {
+    const entryTime = new Date(ingressDate);
+    const exitTime = new Date();
+    const totalMinutes = Math.ceil((exitTime.getTime() - entryTime.getTime()) / (1000 * 60));
+    const durationMinutes = Math.max(1, totalMinutes);
+
+    const firstHourCost = hourlyRate;
+    const additionalMinutes = Math.max(0, durationMinutes - 60);
+    const additionalCost = additionalMinutes * 10;
+    const subtotal = firstHourCost + additionalCost;
+    const roundedTotal = Math.ceil(subtotal / 50) * 50;
+
+    return {
+      entryTime,
+      exitTime,
+      durationMinutes,
+      firstHourCost,
+      additionalMinutes,
+      additionalCost,
+      subtotal,
+      roundedTotal,
+    };
   }
 
   function formatDateTime(dateStr: string): string {
@@ -286,7 +378,7 @@ export function VehiclesTable({ theme = 'dark' }: VehiclesTableProps) {
       veh_reference: generateReference(),
       veh_tax: defaultRate,
     }));
-    setShowModal(true);
+    setShowAddModal(true);
   }
 
   return (
@@ -486,6 +578,26 @@ export function VehiclesTable({ theme = 'dark' }: VehiclesTableProps) {
                           >
                             {t('vehicles.checkout')}
                           </button>
+                          <button
+                            onClick={() => printVehicleReceipt(vehicle)}
+                            className={`rounded-lg border px-2 py-1 text-xs font-medium transition-colors sm:px-3 sm:text-sm ${
+                              isLight
+                                ? 'border-sky-300 bg-sky-50 text-sky-700 hover:bg-sky-100'
+                                : 'border-blue-500/30 bg-blue-500/20 text-blue-300 hover:bg-blue-500/30'
+                            }`}
+                          >
+                            {t('vehicles.reprint')}
+                          </button>
+                          <button
+                            onClick={() => handleDeleteVehicle(vehicle.veh_id!)}
+                            className={`rounded-lg border px-2 py-1 text-xs font-medium transition-colors sm:px-3 sm:text-sm ${
+                              isLight
+                                ? 'border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100'
+                                : 'border-red-500/30 bg-red-500/20 text-red-300 hover:bg-red-500/30'
+                            }`}
+                          >
+                            {t('vehicles.delete')}
+                          </button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -497,7 +609,7 @@ export function VehiclesTable({ theme = 'dark' }: VehiclesTableProps) {
         </Paper>
       </div>
 
-      {showModal && (
+      {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div
             className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl ${isLight ? 'border-stone-200 bg-white' : 'border-white/10 bg-slate-900'}`}
@@ -536,16 +648,10 @@ export function VehiclesTable({ theme = 'dark' }: VehiclesTableProps) {
                   }}
                   required
                   placeholder="ABC-123"
-                  className={`mt-1 w-full rounded-xl border px-3 py-2 ${
-                    plateValidation && !plateValidation.isValid
-                      ? 'border-rose-400 bg-rose-500/10'
-                      : isLight
-                        ? 'border-stone-200 bg-white text-slate-900'
-                        : 'border-white/10 bg-slate-800 text-white'
-                  }`}
+                  className={`mt-1 w-full rounded-xl border px-3 py-2 ${isLight ? 'border-stone-200 bg-white text-slate-900' : 'border-white/10 bg-slate-800 text-white'}`}
                 />
                 {plateValidation && !plateValidation.isValid && (
-                  <p className="mt-1 text-sm text-rose-400">{plateValidation.errorMessage}</p>
+                  <p className="mt-1 text-xs text-rose-500">{plateValidation.errorMessage}</p>
                 )}
               </div>
               <div>
@@ -566,7 +672,7 @@ export function VehiclesTable({ theme = 'dark' }: VehiclesTableProps) {
                 <button
                   type="button"
                   onClick={() => {
-                    setShowModal(false);
+                    setShowAddModal(false);
                     resetForm();
                   }}
                   className={`rounded-xl border px-4 py-2 font-medium transition ${
@@ -600,7 +706,7 @@ export function VehiclesTable({ theme = 'dark' }: VehiclesTableProps) {
             <h3
               className={`mb-4 text-xl font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}
             >
-              Confirmar Salida
+              {t('vehicles.confirmCheckout')}
             </h3>
 
             <div
@@ -626,7 +732,9 @@ export function VehiclesTable({ theme = 'dark' }: VehiclesTableProps) {
                 <p
                   className={`mt-1 text-sm font-medium ${isLight ? 'text-slate-900' : 'text-white'}`}
                 >
-                  {formatDateTime(checkoutModal.vehicle.veh_ingress_date)}
+                  {checkoutModal.vehicle?.veh_ingress_date
+                    ? formatDateTime(checkoutModal.vehicle.veh_ingress_date)
+                    : '-'}
                 </p>
               </div>
 
@@ -641,9 +749,74 @@ export function VehiclesTable({ theme = 'dark' }: VehiclesTableProps) {
                 <p
                   className={`mt-1 text-sm font-medium ${isLight ? 'text-slate-900' : 'text-white'}`}
                 >
-                  {formatDateTime(new Date().toISOString())}
+                  {checkoutModal.breakdown
+                    ? formatDateTime(checkoutModal.breakdown.exitTime.toISOString())
+                    : formatDateTime(new Date().toISOString())}
                 </p>
               </div>
+
+              {checkoutModal.breakdown && (
+                <div
+                  className={`rounded-xl border p-4 ${isLight ? 'border-stone-200 bg-stone-50' : 'border-white/10 bg-slate-800/50'}`}
+                >
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className={isLight ? 'text-slate-600' : 'text-slate-400'}>
+                        {t('vehicles.duration') || 'Duración'}
+                      </span>
+                      <span className={isLight ? 'text-slate-900' : 'text-white'}>
+                        {checkoutModal.breakdown.durationMinutes} min
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className={isLight ? 'text-slate-600' : 'text-slate-400'}>
+                        {t('vehicles.firstHour') || 'Primera hora'}
+                      </span>
+                      <span className={isLight ? 'text-slate-900' : 'text-white'}>
+                        ₡{checkoutModal.breakdown.firstHourCost.toLocaleString()}
+                      </span>
+                    </div>
+                    {checkoutModal.breakdown.additionalMinutes > 0 && (
+                      <>
+                        <div className="flex justify-between">
+                          <span className={isLight ? 'text-slate-600' : 'text-slate-400'}>
+                            {t('vehicles.additionalMinutes') || 'Minutos adicionales'}
+                          </span>
+                          <span className={isLight ? 'text-slate-900' : 'text-white'}>
+                            {checkoutModal.breakdown.additionalMinutes} × ₡10
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className={isLight ? 'text-slate-600' : 'text-slate-400'}>
+                            {t('vehicles.additionalCost') || 'Costo adicional'}
+                          </span>
+                          <span className={isLight ? 'text-slate-900' : 'text-white'}>
+                            ₡{checkoutModal.breakdown.additionalCost.toLocaleString()}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                    <div
+                      className={`border-t ${isLight ? 'border-stone-200' : 'border-white/10'} pt-2 flex justify-between`}
+                    >
+                      <span className={isLight ? 'text-slate-600' : 'text-slate-400'}>
+                        {t('vehicles.subtotal') || 'Subtotal'}
+                      </span>
+                      <span className={isLight ? 'text-slate-900' : 'text-white'}>
+                        ₡{checkoutModal.breakdown.subtotal.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex justify-between font-semibold">
+                      <span className="text-cyan-200">
+                        {t('vehicles.totalRounded') || 'Total (redondeado)'}
+                      </span>
+                      <span className="text-cyan-400">
+                        ₡{checkoutModal.breakdown.roundedTotal.toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className={`rounded-xl border border-cyan-400/30 bg-cyan-400/10 p-4`}>
                 <p className={`text-xs font-medium uppercase tracking-wide text-cyan-200`}>
@@ -663,7 +836,9 @@ export function VehiclesTable({ theme = 'dark' }: VehiclesTableProps) {
             <div className="flex justify-end gap-3 pt-4">
               <button
                 type="button"
-                onClick={() => setCheckoutModal({ open: false, vehicle: null })}
+                onClick={() =>
+                  setCheckoutModal({ open: false, vehicle: null, breakdown: undefined })
+                }
                 className={`rounded-xl border px-4 py-2 font-medium transition ${
                   isLight
                     ? 'border-stone-200 text-slate-700 hover:bg-stone-100'
@@ -683,6 +858,20 @@ export function VehiclesTable({ theme = 'dark' }: VehiclesTableProps) {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        open={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setVehicleToDelete(null);
+        }}
+        onConfirm={confirmDeleteVehicle}
+        title={t('vehicles.deleteVehicle')}
+        message={t('vehicles.confirmDeleteMessage')}
+        confirmText={t('common.delete')}
+        cancelText={t('common.cancel')}
+        variant="danger"
+      />
     </>
   );
 }
