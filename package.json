@@ -1,13 +1,13 @@
 {
   "name": "parqueo-parroquial-san-marcos",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.1.1",
   "type": "module",
   "main": "dist-electron/main.js",
   "scripts": {
     "dev": "vite",
     "build": "npm run lint && tsc -b && vite build",
-    "build:win": "electron-builder --win --publish never",
+    "build:win": "npm run build && electron-builder --win --publish never",
     "lint": "eslint .",
     "typecheck": "tsc -b --pretty false",
     "test:ci": "node scripts/ci-test-gate.mjs",
