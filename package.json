@@ -1,9 +1,23 @@
 {
   "name": "parqueo-parroquial-san-marcos",
   "private": true,
-  "version": "1.1.2",
+  "version": "1.1.4",
   "type": "module",
   "main": "dist-electron/main.js",
+  "build": {
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "asar": true,
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    }
+  },
   "scripts": {
     "dev": "vite",
     "build": "npm run lint && tsc -b && vite build",

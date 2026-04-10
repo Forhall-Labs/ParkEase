@@ -1,7 +1,7 @@
 import { app, BrowserWindow, screen } from 'electron';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
-import { appendFileSync, mkdirSync } from 'fs';
+import { appendFileSync, existsSync, mkdirSync } from 'fs';
 import { initDatabase } from './database/db.js';
 import { registerUserHandlers } from './handlers/user.handler.js';
 import { registerVehicleHandlers } from './handlers/vehicle.handler.js';
@@ -83,8 +83,19 @@ function createWindow(): void {
     win.loadURL(devServerUrl);
     win.webContents.openDevTools();
   } else {
-    const indexPath = join(__dirname, '../dist/index.html');
-    writeRuntimeLog(`Loading production renderer from: ${indexPath}`);
+    const resourceIndexPath = join(
+      process.env.PORTABLE_EXECUTABLE_DIR || process.cwd(),
+      'resources',
+      'dist',
+      'index.html'
+    );
+    const bundledIndexPath = join(__dirname, '../dist/index.html');
+    const indexPath = existsSync(resourceIndexPath) ? resourceIndexPath : bundledIndexPath;
+
+    writeRuntimeLog(
+      `Loading production renderer from: ${indexPath} (resourceExists=${existsSync(resourceIndexPath)}, bundledExists=${existsSync(bundledIndexPath)})`
+    );
+
     void win.loadFile(indexPath).catch((error: unknown) => {
       writeRuntimeLog(`loadFile failed: ${error instanceof Error ? error.message : String(error)}`);
     });
