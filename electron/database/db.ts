@@ -146,6 +146,11 @@ function runMigrations(): void {
     },
 
     '006_seed_admin_user': () => {
+      const existing = db
+        .prepare('SELECT user_id FROM psm_users WHERE user_username = ?')
+        .get('admin');
+      if (existing) return;
+
       const hashedPassword = bcrypt.hashSync('admin123', 10);
 
       db.prepare(

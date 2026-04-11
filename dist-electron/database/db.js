@@ -121,6 +121,11 @@ function runMigrations() {
       `);
         },
         '006_seed_admin_user': () => {
+            const existing = db
+                .prepare('SELECT user_id FROM psm_users WHERE user_username = ?')
+                .get('admin');
+            if (existing)
+                return;
             const hashedPassword = bcrypt.hashSync('admin123', 10);
             db.prepare(`
         INSERT INTO psm_users (user_name, user_lastname, user_username, user_password, user_email, user_status, user_version)
