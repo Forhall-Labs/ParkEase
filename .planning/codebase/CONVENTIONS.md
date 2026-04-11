@@ -1,133 +1,146 @@
-# Coding Conventions
+# Code Conventions
 
-**Analysis Date:** 2026-04-09
+## Language & Formatting
 
-## Naming Patterns
-
-**Files:**
-- React component files use lowercase or camelCase names in `src/components/` (examples: `src/components/dashboardCard.tsx`, `src/components/vehiclesResumeTable.tsx`).
-- UI screen files use lowercase names in `src/components/UI/` (examples: `src/components/UI/dashboard.tsx`, `src/components/UI/reports.tsx`).
-- Electron backend files follow `<domain>.<layer>.ts` naming in `electron/` (examples: `electron/repositories/user.repository.ts`, `electron/service/user.service.ts`, `electron/handlers/user.handler.ts`).
-- Existing typo is part of current codebase and should be preserved unless explicitly refactoring: `electron/repositories/vehcile.repository.ts`.
-
-**Functions:**
-- Functions and hooks use camelCase (examples: `useLogin`, `registerVehicleHandlers`, `normalizeReportDate`, `getAllUsers`).
-- Handler registration pattern is `register<Domain>Handlers` in `electron/handlers/*.ts`.
-- Query functions in repositories follow verb + entity naming (examples in `electron/repositories/user.repository.ts`: `findAllUsers`, `createUser`, `updateUserPassword`).
-
-**Variables:**
-- Local variables and state use camelCase (`activePath`, `selectedRange`, `todayRevenue` in `src/App.tsx` and `src/components/UI/reports.tsx`).
-- DB-backed DTO/model properties intentionally use snake_case to mirror SQLite column names (examples in `electron/models/user.model.ts` and `src/types/electron-api.d.ts`: `user_username`, `veh_ingress_date`, `par_tax`).
-
-**Types:**
-- Interfaces and type aliases use PascalCase (`SafeUser`, `LoginResponse`, `ReportPeriod`, `VehicleReportResult` in `src/types/electron-api.d.ts`).
-- DTO names use `Dto` suffix (`CreateUserDto`, `UpdateVehicleDto` in `electron/models/user.model.ts`, `electron/preload.ts`).
-- Result payloads often standardize to `{ success, message?, id? }` (`MutationResult` in `src/types/electron-api.d.ts`).
-
-## Code Style
-
-**Formatting:**
-- Formatter: Prettier configured in `.prettierrc`.
-- Key settings from `.prettierrc`:
-  - `semi: true`
-  - `singleQuote: true`
-  - `tabWidth: 2`
-  - `trailingComma: "es5"`
-  - `printWidth: 100`
-
-**Linting:**
-- Linter: ESLint flat config in `eslint.config.js` with `@eslint/js`, `typescript-eslint`, `eslint-plugin-react-hooks`, and `eslint-plugin-react-refresh`.
-- Scope: `**/*.{ts,tsx}` only (`eslint.config.js`), so plain `.js/.jsx` files are outside primary lint coverage.
-- Ignores: `dist`, `dist-electron`, `.github`, `.opencode`.
-- Quality implications:
-  - Mixed quote style exists (`src/components/clock.tsx` uses double quotes while most files use single quotes), but `lint-staged` auto-runs `prettier --write` for `src/**/*.{ts,tsx}` from `package.json`.
+- **TypeScript** - Strict typing enabled via tsconfig configurations
+- **Formatter**: Prettier (^3.8.1) - Enforced via lint-staged and husky pre-commit hooks
+- **Linting**: ESLint (^9.39.4) with React-specific plugins
+- **Line Endings**: LF (Unix-style) - Standard for cross-platform consistency
+- **Character Encoding**: UTF-8 (implied by modern tooling)
 
 ## Import Organization
 
-**Order:**
-1. External packages first (`react`, `electron`, `bcryptjs`).
-2. Internal modules second (relative imports like `../repositories/user.repository.js`, `../../i18n`).
-3. Type-only imports are explicitly marked with `import type` when used (examples: `src/hooks/useLogin.ts`, `electron/service/user.service.ts`).
+- **Relative Paths**: Used for local imports (e.g., `../components/Button`)
+- **Alias Imports**: Not observed - direct relative paths preferred
+- **Order**:
+  1. External packages (react, @mui/material, etc.)
+  2. Internal absolute paths (not used)
+  3. Relative paths (components, hooks, styles, types)
+- **Type-only Imports**: Using `import type` when appropriate (modern TypeScript)
 
-**Path Aliases:**
-- Vite alias `@` -> `src` is configured in `vite.config.ts`.
-- Current source primarily uses relative imports rather than alias imports.
+## Naming Conventions
 
-## Error Handling
+### Files & Directories
 
-**Patterns:**
-- Renderer-side async calls use `try/catch/finally` with local error state (`src/hooks/useLogin.ts`, `src/components/UI/users.tsx`, `src/components/UI/reports.tsx`).
-- Electron service layer returns structured failure objects instead of throwing for domain validation (`electron/service/user.service.ts`, `electron/service/vehicle.service.ts`).
-- Defensive fallbacks are used around optional DB queries in handlers (`electron/handlers/vehicle.handler.ts` catches failures and returns default `0` metrics).
-- Hard startup preconditions throw explicit errors when invariant is broken (`electron/database/db.ts` in `getDatabase`).
+- **Components**: PascalCase with `.tsx` extension (e.g., `Button.tsx`)
+- **Utility/Hooks**: camelCase with `.ts` extension (e.g., `useLogin.ts`)
+- **Styles**: camelCase or kebab-case with `.css` extension
+- **Tests**: Not explicitly observed in structure
+- **Config Files**: kebab-case or descriptive names (e.g., `vite.config.ts`)
 
-## Logging
+### Variables & Functions
 
-**Framework:** console
+- **Variables**: camelCase (e.g., `isLoading`, `userData`)
+- **Functions**: camelCase (e.g., `handleClick`, `fetchData`)
+- **Constants**: UPPER_SNAKE_CASE (observed in some contexts)
+- **Boolean Variables**: Prefixed with `is`, `has`, `should` (e.g., `isVisible`, `hasErrors`)
 
-**Patterns:**
-- Error logs are written with `console.error(...)` in renderer/electron utility paths (examples: `src/components/UI/settings.tsx`, `src/components/vehiclesResumeTable.tsx`, `electron/main.ts`).
-- Migration progress logs use `console.log(...)` (`electron/database/db.ts`).
-- No centralized logger abstraction detected.
+### Types & Interfaces
 
-## Comments
+- **Types**: PascalCase (e.g., `UserType`, `VehicleData`)
+- **Interfaces**: PascalCase with `I` prefix not used; direct naming (e.g., `User`, `Vehicle`)
+- **Enums**: PascalCase (observed in MUI usage)
+- **Generic Types**: Single uppercase letters (T, U, K, V) or descriptive (TData, TResponse)
 
-**When to Comment:**
-- Comments are sparse and mostly used to separate sections or explain specific decisions (examples: section banners in `electron/service/user.service.ts`, migration section comments in `electron/database/db.ts`).
-- Some files include author header comments (examples: `src/App.tsx`, `src/components/UI/users.tsx`, `src/components/UI/reports.tsx`).
+### React Specific
 
-**JSDoc/TSDoc:**
-- Not a standard pattern in application code; no regular JSDoc/TSDoc blocks detected in `src/` or `electron/`.
+- **Component Names**: PascalCase (e.g., `DashboardCard`, `Sidebar`)
+- **Props**: camelCase (e.g., `onClick`, `isActive`)
+- **Event Handlers**: Prefixed with `handle` or `on` (e.g., `handleClick`, `onSubmit`)
+- **State Variables**: Often paired with setter (`[state, setState]`)
+- **Custom Hooks**: Prefixed with `use` (e.g., `useLogin`, `useForm`)
 
-## Function Design
+## Code Style Patterns
 
-**Size:**
-- Functions are generally medium-size in service/repository layers (`electron/service/user.service.ts`, `electron/repositories/user.repository.ts`).
-- Large component rendering functions exist in UI screens (`src/App.tsx`, `src/components/UI/reports.tsx`, `src/components/UI/users.tsx`).
+### React Components
 
-**Parameters:**
-- Strongly typed params are standard in TypeScript files (examples: `handleSubmit(event: FormEvent<HTMLFormElement>)` in `src/App.tsx`, `getUserById(id: number)` in `electron/service/user.service.ts`).
-- Optional args used for partial updates and optional IPC fields (`total?: string`, `selectedDate?: string`).
+- **Function Components**: Preferred over class components
+- **Arrow Functions**: Used for concise component definitions
+- **Explicit Return Types**: Often omitted for components (inferred)
+- **Fragment Usage**: `<>` and `</>` for wrapperless groups
+- **Conditional Rendering**: Ternary operators and logical AND (`&&`)
+- **List Keys**: Stable IDs used when mapping arrays
 
-**Return Values:**
-- Repository functions return concrete entity arrays/rows or numeric DB change counts (`electron/repositories/user.repository.ts`).
-- Service layer returns domain result objects to support predictable UI messaging (`electron/service/user.service.ts`, `electron/service/vehicle.service.ts`).
-- Hooks/components return React state APIs and JSX respectively (`src/hooks/useLogin.ts`, `src/App.tsx`).
+### TypeScript Usage
 
-## Module Design
+- **Strict Null Checks**: Enabled via tsconfig
+- **Explicit Returns**: Function return types often specified
+- **Object Typing**: Interfaces preferred for complex objects
+- **Array Typing**: Explicit generic types (e.g., `Array<User>` or `User[]`)
+- **Optional Properties**: `?` notation used judiciously
+- **Union Types**: Used for props variants (especially with MUI components)
 
-**Exports:**
-- Named exports are dominant for services, repositories, and screen components (`electron/service/*.ts`, `src/components/UI/*.tsx`).
-- Default exports are used selectively for app shell/utility components (`src/components/clock.tsx`, `src/main.tsx`).
+### Error Handling
 
-**Barrel Files:**
-- Not used as a broad pattern; modules are imported directly from concrete file paths.
+- **Try/Catch**: Used in asynchronous operations (especially database)
+- **Error Boundaries**: Not explicitly observed in React tree
+- **Custom Error Types**: Not prominently used
+- **Validation**: Input validation before database operations
+- **User Feedback**: Error states shown in UI (implied from component structure)
 
-## Typing Practices
+### Async/Await
 
-- TypeScript `strict` mode is enabled across app, node/vite config, and electron builds (`tsconfig.app.json`, `tsconfig.node.json`, `tsconfig.electron.json`).
-- Additional compile-time guards enabled: `noUnusedLocals`, `noUnusedParameters`, `noFallthroughCasesInSwitch`; app/node configs also enforce `noUncheckedSideEffectImports`.
-- Cross-process typing is maintained with shared contracts via `src/types/electron-api.d.ts` and preload signatures in `electron/preload.ts`.
-- Type-only imports are used to avoid runtime import overhead and clarify intent (`import type` usage in `src/hooks/useLogin.ts`, `electron/service/user.service.ts`).
-- Database row types rely on `as Type` assertions after `better-sqlite3` calls (`electron/repositories/*.ts`), so future phases should keep SQL column names synchronized with model interfaces.
+- **Preferred Pattern**: async/await over .then() chains
+- **Error Handling**: Try/catch blocks around async operations
+- **Loading States**: UI shows loading indicators during async ops
 
-## Build Quality Gates
+## Module Organization
 
-- Local gate 1: pre-commit hook runs `lint-staged` (`.husky/pre-commit`) and `package.json` applies `eslint --fix` + `prettier --write` on staged `src/**/*.{ts,tsx}`.
-- Local gate 2: commit message hook enforces Conventional Commits via commitlint (`.husky/commit-msg`, `commitlint.config.cjs`).
-- Local gate 3: pre-push hook executes full build (`.husky/pre-push` -> `npm run build`).
-- Build script itself enforces chained checks (`package.json`: `build` = `npm run lint && tsc -b && vite build`).
-- CI gate: `.github/workflows/ci.yml` runs `npm run lint` and `npx tsc --noEmit` on pushes/PRs to `main` and `dev`.
-- Release gate: `.github/workflows/build.yml` builds Windows installer on tags and performs `electron-rebuild` for native module compatibility.
+### Feature Organization
 
-## Actionable Guidance For Future Phases
+- **Domain-based**: Features grouped by entity (users, vehicles, settings)
+- **Horizontal Layering**: Components, hooks, styles separated by type
+- **Barrel Exports**: `index.ts` files used for clean imports (primitives/)
 
-- Keep snake_case DTO fields when crossing Electron/SQLite boundaries to avoid mapper code in every repository/service call.
-- Prefer adding new domain logic in `electron/service/<domain>.service.ts` and keep `electron/handlers/*.ts` focused on IPC validation and delegation.
-- Add or update shared IPC types in `src/types/electron-api.d.ts` whenever preload or service contracts change.
-- Keep renderer `try/catch/finally` handling for all `window.electronAPI` calls, and map domain failures to user-facing messages.
-- Expand lint coverage to include `electron/**/*.ts` and non-`src` TS files if stricter quality enforcement is needed in upcoming phases.
+### Separation of Concerns
 
----
+- **UI vs Logic**: Components focused on presentation, hooks on logic
+- **State Management**: Local component state vs custom hooks for shared state
+- **Styling**: CSS modules or component-scoped styles preferred
+- **Constants**: Not centralized; values often inline or in components
 
-*Convention analysis: 2026-04-09*
+## Commenting Practices
+
+- **JSDoc**: Used for complex functions and exports
+- **TODO Comments**: Present for future work items
+- **Inline Comments**: Used sparingly for clarification
+- **License Headers**: Not observed in source files
+
+## Configuration Conventions
+
+### package.json Scripts
+
+- **Build**: `npm run build` (lint + typecheck + vite build)
+- **Dev**: `npm run dev` (vite dev server)
+- **Preview**: `npm run preview` (vite preview)
+- **Test**: `npm run test:ci` (custom test gate)
+- **Lint**: `npm run lint` (eslint check)
+- **Typecheck**: `npm run typecheck` (typescript check)
+- **Win Build**: `npm run build:win` (electron builder for windows)
+
+### Commit Messages
+
+- **Conventional Commits**: Enforced via commitlint
+- **Types**: feat, fix, docs, style, refactor, perf, test, chore, ci
+- **Scopes**: Optional scope specification (e.g., `feat(auth): add login`)
+
+## Security Practices
+
+- **Environment Variables**: Not observed (desktop app doesn't use .env)
+- **Secrets Management**: No secrets in codebase (local SQLite only)
+- **Input Sanitization**: Implied validation before database operations
+- **XSS Protection**: React's automatic escaping provides baseline protection
+
+## Performance Considerations
+
+- **Bundle Size**: Monitored implicitly through build process
+- **Lazy Loading**: Not observed (small application size)
+- **Memoization**: React.memo, useMemo, useCallback used where beneficial
+- **Virtual Scrolling**: Not implemented for large lists (current data volume low)
+
+## Testing Conventions
+
+- **Test Framework**: Not explicitly configured in package.json
+- **Test Files**: No `.test.*` or `*.test.*` files observed
+- **Testing Approach**: CI test gate suggests integration/end-to-end testing focus
+- **Mock Data**: Used in development (`src/data/` directory)

@@ -1,156 +1,121 @@
-# Testing Patterns
+# Testing Strategy
 
-**Analysis Date:** 2026-04-09
+## Test Framework & Tools
 
-## Test Framework
+- **No Explicit Test Framework**: No testing libraries (Jest, Vitest, etc.) in devDependencies
+- **Custom Test Gate**: `scripts/ci-test-gate.mjs` serves as primary validation mechanism
+- **TypeScript Compiler**: Used for type checking as part of verification (`npm run typecheck`)
+- **ESLint**: Used for linting as part of verification (`npm run lint`)
+- **Build Process**: `vite build` tested as part of verification (`npm run build`)
 
-**Runner:**
-- Not detected in current workspace (`package.json` has no `test` script and no test framework dependency such as Vitest/Jest).
-- Config: Not detected (`vitest.config.*`, `jest.config.*`, and `playwright.config.*` are absent).
+## Test Types & Coverage
 
-**Assertion Library:**
-- Not applicable currently (no test runner configured).
+### Unit Testing
 
-**Run Commands:**
-```bash
-npm run lint           # Static analysis gate (present)
-npx tsc --noEmit       # Type-check gate (used in CI)
-npm run build          # Full build gate (lint + tsc -b + vite build)
-```
+- **Not Explicitly Configured**: No unit test files or framework observed
+- **Potential Gaps**: Individual functions, hooks, and components lack isolated testing
+- **Implicit Validation**: Type checking and linting provide some correctness guarantees
 
-## Test File Organization
+### Integration Testing
 
-**Location:**
-- No test files detected for `*.test.*` or `*.spec.*` under `src/` or `electron/`.
+- **CI Test Gate Focus**: Primary emphasis on integration-like validation
+- **Build Verification**: Ensures application compiles and packages correctly
+- **Type Safety**: TypeScript checks catch interface mismatches
+- **Code Quality**: ESLint enforces consistent patterns and catches obvious errors
 
-**Naming:**
-- Not established yet.
+### End-to-End Testing
 
-**Structure:**
-```
-Not detected
-```
+- **Not Configured**: No E2E frameworks (Cypress, Playwright, etc.) observed
+- **Manual Validation**: Likely relies on manual testing during development
+- **Release Process**: Draft releases on tags enable manual QA before publishing
 
-## Test Structure
+### Performance Testing
 
-**Suite Organization:**
-```typescript
-// Not detected: no describe/it patterns currently in repository source files.
-```
+- **Not Configured**: No benchmarks or performance testing tools
+- **Implicit Awareness**: Bundle size monitored through build process
+- **Electron Considerations**: Memory usage and startup time not formally measured
 
-**Patterns:**
-- Setup pattern: Not detected
-- Teardown pattern: Not detected
-- Assertion pattern: Not detected
+## Testing Conventions
 
-## Mocking
+### Test Organization
 
-**Framework:** Not detected
+- **No Test Directory**: Absence of `__tests__`, `tests`, or similar directories
+- **No Test Naming Patterns**: No `*.test.*` or `*.spec.*` files
+- **Test Location**: Not applicable due to lack of tests
 
-**Patterns:**
-```typescript
-// Not detected in current codebase.
-```
+### Test Writing Practices
 
-**What to Mock:**
-- For future tests, mock `window.electronAPI` in renderer tests (usage in `src/hooks/useLogin.ts`, `src/components/UI/users.tsx`, `src/components/UI/reports.tsx`).
-- For Electron service tests, mock or isolate repository calls to avoid brittle DB coupling (`electron/service/user.service.ts`, `electron/service/vehicle.service.ts`).
+- **Not Observable**: No test files to analyze patterns
+- **Assertion Libraries**: None detected
+- **Mocking Frameworks**: None detected
+- **Test Runners**: None configured
 
-**What NOT to Mock:**
-- Do not mock pure helper logic (date window and normalization logic) where deterministic unit tests can validate behavior directly (`src/components/UI/reports.tsx` helper functions, `electron/handlers/vehicle.handler.ts` report period/date guards).
-- Do not over-mock SQL behavior for migration/DB smoke checks; use temporary SQLite files for integration-level repository verification (`electron/database/db.ts`, `electron/repositories/*.ts`).
+## CI/CD Testing Pipeline
 
-## Fixtures and Factories
+### Quality Gate (`npm run ci:verify`)
 
-**Test Data:**
-```typescript
-// Existing non-test data examples that can be promoted into fixture patterns:
-// - src/data/mockDashboardCard.data.ts
-// - src/data/mockVehicle.data.ts
-```
+1. **Linting** (`npm run lint`) - ESLint check for code quality and style
+2. **Type Checking** (`npm run typecheck`) - TypeScript compiler validation
+3. **Build** (`npm run build`) - Vite build and TypeScript compilation
+4. **Custom Test Gate** (`npm run test:ci`) - Runs `scripts/ci-test-gate.mjs`
 
-**Location:**
-- Current sample/mock-like data lives in `src/data/`, but no formal `fixtures`/`factories` test directory exists.
+### Custom Test Gate (`scripts/ci-test-gate.mjs`)
 
-## Coverage
+- **Purpose**: Additional validation beyond linting, typechecking, and building
+- **Implementation**: Custom Node.js script (likely validates build outputs)
+- **Integration**: Part of both CI verification and test CI scripts
+- **Release Blocking**: Prevents progression if validation fails
 
-**Requirements:**
-- No automated coverage threshold is enforced.
-- No coverage command or reporter detected in `package.json`.
+### CI Workflow Characteristics
 
-**View Coverage:**
-```bash
-# Not available yet (no test runner configured).
-```
+- **Node Version**: Uses Node 22 (as specified in workflows)
+- **Cache Dependencies**: npm caching for faster installations
+- **Matrix Testing**: Not observed (single Node version)
+- **Artifacts**: Build artifacts preserved for release workflow
 
-## Test Types
+## Test Data & Fixtures
 
-**Unit Tests:**
-- Not implemented.
-- High-value first targets:
-  - `electron/service/vehicle.service.ts` fee calculations and status transitions.
-  - `electron/service/user.service.ts` auth branches and duplicate validation.
-  - `src/hooks/useLogin.ts` session restore and login error paths.
+### Mock Data
 
-**Integration Tests:**
-- Not implemented.
-- High-value first targets:
-  - Repository + SQLite interactions in `electron/repositories/user.repository.ts` and `electron/repositories/vehcile.repository.ts`.
-  - IPC handler boundary behavior in `electron/handlers/vehicle.handler.ts` and `electron/handlers/user.handler.ts`.
+- **Location**: `src/data/` directory
+- **Files**:
+  - `mockVehicle.data.ts` - Sample vehicle data
+  - `mockDashboardCard.data.ts` - Sample dashboard metrics
+- **Usage**: Likely used for development and UI preview
+- **Format**: TypeScript exports of data arrays/objects
 
-**E2E Tests:**
-- Not used (no Playwright/Cypress/Spectron configuration detected).
+### Database Testing
 
-## Current Quality Gates (Testing Adjacent)
+- **Not Configured**: No automated database testing observed
+- **Manual Verification**: Likely tested through application usage
+- **Schema Migrations**: Not evident (static schema implied)
 
-- `npm run build` is a hard local and pre-push gate (`.husky/pre-push`, `package.json`).
-- CI (`.github/workflows/ci.yml`) runs lint and type-check only; no test step exists.
-- Commit hygiene gates exist via `lint-staged` and commitlint (`.husky/pre-commit`, `.husky/commit-msg`, `commitlint.config.cjs`).
+## Testing Gaps & Recommendations
 
-## Realistic Recommendations
+### Missing Test Types
 
-- Phase 1 (minimum viable testing):
-  - Add Vitest and Testing Library for renderer units.
-  - Add `test`, `test:watch`, and `test:coverage` scripts in `package.json`.
-  - Add a `vitest.config.ts` with separate environments for browser-like (`jsdom`) and node tests.
+- **Unit Tests**: No framework or conventions for testing individual functions
+- **Component Tests**: No React component testing (rendering, props, state)
+- **Integration Tests**: No testing of service/repository interactions
+- **E2E Tests**: No user flow testing (login, vehicle management, etc.)
+- **Regression Tests**: No automated catching of previously fixed issues
 
-- Phase 2 (high-risk backend validation):
-  - Add Node-based unit tests for `electron/service/user.service.ts` and `electron/service/vehicle.service.ts`.
-  - Add repository integration tests using temporary SQLite DB seeded via `initDatabase` from `electron/database/db.ts`.
+### Recommended Additions
 
-- Phase 3 (IPC contract confidence):
-  - Add integration tests around `electron/preload.ts` contract shape and handler invocation (`electron/handlers/*.ts`).
-  - Assert parity with `src/types/electron-api.d.ts` to avoid drift between preload and renderer types.
+1. **Testing Framework**: Add Vitest or Jest with TypeScript support
+2. **Testing Scripts**: Add `npm run test` and `npm run test:watch`
+3. **Test Patterns**: Establish conventions for unit, integration, and E2E tests
+4. **Mocking Strategy**: Define approaches for mocking dependencies
+5. **CI Integration**: Add test results to quality gate
+6. **Coverage Tracking**: Consider adding coverage thresholds
 
-- Phase 4 (CI hardening):
-  - Update `.github/workflows/ci.yml` to run `npm test -- --run`.
-  - Add initial coverage target (for example 60% statements) and ratchet upward per milestone.
+## Current Validation Approach
 
-## Common Patterns
+The project relies on a **preventive quality approach** rather than **detective testing**:
 
-**Async Testing:**
-```typescript
-// Recommended pattern for this codebase once Vitest is added:
-// await expect(window.electronAPI.users.login(dto)).resolves.toMatchObject({ success: true })
-// await expect(loadUsers()).rejects.toThrowError()
-```
+- **Prevention**: Strong typing (TypeScript) and linting (ESLint) prevent many issues
+- **Build Verification**: Ensures the application can be successfully compiled
+- **Manual Validation**: Human testing during development and release preparation
+- **Gatekeeping**: CI prevents merging/builds that fail basic quality checks
 
-**Error Testing:**
-```typescript
-// Recommended pattern for service functions returning domain results:
-// expect(login({ user_username: 'x', user_password: 'bad' })).toEqual(
-//   expect.objectContaining({ success: false, message: expect.any(String) })
-// )
-```
-
-## Coverage Summary (Current State)
-
-- Automated tests present: 0 files detected.
-- Unit coverage: 0% measured (tooling absent).
-- Integration coverage: 0% measured (tooling absent).
-- E2E coverage: 0% measured (tooling absent).
-- Residual risk: regressions in business logic and IPC contract changes can pass lint/type gates undetected.
-
----
-
-*Testing analysis: 2026-04-09*
+This approach is suitable for a small team and relatively simple desktop application but may benefit from additional automated testing as complexity grows.

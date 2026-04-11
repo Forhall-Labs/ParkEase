@@ -1,80 +1,80 @@
 # Technology Stack
 
-**Analysis Date:** 2026-04-09
-
 ## Languages
 
-**Primary:**
-- TypeScript 5.9.x - Renderer and Electron source in `src/` and `electron/` with project references in `tsconfig.json`.
+- TypeScript (primary language)
+- JavaScript (for some configuration files)
+- JSON (package.json, tsconfig, etc.)
+- CSS/Tailwind CSS (styling)
 
-**Secondary:**
-- JavaScript (generated/runtime artifacts) - Electron build output in `dist-electron/` and package/tooling config in `commitlint.config.cjs`.
-- CSS (Tailwind-driven utility styling) - Global styles in `src/index.css` and utility classes in React components like `src/App.tsx`.
+## Runtime & Platform
 
-## Runtime
+- Node.js (version 22+ as per CI configuration)
+- Electron (version ^41.1.1) - Desktop application framework
+- Vite (^8.0.1) - Build tool and development server
 
-**Environment:**
-- Node.js 20 in CI and build runners (`.github/workflows/ci.yml`, `.github/workflows/build.yml`).
-- Electron 41 runtime for desktop app shell (`package.json`, `electron/main.ts`).
-- Chromium renderer via Electron + React (`electron/main.ts`, `src/main.tsx`).
+## Frontend Framework
 
-**Package Manager:**
-- npm (scripts and lockfile usage in `package.json` and `package-lock.json`).
-- Lockfile: present (`package-lock.json`).
+- React (^19.2.4) - UI library
+- React DOM (^19.2.4) - DOM rendering for React
+- @vitejs/plugin-react (^6.0.1) - Vite plugin for React
 
-## Frameworks
+## UI Component Library
 
-**Core:**
-- React 19 (`react`, `react-dom`) for renderer UI in `src/` (`package.json`, `src/main.tsx`).
-- Electron 41 for desktop process model and secure preload bridge (`package.json`, `electron/main.ts`, `electron/preload.ts`).
-- MUI + Emotion (`@mui/material`, `@emotion/react`, `@emotion/styled`) as component/styling dependencies (`package.json`).
+- @mui/material (^9.0.0) - Material UI components
+- @emotion/react (^11.14.0) & @emotion/styled (^11.14.1) - Styling for MUI
 
-**Testing:**
-- Not detected. No Jest/Vitest/Playwright/Cypress config files found; CI currently runs lint + type-check only (`.github/workflows/ci.yml`).
+## Styling
 
-**Build/Dev:**
-- Vite 8 as dev server and bundle tool (`package.json`, `vite.config.ts`).
-- `vite-plugin-electron` and `vite-plugin-electron-renderer` for Electron main/preload integration with Vite (`package.json`, `vite.config.ts`).
-- TypeScript project builds via `tsc -b` and per-target configs (`package.json`, `tsconfig.app.json`, `tsconfig.electron.json`, `tsconfig.node.json`).
-- Electron Builder for Windows packaging (`package.json`, `.github/workflows/build.yml`).
-- Electron Rebuild for native module rebuild (`@electron/rebuild` dependency and workflow step in `.github/workflows/build.yml`).
+- Tailwind CSS (^4.2.2) via @tailwindcss/vite
+- PostCSS (implicit through Tailwind)
+- CSS modules (via vite-plugin-electron-renderer)
 
-## Key Dependencies
+## State Management
 
-**Critical:**
-- `electron` - App runtime and process isolation model (`electron/main.ts`, `electron/preload.ts`).
-- `better-sqlite3` - Local persistent storage and migrations (`electron/database/db.ts`, `electron/repositories/*.ts`).
-- `bcryptjs` - Password hashing and verification in local auth flow (`electron/service/user.service.ts`).
-- `react` / `react-dom` - UI rendering (`src/main.tsx`, `src/App.tsx`).
+- React Context API (implied from hooks usage)
+- Custom hooks (e.g., useLogin.ts)
 
-**Infrastructure:**
-- `vite` + `@vitejs/plugin-react` - Dev/build pipeline (`vite.config.ts`).
-- `typescript` + `typescript-eslint` + `eslint` - Static checks and linting (`tsconfig*.json`, `eslint.config.js`, `package.json`).
-- `prettier` + `lint-staged` + `husky` - formatting and pre-commit automation (`.prettierrc`, `package.json`, `.husky/`).
-- `electron-builder` - distributable packaging (`package.json`, `.github/workflows/build.yml`).
+## Build Tools & Dev Dependencies
 
-## Configuration
+- TypeScript (~5.9.3) with typescript-eslint
+- ESLint (^9.39.4) with plugins:
+  - eslint-config-prettier
+  - eslint-plugin-react-hooks
+  - eslint-plugin-react-refresh
+- Prettier (^3.8.1) for code formatting
+- Husky (^9.1.7) for git hooks
+- Lint-staged (^16.4.0) for pre-commit linting
+- Commitlint (^20.5.0) for commit message validation
+- Vite plugins:
+  - vite-plugin-electron (^0.29.1)
+  - vite-plugin-electron-renderer (^0.14.6)
+- ESBuild (^0.27.7) for fast bundling
 
-**Environment:**
-- Development window URL uses `process.env.VITE_DEV_SERVER_URL` in `electron/main.ts`.
-- No `.env` files detected at repository root (shell glob check returned no matches).
-- GitHub Actions uses `GH_TOKEN` for release packaging in `.github/workflows/build.yml`.
+## Database
 
-**Build:**
-- Vite + Electron dual-entry build config in `vite.config.ts` (`electron/main.ts` and `electron/preload.ts` entries).
-- TypeScript target partitioning across renderer/node/electron configs in `tsconfig.app.json`, `tsconfig.node.json`, `tsconfig.electron.json`.
-- Lint rules in `eslint.config.js`; formatting rules in `.prettierrc`; commit policy in `commitlint.config.cjs`.
+- Better SQLite3 (^12.8.0) - Embedded SQLite database
+- Types: @types/better-sqlite3 (^7.6.13)
 
-## Platform Requirements
+## Security & Utilities
 
-**Development:**
-- Node.js/npm toolchain with native module support for `better-sqlite3` and Electron rebuild (`package.json`, `.github/workflows/build.yml`).
-- Local Electron dev startup expects Vite dev server on port 5173 (`vite.config.ts`, `electron/main.ts`).
+- Bcryptjs (^3.0.3) - Password hashing
+- Types: @types/bcryptjs (^2.4.6)
 
-**Production:**
-- Desktop distribution target explicitly automated for Windows `.exe` artifacts (`.github/workflows/build.yml`).
-- Local SQLite file stored under Electron user data path as `psm.db` (`electron/database/db.ts`).
+## Electron Specific
 
----
+- @electron/rebuild (^4.0.3) - Rebuild native Electron modules
+- Electron Builder (^26.8.1) - Packaging and distribution
 
-*Stack analysis: 2026-04-09*
+## Configuration Files
+
+- package.json - Project metadata and dependencies
+- tsconfig.json - TypeScript configuration with project references
+- tsconfig.node.json - Node.js specific TypeScript config
+- tsconfig.electron.json - Electron main process TypeScript config
+- tsconfig.app.json - Renderer process TypeScript config
+- vite.config.ts - Vite configuration
+- electron-builder configuration in package.json.build
+- eslint.config.js - ESLint configuration
+- commitlint.config.cjs - Commitlint configuration
+- .prettierrc - Prettier configuration

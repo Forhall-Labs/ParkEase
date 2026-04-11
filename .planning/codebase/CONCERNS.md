@@ -1,139 +1,133 @@
-# Codebase Concerns
+# Codebase Concerns & Technical Debt
 
-**Analysis Date:** 2026-04-09
+## Architecture Concerns
 
-## Tech Debt
+### Tight Coupling Between Layers
 
-**[High] Build artifacts committed and not ignored (`dist-electron`)**
-- Issue: Generated Electron output is stored in source control and `.gitignore` does not exclude `dist-electron`.
-- Files: `.gitignore`, `dist-electron/main.js`, `dist-electron/preload.js`, `dist-electron/database/db.js`
-- Impact: Source/build drift risk, noisy diffs, accidental regression from stale generated code, larger review surface.
-- Fix approach: Add `dist-electron/` to `.gitignore`, remove generated artifacts from git, and regenerate only in CI/release.
+- **Direct Repository Access**: UI components may bypass service layer and access repositories directly through Electron IPC
+- **Main Process Overload**: Electron main process handles both system operations and business logic, potentially causing blocking operations
+- **Limited Abstraction**: Minimal separation between Electron-specific code and core application logic
 
-**[High] Duplicate contract definitions for renderer-electron API**
-- Issue: API types are duplicated in two places with overlapping declarations.
-- Files: `electron/preload.ts`, `src/types/electron-api.d.ts`
-- Impact: Interface drift can produce runtime breakages that TypeScript does not catch across process boundary.
-- Fix approach: Keep a single shared type source (for example, under `shared/`), import into both preload and renderer.
+### Electron-Specific Issues
 
-**[Medium] Typo-based module naming debt (`vehcile`)**
-- Issue: Vehicle repository filename is misspelled and referenced broadly.
-- Files: `electron/repositories/vehcile.repository.ts`, `electron/service/vehicle.service.ts`, `dist-electron/repositories/vehcile.repository.js`
-- Impact: Reduced discoverability, higher onboarding friction, future rename risk across many imports.
-- Fix approach: Rename to `vehicle.repository.ts` with a coordinated symbol/file rename.
+- **Preload Script Security**: Need to verify that contextBridge exposure is properly limited to prevent leakage of sensitive APIs
+- **IPC Overhead**: Frequent communication between main and renderer processes could impact performance
+- **No Process Offloading**: Heavy computations run on main process could freeze the UI
 
-**[Medium] Large UI/bridge files increase change risk**
-- Issue: Several files are very large and combine multiple responsibilities.
-- Files: `src/components/vehiclesResumeTable.tsx`, `src/components/UI/reports.tsx`, `src/components/UI/settings.tsx`, `electron/preload.ts`
-- Impact: Harder reviews, increased regression chance, brittle merges.
-- Fix approach: Split by feature slices (table sections/hooks/components), keep preload as thin bridge + per-domain modules.
+## Data Layer Concerns
 
-## Known Bugs
+### SQLite Limitations
 
-**[High] Empty update payload can generate invalid SQL**
-- Symptoms: Update operations can construct `UPDATE ... SET  WHERE ...` when DTO has zero keys.
-- Files: `electron/repositories/user.repository.ts`, `electron/repositories/parameter.repository.ts`, `electron/repositories/vehcile.repository.ts`
-- Trigger: Any IPC caller sending an empty object to update handlers.
-- Workaround: Validate DTO non-empty in service/handler before invoking repository updates.
+- **Concurrent Writes**: Better-sqlite3 handles concurrent access poorly; desktop app may face issues under heavy usage
+- **No Connection Pooling**: Each repository likely creates its own database connection
+- **Schema Migrations**: No visible migration system; schema changes would require manual intervention
+- **Database Location**: Hardcoded APPDATA path may not be ideal for all deployment scenarios
 
-**[Medium] Silent error swallowing in stats endpoints masks failures**
-- Symptoms: Dashboard endpoints return `0` values when SQL/runtime errors occur.
-- Files: `electron/handlers/vehicle.handler.ts`
-- Trigger: Any DB error during stats/revenue/today count queries.
-- Workaround: Log structured error and return explicit failure status instead of forcing zero.
+### Repository Pattern Implementation
 
-## Security Considerations
+- **Inconsistent Naming**: One repository file has a typo (`vehcile.repository.ts` instead of `vehicle.repository.ts`)
+- **Repository Responsibility**: Unclear if repositories handle transactions or if that's left to services
+- **Error Handling**: Need to verify consistent error handling and connection management across repositories
 
-**[Critical] Legacy plaintext password acceptance remains enabled**
-- Risk: Accounts with plaintext passwords are still accepted during login fallback.
-- Files: `electron/service/user.service.ts`
-- Current mitigation: Passwords are migrated to bcrypt upon successful plaintext login.
-- Recommendations: Remove plaintext fallback behind one-time migration script; enforce bcrypt-only auth path.
+## Security Concerns
 
-**[High] SQL field-name injection vector via dynamic update builders**
-- Risk: Dynamic SQL column list is built from untrusted object keys.
-- Files: `electron/repositories/user.repository.ts`, `electron/repositories/parameter.repository.ts`, `electron/repositories/vehcile.repository.ts`
-- Current mitigation: Values are parameterized, but column names are not allowlisted.
-- Recommendations: Use explicit allowlists for updatable fields and reject unknown keys before query construction.
+### Authentication & Authorization
 
-**[High] Session PII persisted locally in clear text**
-- Risk: Session table stores user identity and email in plain SQLite rows.
-- Files: `electron/handlers/session.handler.ts`, `electron/database/db.ts`
-- Current mitigation: Local-only DB path (`app.getPath('userData')`) and no password in session row.
-- Recommendations: Store minimal session token only, encrypt sensitive local payloads, and add expiration/rotation policy.
+- **Password Storage**: Uses bcryptjs which is good, but need to verify work factor and salt handling
+- **Session Management**: Electron-based sessions may have security implications compared to web tokens
+- **No Role-Based Access Control**: Evidence of role checking not clearly visible in codebase
+- **Password Recovery**: No evidence of password reset functionality
 
-**[Medium] Electron renderer sandbox is disabled**
-- Risk: Reduced defense-in-depth if renderer is compromised.
-- Files: `electron/main.ts`
-- Current mitigation: `contextIsolation: true` and `nodeIntegration: false` are enabled.
-- Recommendations: Enable `sandbox: true` and test preload compatibility.
+### Application Security
 
-## Performance Bottlenecks
+- **No CSRF Protection**: Not applicable to desktop app but worth noting
+- **XSS Mitigation**: React provides default protection, but dangerouslySetInnerHTML usage should be audited
+- **Dependency Vulnerabilities**: No visible dependency scanning in CI pipeline
+- **Code Signing**: Electron apps should be code-signed for distribution; not evident in build process
 
-**[Medium] Repeated full scans for report/stat queries**
-- Problem: Queries filter using `DATE(veh_egress_date)` and no indexes are defined for egress/status filters.
-- Files: `electron/handlers/vehicle.handler.ts`, `electron/repositories/vehcile.repository.ts`, `electron/database/db.ts`
-- Cause: Function-wrapped date filtering and absent supporting indexes.
-- Improvement path: Add indexes on `veh_status`, `veh_egress_date`, and potentially computed/date-normalized column; avoid function-wrapped filter where possible.
+## Performance Concerns
 
-**[Medium] Unpaginated fetches for growing datasets**
-- Problem: APIs load full tables for users/vehicles/parameters.
-- Files: `electron/repositories/user.repository.ts`, `electron/repositories/vehcile.repository.ts`, `electron/repositories/parameter.repository.ts`
-- Cause: `SELECT *` endpoints without pagination limits.
-- Improvement path: Add page/limit/sort contracts and UI pagination/virtualization.
+### Bundle Size
 
-## Fragile Areas
+- **Heavy Dependencies**: MUI and Electron contribute to large bundle sizes
+- **No Code Splitting**: Routes or features not lazy-loaded
+- **Large Dev Dependencies**: Full Electron toolchain included in development
 
-**[High] Migration application is not atomic per release boot**
-- Files: `electron/database/db.ts`
-- Why fragile: Migration execution and migration-record inserts are not wrapped in a transaction.
-- Safe modification: Wrap per-migration or full migration batch in transaction and fail-fast with rollback.
-- Test coverage: No automated migration failure/recovery tests detected.
+### Runtime Performance
 
-**[High] Session save does delete-then-insert without transaction**
-- Files: `electron/handlers/session.handler.ts`
-- Why fragile: Failure between delete and insert can leave app without session unexpectedly.
-- Safe modification: Use transaction for clear+insert or `INSERT ... ON CONFLICT` strategy with single-row key.
-- Test coverage: No session persistence tests detected.
+- **Database Queries**: Need to verify if complex queries are optimized and indexed
+- **UI Re-renders**: Potential for unnecessary re-renders in React components
+- **Memory Leaks**: Electron applications can accumulate memory over time; no monitoring evident
+- **Startup Time**: Electron apps typically have slower startup; no optimization efforts visible
 
-## Scaling Limits
+### Frontend Performance
 
-**[Medium] Single local SQLite with synchronous access model**
-- Current capacity: Suitable for single-desktop, low concurrency, moderate dataset.
-- Limit: Large tables and report-heavy usage will degrade due to full scans and synchronous query model.
-- Scaling path: Add indexes and pagination now; if multi-user/remote requirements emerge, migrate to client-server API + managed DB.
+- **Image Optimization**: No evidence of image optimization or lazy loading
+- **CSS Efficiency**: Tailwind may generate unused CSS; no purging configuration visible
+- **Font Loading**: No optimization for web fonts if used
 
-## Dependencies at Risk
+## Maintainability Concerns
 
-**[Medium] Native Electron + `better-sqlite3` upgrade coupling**
-- Risk: Electron major updates can break native module rebuilds.
-- Impact: Build/runtime failures in packaged app.
-- Migration plan: Pin compatible Electron/native versions, add CI matrix for rebuild/package validation, keep `@electron/rebuild` path tested.
+### Code Duplication
 
-## Missing Critical Features
+- **UI Patterns**: Similar modal, form, and table patterns may be duplicated across components
+- **Error Handling**: Inconsistent error handling approaches possible
+- **Loading States**: Loading UI patterns may be implemented differently in various places
 
-**[High] No role-based authorization model across IPC commands**
-- Problem: IPC handlers expose full CRUD operations without role checks.
-- Blocks: Separation of duties, least-privilege operation, auditable admin-only actions.
+### Documentation Gaps
 
-**[Medium] No explicit audit trail for destructive actions**
-- Problem: Deletes/updates are not audit-logged.
-- Blocks: Traceability for operational incidents and data disputes.
+- **API Documentation**: No visible JSDoc or TypeDoc comments for public APIs
+- **Architecture Decisions**: Lack of ADRs (Architecture Decision Records) for significant choices
+- **Setup Instructions**: Developer onboarding may rely on tribal knowledge
+- **Contributing Guidelines**: No explicit contribution process documented
 
-## Test Coverage Gaps
+### Testing Deficiencies
 
-**[Critical] Automated tests are effectively absent**
-- What's not tested: Auth flows, session persistence, repository update guards, IPC handlers, migration behavior, reporting queries.
-- Files: `package.json`, `electron/service/user.service.ts`, `electron/handlers/session.handler.ts`, `electron/database/db.ts`, `electron/handlers/vehicle.handler.ts`
-- Risk: Regressions ship undetected in security/correctness-critical paths.
-- Priority: High
+- **No Automated Tests**: Complete absence of unit, integration, or E2E tests
+- **Manual Validation Reliance**: High dependence on manual testing
+- **Regression Risk**: No safety net for refactoring or feature additions
+- **CI Limitations**: Quality gate focuses on build correctness, not behavioral correctness
 
-**[High] No integration tests for preload-to-IPC contracts**
-- What's not tested: `window.electronAPI` method signatures and runtime behavior across renderer/main boundary.
-- Files: `electron/preload.ts`, `src/types/electron-api.d.ts`, `electron/handlers/*.ts`
-- Risk: Runtime contract drift and broken UI operations after refactors.
-- Priority: High
+## Development Process Concerns
 
----
+### Dependency Management
 
-*Concerns audit: 2026-04-09*
+- **Lockfile Maintenance**: Past issues with npm ci synchronization indicate potential maintenance challenges
+- **Version Pinning**: Some dependencies pinned (emnapi) while others use ranges
+- **Outdated Dependencies**: No visible dependency update process
+- **Security Scanning**: No automated vulnerability detection in CI
+
+### Build & Release Process
+
+- **Electron Builder Configuration**: Complexity may lead to packaging issues across platforms
+- **No Automatic Updates**: Application lacks auto-update mechanism
+- **Platform Testing**: Limited evidence of cross-platform testing (Windows-focused from context)
+- **Release Notes**: No automated changelog generation
+
+## Specific Code Issues Observed
+
+### Filename Typos
+
+- `vehcile.repository.ts` - Missing 'l' in vehicle
+
+### Potential Runtime Issues
+
+- **Unhandled Promises**: Need to verify promise error handling in asynchronous operations
+- **Memory Leaks**: Event listeners and intervals may not be properly cleaned up
+- **Zombie Processes**: Electron child processes may not terminate correctly
+
+### User Experience Gaps
+
+- **Offline Handling**: No explicit handling of database accessibility issues
+- **Data Validation**: Form validation patterns may be inconsistent
+- **Error UI**: Error states may not be consistently presented to users
+- **Accessibility**: No evidence of ARIA labels, keyboard navigation, or screen reader support
+
+## Technical Debt Hotspots
+
+1. **Database Layer**: Repository implementation consistency and error handling
+2. **Authentication**: Session security and password policies
+3. **UI Components**: Potential duplication and inconsistent patterns
+4. **Build Configuration**: Complexity of Electron builder setup
+5. **Missing Tests**: Complete lack of automated test coverage
+6. **Documentation**: Insufficient developer and architectural documentation

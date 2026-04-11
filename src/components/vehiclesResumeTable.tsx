@@ -489,8 +489,8 @@ export function VehiclesTable({
                 <TableRow
                   className={
                     isLight
-                      ? 'bg-stone-100! hover:bg-stone-100!'
-                      : 'bg-slate-950/50! hover:bg-slate-950/50!'
+                      ? 'bg-stone-100! hover:bg-stone-100! sticky top-0 z-10'
+                      : 'bg-slate-950/50! hover:bg-slate-950/50! sticky top-0 z-10'
                   }
                 >
                   <TableCell

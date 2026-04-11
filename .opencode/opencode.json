@@ -1,0 +1,11 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "permission": {
+    "read": {
+      "/Users/aleleonmarin/Documents/Personal/Parqueo-Parroquial-San-Marcos/.opencode/get-shit-done/*": "allow"
+    },
+    "external_directory": {
+      "/Users/aleleonmarin/Documents/Personal/Parqueo-Parroquial-San-Marcos/.opencode/get-shit-done/*": "allow"
+    }
+  }
+}

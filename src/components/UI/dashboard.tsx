@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { VehiclesTable } from '../../components/vehiclesResumeTable';
 import { DashboardCard } from '../dashboardCard';
 import { t } from '../../i18n';
-import { Button, Card, SectionHeader, StatusBadge } from '../primitives';
+import { Button, Card, SectionHeader } from '../primitives';
 import type { Vehicle } from '../../types/electron-api';
 
 interface DashboardStats {
@@ -109,109 +109,109 @@ export function Dashboard({ theme = 'dark', onGoToVehicles, onQuickAddVehicle }:
         />
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="grid gap-4 xl:grid-cols-[1fr_320px]">
         <Card
           variant="panel"
-          className={`ui-section-padding min-w-0 ${isLight ? 'border-stone-200 bg-white' : 'border-slate-700/70 bg-slate-900/60'}`}
+          className={`min-w-0 overflow-hidden ${isLight ? 'border-stone-200 bg-white' : 'border-slate-700/70 bg-slate-900/60'}`}
         >
-          <SectionHeader
-            label="Monitoreo"
-            title="Vehiculos actualmente en parqueo"
-            subtitle="Vista rapida de los ingresos activos"
-            action={<StatusBadge tone="info">{activeVehicles.length} activos</StatusBadge>}
-            className="mb-4"
-          />
+          <div className="p-4 pb-3">
+            <SectionHeader
+              label="Monitoreo"
+              title="Vehículos en parqueo"
+              subtitle={`${activeVehicles.length} activo${activeVehicles.length !== 1 ? 's' : ''}`}
+              className="mb-0"
+            />
+          </div>
 
           <div
-            className={`overflow-hidden rounded-2xl border ${isLight ? 'border-stone-200' : 'border-white/10'}`}
+            className={`overflow-x-auto ${isLight ? 'border-t border-stone-200' : 'border-t border-white/10'}`}
           >
-            <div className="max-h-[520px] overflow-y-auto">
-              <table className="w-full table-fixed text-sm">
-                <thead className={isLight ? 'bg-stone-100' : 'bg-slate-950/60'}>
+            <table className="w-full text-sm">
+              <thead className={isLight ? 'bg-stone-50' : 'bg-slate-950/60'}>
+                <tr>
+                  <th
+                    className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide ${isLight ? 'text-slate-600' : 'text-cyan-200'}`}
+                  >
+                    {t('vehicles.plate')}
+                  </th>
+                  <th
+                    className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide ${isLight ? 'text-slate-600' : 'text-cyan-200'}`}
+                  >
+                    {t('vehicles.owner')}
+                  </th>
+                  <th
+                    className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide ${isLight ? 'text-slate-600' : 'text-cyan-200'}`}
+                  >
+                    {t('vehicles.reference')}
+                  </th>
+                  <th
+                    className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide ${isLight ? 'text-slate-600' : 'text-cyan-200'}`}
+                  >
+                    {t('vehicles.ingressTime')}
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-inherit">
+                {loadingVehicles ? (
                   <tr>
-                    <th
-                      className={`w-[18%] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide ${isLight ? 'text-slate-700' : 'text-cyan-200'}`}
+                    <td
+                      colSpan={4}
+                      className={`px-4 py-12 text-center ${isLight ? 'text-slate-500' : 'text-slate-400'}`}
                     >
-                      {t('vehicles.plate')}
-                    </th>
-                    <th
-                      className={`w-[25%] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide ${isLight ? 'text-slate-700' : 'text-cyan-200'}`}
-                    >
-                      {t('vehicles.owner')}
-                    </th>
-                    <th
-                      className={`w-[26%] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide ${isLight ? 'text-slate-700' : 'text-cyan-200'}`}
-                    >
-                      {t('vehicles.reference')}
-                    </th>
-                    <th
-                      className={`w-[31%] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide ${isLight ? 'text-slate-700' : 'text-cyan-200'}`}
-                    >
-                      {t('vehicles.ingressTime')}
-                    </th>
+                      {t('common.loading')}
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {loadingVehicles ? (
-                    <tr>
+                ) : visibleVehicles.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className={`px-4 py-12 text-center ${isLight ? 'text-slate-500' : 'text-slate-400'}`}
+                    >
+                      {t('vehicles.noVehicles')}
+                    </td>
+                  </tr>
+                ) : (
+                  visibleVehicles.map((vehicle) => (
+                    <tr
+                      key={vehicle.veh_id}
+                      className={`transition-colors ${isLight ? 'hover:bg-stone-50' : 'hover:bg-slate-800/40'}`}
+                    >
                       <td
-                        colSpan={4}
-                        className={`px-4 py-6 text-center ${isLight ? 'text-slate-500' : 'text-slate-400'}`}
+                        className={`whitespace-nowrap px-4 py-3 font-medium ${isLight ? 'text-slate-900' : 'text-white'}`}
                       >
-                        {t('common.loading')}
+                        {vehicle.veh_plate}
+                      </td>
+                      <td
+                        className={`whitespace-nowrap px-4 py-3 ${isLight ? 'text-slate-600' : 'text-slate-300'}`}
+                      >
+                        {vehicle.veh_owner || '-'}
+                      </td>
+                      <td
+                        className={`whitespace-nowrap px-4 py-3 ${isLight ? 'text-slate-600' : 'text-slate-300'}`}
+                      >
+                        {vehicle.veh_reference}
+                      </td>
+                      <td
+                        className={`whitespace-nowrap px-4 py-3 ${isLight ? 'text-slate-600' : 'text-slate-300'}`}
+                      >
+                        {formatDateTime(vehicle.veh_ingress_date)}
                       </td>
                     </tr>
-                  ) : visibleVehicles.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={4}
-                        className={`px-4 py-6 text-center ${isLight ? 'text-slate-500' : 'text-slate-400'}`}
-                      >
-                        {t('vehicles.noVehicles')}
-                      </td>
-                    </tr>
-                  ) : (
-                    visibleVehicles.map((vehicle) => (
-                      <tr
-                        key={vehicle.veh_id}
-                        className={`border-t ${isLight ? 'border-stone-200' : 'border-white/10'} ${isLight ? 'hover:bg-stone-50' : 'hover:bg-slate-800/40'}`}
-                      >
-                        <td
-                          className={`truncate px-4 py-3 font-medium ${isLight ? 'text-slate-900' : 'text-white'}`}
-                          title={vehicle.veh_plate}
-                        >
-                          {vehicle.veh_plate}
-                        </td>
-                        <td
-                          className={`truncate px-4 py-3 ${isLight ? 'text-slate-700' : 'text-slate-300'}`}
-                          title={vehicle.veh_owner || '-'}
-                        >
-                          {vehicle.veh_owner || '-'}
-                        </td>
-                        <td
-                          className={`truncate px-4 py-3 ${isLight ? 'text-slate-700' : 'text-slate-300'}`}
-                          title={vehicle.veh_reference}
-                        >
-                          {vehicle.veh_reference}
-                        </td>
-                        <td
-                          className={`px-4 py-3 ${isLight ? 'text-slate-700' : 'text-slate-300'}`}
-                        >
-                          {formatDateTime(vehicle.veh_ingress_date)}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
 
           {activeVehicles.length > 8 && (
-            <p className={`mt-3 text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
-              Mostrando 8 de {activeVehicles.length} vehiculos activos. Usa "Ver modulo de
-              vehiculos" para ver todos.
-            </p>
+            <div
+              className={`border-t px-4 py-3 ${isLight ? 'border-stone-200' : 'border-white/10'}`}
+            >
+              <p className={`text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                Mostrando 8 de {activeVehicles.length} vehículos. Ver todos en el módulo de
+                vehículos.
+              </p>
+            </div>
           )}
         </Card>
 
@@ -223,19 +223,14 @@ export function Dashboard({ theme = 'dark', onGoToVehicles, onQuickAddVehicle }:
             <p
               className={`text-xs uppercase tracking-[0.2em] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}
             >
-              Atajos rapidos
+              Acciones rápidas
             </p>
-            <p
-              className={`mt-2 text-sm leading-relaxed ${isLight ? 'text-slate-600' : 'text-slate-300'}`}
-            >
-              Accede rapido al modulo de Vehiculos para ingresar carros y gestionar salidas.
-            </p>
-            <div className="mt-4 grid gap-2">
+            <div className="mt-4 flex flex-col gap-2">
               <Button type="button" variant="filled" onClick={onQuickAddVehicle}>
-                + Ingresar carro
+                + Ingresar vehículo
               </Button>
               <Button type="button" variant="outlined" onClick={onGoToVehicles}>
-                Ver modulo de vehiculos
+                Ver módulo de vehículos
               </Button>
             </div>
           </Card>
