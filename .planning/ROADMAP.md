@@ -64,6 +64,7 @@
 
 - [x] 08-01-PLAN.md — Focus visibility + keyboard handlers in Dropdown/Accordion primitives
 - [x] 08-02-PLAN.md — Reduced-motion for transforms + skip-to-content link
+      **Status**: Complete ✓
       **UI hint**: yes
 
 ### Phase 9: Theme Quality Parity
@@ -79,10 +80,10 @@
 
 | Phase                              | Plans Complete | Status      | Completed |
 | ---------------------------------- | -------------- | ----------- | --------- |
-| 5. Design Tokens and Primitives    | 0/2            | Planned     | -         |
-| 6. Cross-Screen Visual Consistency | 0/0            | Not started | -         |
-| 7. Responsive Layout Hardening     | 0/0            | Not started | -         |
-| 8. Accessibility Baseline          | 0/2            | Planned     | -         |
+| 5. Design Tokens and Primitives    | 2/2            | Complete    | ✓         |
+| 6. Cross-Screen Visual Consistency | 2/2            | Complete    | ✓         |
+| 7. Responsive Layout Hardening     | 2/2            | Complete    | ✓         |
+| 8. Accessibility Baseline          | 2/2            | Complete    | ✓         |
 | 9. Theme Quality Parity            | 0/0            | Not started | -         |
 
 ### Phase 10: quiero que agregues una fase para poder editar como se manejan los parametros, los parametros ahora deben de tener la opcion de poner por ejemplo, tarifa moto cuesta 600 colones, y cuando se ingresa un vehiculo poder seleccionar la tarifa que debamos usar
