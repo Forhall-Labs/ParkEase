@@ -1,13 +1,5 @@
 import { useCallback, useMemo, useState, useEffect } from 'react';
-import {
-  Paper,
-  Table,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TableBody,
-  TableCell,
-} from '@mui/material';
+import { Paper } from '@mui/material';
 import type { Vehicle, CreateVehicleDto, Parameter } from '../types/electron-api';
 import { t } from '../i18n';
 import { ConfirmModal, ModalShell } from './UI/Modal';
@@ -481,187 +473,73 @@ export function VehiclesTable({
         </div>
 
         <Paper
-          className={`overflow-hidden border! shadow-none! ${isLight ? 'bg-stone-50! border-stone-300!' : 'bg-slate-900/50! border-white/10!'}`}
+          className={`overflow-hidden border! shadow-none! ${isLight ? 'bg-white! border-stone-200!' : 'bg-slate-900/50! border-white/10!'}`}
         >
-          <TableContainer className="max-w-full">
-            <Table className="w-full table-fixed">
-              <colgroup>
-                <col className="w-28" />
-                <col className="w-36" />
-                <col className="w-36" />
-                <col className="w-32" />
-                <col className="w-24" />
-              </colgroup>
-              <TableHead>
-                <TableRow
-                  className={
-                    isLight
-                      ? 'bg-stone-100! hover:bg-stone-100!'
-                      : 'bg-slate-950/50! hover:bg-slate-950/50!'
-                  }
+          <div className="divide-y divide-inherit">
+            {loading ? (
+              <div
+                className={`px-4 py-8 text-center text-sm ${isLight ? 'text-slate-500' : 'text-slate-400'}`}
+              >
+                {t('common.loading')}
+              </div>
+            ) : filteredVehicles.length === 0 ? (
+              <div
+                className={`px-4 py-8 text-center text-sm ${isLight ? 'text-slate-500' : 'text-slate-400'}`}
+              >
+                {t('vehicles.noVehicles')}
+              </div>
+            ) : (
+              filteredVehicles.map((vehicle) => (
+                <div
+                  key={vehicle.veh_id}
+                  className={`flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 ${isLight ? 'hover:bg-stone-50' : 'hover:bg-slate-800/40'}`}
                 >
-                  <TableCell
-                    className={
-                      isLight
-                        ? 'text-slate-700! font-semibold! border-b! border-stone-300! text-xs uppercase tracking-wide py-2 px-2'
-                        : 'text-cyan-200! font-semibold! border-b! border-white/10! text-xs uppercase tracking-wide py-2 px-2'
-                    }
-                  >
-                    {t('vehicles.plate')}
-                  </TableCell>
-                  <TableCell
-                    className={
-                      isLight
-                        ? 'text-slate-700! font-semibold! border-b! border-stone-300! text-xs uppercase tracking-wide py-2 px-2'
-                        : 'text-cyan-200! font-semibold! border-b! border-white/10! text-xs uppercase tracking-wide py-2 px-2'
-                    }
-                  >
-                    {t('vehicles.owner')}
-                  </TableCell>
-                  <TableCell
-                    className={
-                      isLight
-                        ? 'text-slate-700! font-semibold! border-b! border-stone-300! text-xs uppercase tracking-wide py-2 px-2'
-                        : 'text-cyan-200! font-semibold! border-b! border-white/10! text-xs uppercase tracking-wide py-2 px-2'
-                    }
-                  >
-                    {t('vehicles.reference')}
-                  </TableCell>
-                  <TableCell
-                    className={
-                      isLight
-                        ? 'text-slate-700! font-semibold! border-b! border-stone-300! text-xs uppercase tracking-wide py-2 px-2'
-                        : 'text-cyan-200! font-semibold! border-b! border-white/10! text-xs uppercase tracking-wide py-2 px-2'
-                    }
-                  >
-                    {t('vehicles.ingressTime')}
-                  </TableCell>
-                  <TableCell
-                    className={
-                      isLight
-                        ? 'text-slate-700! font-semibold! border-b! border-stone-300! text-xs uppercase tracking-wide py-2 px-2 text-center'
-                        : 'text-cyan-200! font-semibold! border-b! border-white/10! text-xs uppercase tracking-wide py-2 px-2 text-center'
-                    }
-                  >
-                    {t('vehicles.actions')}
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={5}
-                      className="border-b! border-white/5! py-6! text-center text-sm text-slate-400!"
+                  <div className="flex flex-1 items-center gap-3">
+                    <span
+                      className={`inline-flex shrink-0 rounded px-2 py-0.5 text-xs font-semibold ${isLight ? 'bg-stone-100 text-slate-800' : 'bg-cyan-400/10 text-cyan-200'}`}
                     >
-                      {t('common.loading')}
-                    </TableCell>
-                  </TableRow>
-                ) : filteredVehicles.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={5}
-                      className={
-                        isLight
-                          ? 'border-b! border-stone-200! py-6! text-center text-sm text-slate-500!'
-                          : 'border-b! border-white/5! py-6! text-center text-sm text-slate-400!'
-                      }
-                    >
-                      {t('vehicles.noVehicles')}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredVehicles.map((vehicle) => (
-                    <TableRow
-                      key={vehicle.veh_id}
-                      className={
-                        isLight
-                          ? 'hover:bg-stone-100! transition-colors'
-                          : 'hover:bg-slate-800/50! transition-colors'
-                      }
-                    >
-                      <TableCell
-                        className={
-                          isLight
-                            ? 'text-slate-900! border-b! border-stone-200! py-2! px-2'
-                            : 'text-white! border-b! border-white/5! py-2! px-2'
-                        }
+                      {vehicle.veh_plate}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p
+                        className={`truncate text-xs ${isLight ? 'text-slate-700' : 'text-slate-200'}`}
                       >
-                        <span
-                          className={`inline-block max-w-full truncate rounded px-2 py-0.5 text-sm font-medium ${isLight ? 'bg-stone-100 text-slate-800' : 'bg-cyan-400/10 text-cyan-200'}`}
-                          title={vehicle.veh_plate}
-                        >
-                          {vehicle.veh_plate}
-                        </span>
-                      </TableCell>
-                      <TableCell
-                        className={
-                          isLight
-                            ? 'text-slate-700! border-b! border-stone-200! py-2! px-2 truncate'
-                            : 'text-slate-200! border-b! border-white/5! py-2! px-2 truncate'
-                        }
-                        title={vehicle.veh_owner || '-'}
-                      >
-                        {vehicle.veh_owner || '-'}
-                      </TableCell>
-                      <TableCell
-                        className={
-                          isLight
-                            ? 'text-slate-700! border-b! border-stone-200! py-2! px-2 truncate'
-                            : 'text-slate-200! border-b! border-white/5! py-2! px-2 truncate'
-                        }
-                        title={vehicle.veh_reference}
-                      >
-                        {vehicle.veh_reference}
-                      </TableCell>
-                      <TableCell
-                        className={
-                          isLight
-                            ? 'text-slate-600! border-b! border-stone-200! py-2! px-2 text-xs'
-                            : 'text-slate-300! border-b! border-white/5! py-2! px-2 text-xs'
-                        }
-                      >
+                        {vehicle.veh_owner || vehicle.veh_reference || '-'}
+                      </p>
+                      <p className={`text-xs ${isLight ? 'text-slate-400' : 'text-slate-500'}`}>
                         {vehicle.veh_ingress_date
                           ? new Date(vehicle.veh_ingress_date).toLocaleString('es-ES')
                           : '-'}
-                      </TableCell>
-                      <TableCell
-                        className={
-                          isLight
-                            ? 'border-b! border-stone-200! py-2! px-2'
-                            : 'border-b! border-white/5! py-2! px-2'
-                        }
-                      >
-                        <div className="flex items-center justify-center gap-1">
-                          <Button
-                            onClick={() => handleCheckout(vehicle.veh_id!)}
-                            variant="filled"
-                            size="sm"
-                          >
-                            {t('vehicles.checkout')}
-                          </Button>
-                          <Button
-                            onClick={() => printVehicleReceipt(vehicle)}
-                            variant="outlined"
-                            size="sm"
-                          >
-                            {t('vehicles.reprint')}
-                          </Button>
-                          <Button
-                            onClick={() => handleDeleteVehicle(vehicle.veh_id!)}
-                            variant="danger"
-                            size="sm"
-                          >
-                            {t('vehicles.delete')}
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      onClick={() => handleCheckout(vehicle.veh_id!)}
+                      variant="filled"
+                      size="sm"
+                    >
+                      {t('vehicles.checkout')}
+                    </Button>
+                    <Button
+                      onClick={() => printVehicleReceipt(vehicle)}
+                      variant="outlined"
+                      size="sm"
+                    >
+                      {t('vehicles.reprint')}
+                    </Button>
+                    <Button
+                      onClick={() => handleDeleteVehicle(vehicle.veh_id!)}
+                      variant="danger"
+                      size="sm"
+                    >
+                      {t('vehicles.delete')}
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </Paper>
       </Card>
 

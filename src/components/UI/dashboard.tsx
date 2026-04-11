@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { VehiclesTable } from '../../components/vehiclesResumeTable';
 import { DashboardCard } from '../dashboardCard';
 import { t } from '../../i18n';
-import { Button, Card, SectionHeader } from '../primitives';
+import { Button, Card } from '../primitives';
 import type { Vehicle } from '../../types/electron-api';
 
 interface DashboardStats {
@@ -61,7 +61,6 @@ export function Dashboard({ theme = 'dark', onGoToVehicles, onQuickAddVehicle }:
   const stats = useDashboardStats();
   const [activeVehicles, setActiveVehicles] = useState<Vehicle[]>([]);
   const [loadingVehicles, setLoadingVehicles] = useState(true);
-  const visibleVehicles = activeVehicles.slice(0, 8);
 
   useEffect(() => {
     const loadActiveVehicles = async () => {
@@ -87,8 +86,8 @@ export function Dashboard({ theme = 'dark', onGoToVehicles, onQuickAddVehicle }:
   }
 
   return (
-    <div className="space-y-5 sm:space-y-6">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <DashboardCard
           title={t('dashboard.parkedVehicles')}
           info={stats.parkedCount.toString()}
@@ -109,137 +108,79 @@ export function Dashboard({ theme = 'dark', onGoToVehicles, onQuickAddVehicle }:
         />
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[1fr_320px]">
-        <Card
-          variant="panel"
-          className={`min-w-0 overflow-hidden ${isLight ? 'border-stone-200 bg-white' : 'border-slate-700/70 bg-slate-900/60'}`}
+      <Card
+        variant="panel"
+        className={`overflow-hidden ${isLight ? 'border-stone-200 bg-white' : 'border-white/10 bg-slate-900/60'}`}
+      >
+        <div
+          className={`flex items-center justify-between border-b px-4 py-3 ${isLight ? 'border-stone-200' : 'border-white/10'}`}
         >
-          <div className="p-4 pb-3">
-            <SectionHeader
-              label="Monitoreo"
-              title="Vehículos en parqueo"
-              subtitle={`${activeVehicles.length} activo${activeVehicles.length !== 1 ? 's' : ''}`}
-              className="mb-0"
-            />
-          </div>
-
-          <div className={`border-t ${isLight ? 'border-stone-200' : 'border-white/10'}`}>
-            <table className="w-full table-fixed text-xs">
-              <colgroup>
-                <col className="w-24" />
-                <col className="w-32" />
-                <col className="w-28" />
-                <col className="w-28" />
-              </colgroup>
-              <thead className={isLight ? 'bg-stone-50' : 'bg-slate-950/60'}>
-                <tr>
-                  <th
-                    className={`px-3 py-2.5 text-left font-semibold uppercase tracking-wide ${isLight ? 'text-slate-600' : 'text-cyan-200'}`}
-                  >
-                    {t('vehicles.plate')}
-                  </th>
-                  <th
-                    className={`px-3 py-2.5 text-left font-semibold uppercase tracking-wide ${isLight ? 'text-slate-600' : 'text-cyan-200'}`}
-                  >
-                    {t('vehicles.owner')}
-                  </th>
-                  <th
-                    className={`px-3 py-2.5 text-left font-semibold uppercase tracking-wide ${isLight ? 'text-slate-600' : 'text-cyan-200'}`}
-                  >
-                    {t('vehicles.reference')}
-                  </th>
-                  <th
-                    className={`px-3 py-2.5 text-left font-semibold uppercase tracking-wide ${isLight ? 'text-slate-600' : 'text-cyan-200'}`}
-                  >
-                    {t('vehicles.ingressTime')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-inherit">
-                {loadingVehicles ? (
-                  <tr>
-                    <td
-                      colSpan={4}
-                      className={`px-3 py-8 text-center ${isLight ? 'text-slate-500' : 'text-slate-400'}`}
-                    >
-                      {t('common.loading')}
-                    </td>
-                  </tr>
-                ) : visibleVehicles.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={4}
-                      className={`px-3 py-8 text-center ${isLight ? 'text-slate-500' : 'text-slate-400'}`}
-                    >
-                      {t('vehicles.noVehicles')}
-                    </td>
-                  </tr>
-                ) : (
-                  visibleVehicles.map((vehicle) => (
-                    <tr
-                      key={vehicle.veh_id}
-                      className={`transition-colors ${isLight ? 'hover:bg-stone-50' : 'hover:bg-slate-800/40'}`}
-                    >
-                      <td
-                        className={`truncate px-3 py-2.5 font-medium ${isLight ? 'text-slate-900' : 'text-white'}`}
-                      >
-                        {vehicle.veh_plate}
-                      </td>
-                      <td
-                        className={`truncate px-3 py-2.5 ${isLight ? 'text-slate-600' : 'text-slate-300'}`}
-                      >
-                        {vehicle.veh_owner || '-'}
-                      </td>
-                      <td
-                        className={`truncate px-3 py-2.5 ${isLight ? 'text-slate-600' : 'text-slate-300'}`}
-                      >
-                        {vehicle.veh_reference}
-                      </td>
-                      <td
-                        className={`truncate px-3 py-2.5 ${isLight ? 'text-slate-600' : 'text-slate-300'}`}
-                      >
-                        {formatDateTime(vehicle.veh_ingress_date)}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {activeVehicles.length > 8 && (
-            <div
-              className={`border-t px-4 py-3 ${isLight ? 'border-stone-200' : 'border-white/10'}`}
-            >
-              <p className={`text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
-                Mostrando 8 de {activeVehicles.length} vehículos. Ver todos en el módulo de
-                vehículos.
-              </p>
-            </div>
-          )}
-        </Card>
-
-        <div className="space-y-4">
-          <Card
-            variant="panel"
-            className={`ui-section-padding ${isLight ? 'border-stone-200 bg-white' : 'border-slate-700/70 bg-slate-900/60'}`}
-          >
-            <p
-              className={`text-xs uppercase tracking-[0.2em] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}
-            >
-              Acciones rápidas
+          <div>
+            <h3 className={`text-sm font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>
+              Vehículos en parqueo
+            </h3>
+            <p className={`text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+              {activeVehicles.length} activo{activeVehicles.length !== 1 ? 's' : ''}
             </p>
-            <div className="mt-4 flex flex-col gap-2">
-              <Button type="button" variant="filled" onClick={onQuickAddVehicle}>
-                + Ingresar vehículo
-              </Button>
-              <Button type="button" variant="outlined" onClick={onGoToVehicles}>
-                Ver módulo de vehículos
-              </Button>
-            </div>
-          </Card>
+          </div>
+          <div className="flex gap-2">
+            <Button type="button" variant="filled" size="sm" onClick={onQuickAddVehicle}>
+              + Ingresar
+            </Button>
+            <Button type="button" variant="outlined" size="sm" onClick={onGoToVehicles}>
+              Ver todos
+            </Button>
+          </div>
         </div>
-      </div>
+
+        <div className="divide-y divide-inherit">
+          {loadingVehicles ? (
+            <div
+              className={`px-4 py-8 text-center text-sm ${isLight ? 'text-slate-500' : 'text-slate-400'}`}
+            >
+              {t('common.loading')}
+            </div>
+          ) : activeVehicles.length === 0 ? (
+            <div
+              className={`px-4 py-8 text-center text-sm ${isLight ? 'text-slate-500' : 'text-slate-400'}`}
+            >
+              {t('vehicles.noVehicles')}
+            </div>
+          ) : (
+            activeVehicles.slice(0, 5).map((vehicle) => (
+              <div
+                key={vehicle.veh_id}
+                className={`flex items-center justify-between px-4 py-2.5 transition-colors hover:${isLight ? 'bg-stone-50' : 'bg-slate-800/40'}`}
+              >
+                <div className="flex items-center gap-3">
+                  <span
+                    className={`inline-flex shrink-0 rounded px-2 py-0.5 text-xs font-semibold ${isLight ? 'bg-stone-100 text-slate-800' : 'bg-cyan-400/10 text-cyan-200'}`}
+                  >
+                    {vehicle.veh_plate}
+                  </span>
+                  <span className={`text-xs ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
+                    {vehicle.veh_owner || vehicle.veh_reference || '-'}
+                  </span>
+                </div>
+                <span className={`text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                  {formatDateTime(vehicle.veh_ingress_date)}
+                </span>
+              </div>
+            ))
+          )}
+        </div>
+
+        {activeVehicles.length > 5 && (
+          <div className={`border-t px-4 py-2 ${isLight ? 'border-stone-200' : 'border-white/10'}`}>
+            <button
+              onClick={onGoToVehicles}
+              className={`text-xs ${isLight ? 'text-cyan-700 hover:text-cyan-600' : 'text-cyan-300 hover:text-cyan-200'}`}
+            >
+              Ver {activeVehicles.length - 5} más →
+            </button>
+          </div>
+        )}
+      </Card>
     </div>
   );
 }
@@ -279,7 +220,7 @@ export function DashboardCardsPanel({ theme = 'dark' }: DashboardProps) {
   ];
 
   return (
-    <div className="space-y-3 sm:space-y-4">
+    <div className="flex flex-col gap-3">
       <div className="grid grid-cols-1 gap-3 sm:gap-4">
         {cards.map((card) => (
           <DashboardCard
