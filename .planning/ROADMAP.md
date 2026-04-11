@@ -89,6 +89,9 @@
 | 8. Accessibility Baseline          | 2/2            | Complete | ✓         |
 | 9. Theme Quality Parity            | 2/2            | Complete | ✓         |
 | 10. Rate Management                | 2/2            | Complete | ✓         |
+| 11. Layout                         | 2/2            | Complete | ✓         |
+| 12. CI/CD                          | 2/2            | Complete | ✓         |
+| 13. Documentation Fix              | 0/1            | Planned  | -         |
 
 ### Phase 10: quiero que agregues una fase para poder editar como se manejan los parametros, los parametros ahora deben de tener la opcion de poner por ejemplo, tarifa moto cuesta 600 colones, y cuando se ingresa un vehiculo poder seleccionar la tarifa que debamos usar
 
@@ -123,8 +126,18 @@ Plans:
 
 Plans:
 
-- [ ] 12-01-PLAN.md — Gate de CI publicable (lint+tsc+build+test contract) y alineación de pre-push Husky
-- [ ] 12-02-PLAN.md — Release draft por tags con .exe + portable.zip, auto-asignación PR no bloqueante y runbook de branch protection
+- [x] 12-01-PLAN.md — Gate de CI publicable (lint+tsc+build+test contract) y alineación de pre-push Husky
+- [x] 12-02-PLAN.md — Release draft por tags con .exe + portable.zip, auto-asignación PR no bloqueante y runbook de branch protection
+
+### Phase 13: Documentation Fix
+
+**Goal:** Add missing VERIFICATION.md files and fix SUMMARY.md frontmatter for v1.1 phases.
+**Depends on:** Phase 12
+**Plans:** 1 plan
+
+Plans:
+
+- [ ] 13-01-PLAN.md — Add VERIFICATION.md files and fix requirements_completed frontmatter
 
 ---
 
