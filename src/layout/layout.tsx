@@ -43,6 +43,7 @@ export function Layout({
 
   return (
     <main
+      id="main-content"
       className={`relative min-h-screen overflow-hidden ${isLight ? 'bg-stone-50 text-slate-900' : 'bg-slate-950 text-white'}`}
     >
       <div

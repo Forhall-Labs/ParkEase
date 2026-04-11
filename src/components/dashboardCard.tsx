@@ -21,7 +21,7 @@ export const DashboardCard: React.FC<CardProps> = ({
 
   return (
     <Card
-      className={`group relative overflow-hidden p-4 shadow-xl backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl sm:p-5 ${
+      className={`group relative overflow-hidden p-4 shadow-xl backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl motion-reduce:transform-none motion-reduce:transition-none motion-reduce:duration-0 sm:p-5 ${
         isLight
           ? 'border-stone-200 bg-linear-to-br from-stone-50 via-stone-100 to-stone-50 shadow-stone-200/20 hover:border-stone-300 hover:shadow-stone-300/25'
           : 'border-white/10 bg-linear-to-br from-slate-900/90 via-slate-900/70 to-slate-800/80 shadow-slate-950/30 hover:border-cyan-400/20 hover:shadow-slate-950/50'

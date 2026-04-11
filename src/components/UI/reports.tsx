@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { getLanguage, t } from '../../i18n';
 import type { ReportPeriod, VehicleReportResult } from '../../types/electron-api';
 import { Button, Card, Input, SectionHeader, StatusBadge } from '../primitives';
+import { Dropdown } from '../../components/primitives/Dropdown';
 import { ConfirmModal } from './Modal';
 
 interface ReportsProps {
@@ -282,7 +283,8 @@ export function Reports({ theme = 'dark' }: ReportsProps) {
                 >
                   {t('reports.period')}
                 </span>
-                <div className="flex flex-wrap gap-2">
+                {/* Responsive period controls: buttons on lg+, dropdown on smaller screens */}
+                <div className="lg:flex lg:flex-wrap lg:gap-2 hidden lg:block">
                   {REPORT_PERIODS.map((candidatePeriod) => {
                     const active = period === candidatePeriod;
                     return (
@@ -298,6 +300,33 @@ export function Reports({ theme = 'dark' }: ReportsProps) {
                       </Button>
                     );
                   })}
+                </div>
+                <div className="lg:hidden lg:block">
+                  <Dropdown
+                    trigger={
+                      <span className="flex items-center gap-2">
+                        <span>{t('reports.period')}</span>
+                        <span className="ml-2 text-xs">{period}</span>
+                      </span>
+                    }
+                    triggerClassName="min-w-[8rem]"
+                    contentClassName="w-56"
+                  >
+                    {REPORT_PERIODS.map((candidatePeriod) => {
+                      const active = period === candidatePeriod;
+                      return (
+                        <Button
+                          key={candidatePeriod}
+                          type="button"
+                          onClick={() => handlePeriodChange(candidatePeriod)}
+                          variant={active ? 'filled' : 'outlined'}
+                          className="w-full text-left mb-2 last:mb-0"
+                        >
+                          {t(`reports.periods.${candidatePeriod}`)}
+                        </Button>
+                      );
+                    })}
+                  </Dropdown>
                 </div>
               </label>
 
