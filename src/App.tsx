@@ -40,7 +40,9 @@ function App() {
   }
 
   if (currentUser) {
-    const showStats = false;
+    // Aside panel (DashboardCardsPanel) should only appear on Dashboard and Vehicles screens
+    const showStats =
+      activePath === '/dashboard' || activePath === '/' || activePath === '/vehiculos';
 
     const renderContent = () => {
       switch (activePath) {
