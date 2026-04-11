@@ -1,10 +1,11 @@
 {
-  "name": "parqueo-parroquial-san-marcos",
+  "name": "parkease",
   "private": true,
   "version": "1.1.4",
   "type": "module",
   "main": "dist-electron/main.js",
   "build": {
+    "productName": "ParkEase",
     "files": [
       "dist/**/*",
       "dist-electron/**/*",

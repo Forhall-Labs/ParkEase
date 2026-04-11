@@ -205,7 +205,7 @@ export function VehiclesTable({
 
     const labels = {
       title: isEnglish ? 'Parking Receipt' : 'Recibo de Parqueo',
-      subtitle: isEnglish ? 'Parqueo Parroquial San Marcos' : 'Parqueo Parroquial San Marcos',
+      subtitle: 'ParkEase',
       plate: isEnglish ? 'Plate' : 'Placa',
       owner: isEnglish ? 'Owner' : 'Propietario',
       entryDate: isEnglish ? 'Entry Date' : 'Fecha Ingreso',

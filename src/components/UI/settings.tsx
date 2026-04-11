@@ -12,7 +12,7 @@ interface SettingsProps {
 export function Settings({ theme = 'dark', onThemeChange }: SettingsProps) {
   const [activeTab, setActiveTab] = useState<'general' | 'parking' | 'parameters'>('general');
   const [parkingInfo, setParkingInfo] = useState({
-    name: 'Parqueo Parroquial San Marcos',
+    name: 'ParkEase',
     address: 'San Marcos, Costa Rica',
     phone: '',
     email: '',
