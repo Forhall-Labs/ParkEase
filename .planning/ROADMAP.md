@@ -60,8 +60,11 @@
 **Depends on**: Phase 7
 **Requirements**: ACC-01, ACC-02
 **Success Criteria** (what must be TRUE): 1. Interactive controls in primary views display clear focus-visible states. 2. Key flows can be completed by keyboard navigation without pointer-only steps. 3. Motion-heavy interactions respect reduced-motion preferences.
-**Plans**: TBD
-**UI hint**: yes
+**Plans**: 2 plans
+
+- [x] 08-01-PLAN.md — Focus visibility + keyboard handlers in Dropdown/Accordion primitives
+- [x] 08-02-PLAN.md — Reduced-motion for transforms + skip-to-content link
+      **UI hint**: yes
 
 ### Phase 9: Theme Quality Parity
 
@@ -79,7 +82,7 @@
 | 5. Design Tokens and Primitives    | 0/2            | Planned     | -         |
 | 6. Cross-Screen Visual Consistency | 0/0            | Not started | -         |
 | 7. Responsive Layout Hardening     | 0/0            | Not started | -         |
-| 8. Accessibility Baseline          | 0/0            | Not started | -         |
+| 8. Accessibility Baseline          | 0/2            | Planned     | -         |
 | 9. Theme Quality Parity            | 0/0            | Not started | -         |
 
 ### Phase 10: quiero que agregues una fase para poder editar como se manejan los parametros, los parametros ahora deben de tener la opcion de poner por ejemplo, tarifa moto cuesta 600 colones, y cuando se ingresa un vehiculo poder seleccionar la tarifa que debamos usar
