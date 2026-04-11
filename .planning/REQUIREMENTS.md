@@ -41,6 +41,11 @@
 - [ ] **THEM-01**: Light theme visual quality reaches parity with dark theme on key screens.
 - [ ] **THEM-02**: Theme contrast and readability meet baseline quality in both light and dark modes.
 
+### Rate Management
+
+- [x] **RATE-01**: Sistema de tarifas con modelo de datos que permite nombre, monto y una tarifa general única.
+- [x] **RATE-02**: UI de tarifas en Configuración e ingreso de vehículos con selección manual y fallback automático.
+
 ### CI/CD
 
 - [ ] **CICD-01**: Pull requests and pushes to `main`/`dev` run a blocking CI quality gate with lint, type-check, build, and formal tests contract.
@@ -66,23 +71,25 @@
 
 ## Traceability
 
-| Requirement | Phase    | Status  |
-| ----------- | -------- | ------- |
-| UIX-01      | Phase 7  | Planned |
-| UIX-02      | Phase 6  | Planned |
-| UIX-03      | Phase 6  | Planned |
-| ACC-01      | Phase 8  | Planned |
-| ACC-02      | Phase 8  | Planned |
-| RESP-01     | Phase 7  | Planned |
-| RESP-02     | Phase 7  | Planned |
-| TOKN-01     | Phase 5  | Planned |
-| TOKN-02     | Phase 5  | Planned |
-| THEM-01     | Phase 9  | Planned |
-| THEM-02     | Phase 9  | Planned |
-| CICD-01     | Phase 12 | Planned |
-| CICD-02     | Phase 12 | Planned |
-| CICD-03     | Phase 12 | Planned |
-| CICD-04     | Phase 12 | Planned |
+| Requirement | Phase    | Status   |
+| ----------- | -------- | -------- |
+| UIX-01      | Phase 7  | Planned  |
+| UIX-02      | Phase 6  | Planned  |
+| UIX-03      | Phase 6  | Planned  |
+| ACC-01      | Phase 8  | Planned  |
+| ACC-02      | Phase 8  | Planned  |
+| RESP-01     | Phase 7  | Planned  |
+| RESP-02     | Phase 7  | Planned  |
+| TOKN-01     | Phase 5  | Planned  |
+| TOKN-02     | Phase 5  | Planned  |
+| THEM-01     | Phase 9  | Complete |
+| THEM-02     | Phase 9  | Complete |
+| RATE-01     | Phase 10 | Complete |
+| RATE-02     | Phase 10 | Complete |
+| CICD-01     | Phase 12 | Planned  |
+| CICD-02     | Phase 12 | Planned  |
+| CICD-03     | Phase 12 | Planned  |
+| CICD-04     | Phase 12 | Planned  |
 
 ---
 

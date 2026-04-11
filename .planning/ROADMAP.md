@@ -88,6 +88,7 @@
 | 7. Responsive Layout Hardening     | 2/2            | Complete | ✓         |
 | 8. Accessibility Baseline          | 2/2            | Complete | ✓         |
 | 9. Theme Quality Parity            | 2/2            | Complete | ✓         |
+| 10. Rate Management                | 2/2            | Complete | ✓         |
 
 ### Phase 10: quiero que agregues una fase para poder editar como se manejan los parametros, los parametros ahora deben de tener la opcion de poner por ejemplo, tarifa moto cuesta 600 colones, y cuando se ingresa un vehiculo poder seleccionar la tarifa que debamos usar
 
@@ -98,8 +99,8 @@
 
 Plans:
 
-- [ ] 10-01-PLAN.md — Modelo/IPC/migración para tarifas nombradas con default único y sin eliminación
-- [ ] 10-02-PLAN.md — UX de tarifas en Configuración + selección/fallback de tarifa en ingreso de vehículo
+- [x] 10-01-PLAN.md — Modelo/IPC/migración para tarifas nombradas con default único y sin eliminación
+- [x] 10-02-PLAN.md — UX de tarifas en Configuración + selección/fallback de tarifa en ingreso de vehículo
 
 ### Phase 11: layout
 
