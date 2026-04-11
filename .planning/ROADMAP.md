@@ -1,7 +1,7 @@
 # Roadmap: Parqueo Parroquial San Marcos
 
 **Created:** 2025-04-08
-**Last Updated:** 2026-04-09
+**Last Updated:** 2026-04-11
 **Milestone:** v1.1 UX Refinement and Consistency
 **Active Phases:** 6
 **v1.1 Requirements:** 11
@@ -73,18 +73,21 @@
 **Depends on**: Phase 8
 **Requirements**: THEM-01, THEM-02
 **Success Criteria** (what must be TRUE): 1. Light theme quality on key screens is visually consistent and polished relative to dark theme. 2. Text, surfaces, and interactive states maintain readable contrast in both themes. 3. Theme switching does not degrade spacing, hierarchy, or control clarity on key screens.
-**Plans**: TBD
-**UI hint**: yes
+**Plans**: 2 plans
+
+- [x] 09-01-PLAN.md — Token parity audit, light theme fixes, surface elevation with shadows
+- [x] 09-02-PLAN.md — Primitive component token verification, DashboardCard improvements
+      **UI hint**: yes
 
 ## Progress
 
-| Phase                              | Plans Complete | Status      | Completed |
-| ---------------------------------- | -------------- | ----------- | --------- |
-| 5. Design Tokens and Primitives    | 2/2            | Complete    | ✓         |
-| 6. Cross-Screen Visual Consistency | 2/2            | Complete    | ✓         |
-| 7. Responsive Layout Hardening     | 2/2            | Complete    | ✓         |
-| 8. Accessibility Baseline          | 2/2            | Complete    | ✓         |
-| 9. Theme Quality Parity            | 0/0            | Not started | -         |
+| Phase                              | Plans Complete | Status   | Completed |
+| ---------------------------------- | -------------- | -------- | --------- |
+| 5. Design Tokens and Primitives    | 2/2            | Complete | ✓         |
+| 6. Cross-Screen Visual Consistency | 2/2            | Complete | ✓         |
+| 7. Responsive Layout Hardening     | 2/2            | Complete | ✓         |
+| 8. Accessibility Baseline          | 2/2            | Complete | ✓         |
+| 9. Theme Quality Parity            | 2/2            | Complete | ✓         |
 
 ### Phase 10: quiero que agregues una fase para poder editar como se manejan los parametros, los parametros ahora deben de tener la opcion de poner por ejemplo, tarifa moto cuesta 600 colones, y cuando se ingresa un vehiculo poder seleccionar la tarifa que debamos usar
 
