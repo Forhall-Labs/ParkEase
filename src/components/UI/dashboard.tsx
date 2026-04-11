@@ -123,29 +123,33 @@ export function Dashboard({ theme = 'dark', onGoToVehicles, onQuickAddVehicle }:
             />
           </div>
 
-          <div
-            className={`overflow-x-auto ${isLight ? 'border-t border-stone-200' : 'border-t border-white/10'}`}
-          >
-            <table className="w-full text-sm">
+          <div className={`border-t ${isLight ? 'border-stone-200' : 'border-white/10'}`}>
+            <table className="w-full table-fixed text-xs">
+              <colgroup>
+                <col className="w-24" />
+                <col className="w-32" />
+                <col className="w-28" />
+                <col className="w-28" />
+              </colgroup>
               <thead className={isLight ? 'bg-stone-50' : 'bg-slate-950/60'}>
                 <tr>
                   <th
-                    className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide ${isLight ? 'text-slate-600' : 'text-cyan-200'}`}
+                    className={`px-3 py-2.5 text-left font-semibold uppercase tracking-wide ${isLight ? 'text-slate-600' : 'text-cyan-200'}`}
                   >
                     {t('vehicles.plate')}
                   </th>
                   <th
-                    className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide ${isLight ? 'text-slate-600' : 'text-cyan-200'}`}
+                    className={`px-3 py-2.5 text-left font-semibold uppercase tracking-wide ${isLight ? 'text-slate-600' : 'text-cyan-200'}`}
                   >
                     {t('vehicles.owner')}
                   </th>
                   <th
-                    className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide ${isLight ? 'text-slate-600' : 'text-cyan-200'}`}
+                    className={`px-3 py-2.5 text-left font-semibold uppercase tracking-wide ${isLight ? 'text-slate-600' : 'text-cyan-200'}`}
                   >
                     {t('vehicles.reference')}
                   </th>
                   <th
-                    className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide ${isLight ? 'text-slate-600' : 'text-cyan-200'}`}
+                    className={`px-3 py-2.5 text-left font-semibold uppercase tracking-wide ${isLight ? 'text-slate-600' : 'text-cyan-200'}`}
                   >
                     {t('vehicles.ingressTime')}
                   </th>
@@ -156,7 +160,7 @@ export function Dashboard({ theme = 'dark', onGoToVehicles, onQuickAddVehicle }:
                   <tr>
                     <td
                       colSpan={4}
-                      className={`px-4 py-12 text-center ${isLight ? 'text-slate-500' : 'text-slate-400'}`}
+                      className={`px-3 py-8 text-center ${isLight ? 'text-slate-500' : 'text-slate-400'}`}
                     >
                       {t('common.loading')}
                     </td>
@@ -165,7 +169,7 @@ export function Dashboard({ theme = 'dark', onGoToVehicles, onQuickAddVehicle }:
                   <tr>
                     <td
                       colSpan={4}
-                      className={`px-4 py-12 text-center ${isLight ? 'text-slate-500' : 'text-slate-400'}`}
+                      className={`px-3 py-8 text-center ${isLight ? 'text-slate-500' : 'text-slate-400'}`}
                     >
                       {t('vehicles.noVehicles')}
                     </td>
@@ -177,22 +181,22 @@ export function Dashboard({ theme = 'dark', onGoToVehicles, onQuickAddVehicle }:
                       className={`transition-colors ${isLight ? 'hover:bg-stone-50' : 'hover:bg-slate-800/40'}`}
                     >
                       <td
-                        className={`whitespace-nowrap px-4 py-3 font-medium ${isLight ? 'text-slate-900' : 'text-white'}`}
+                        className={`truncate px-3 py-2.5 font-medium ${isLight ? 'text-slate-900' : 'text-white'}`}
                       >
                         {vehicle.veh_plate}
                       </td>
                       <td
-                        className={`whitespace-nowrap px-4 py-3 ${isLight ? 'text-slate-600' : 'text-slate-300'}`}
+                        className={`truncate px-3 py-2.5 ${isLight ? 'text-slate-600' : 'text-slate-300'}`}
                       >
                         {vehicle.veh_owner || '-'}
                       </td>
                       <td
-                        className={`whitespace-nowrap px-4 py-3 ${isLight ? 'text-slate-600' : 'text-slate-300'}`}
+                        className={`truncate px-3 py-2.5 ${isLight ? 'text-slate-600' : 'text-slate-300'}`}
                       >
                         {vehicle.veh_reference}
                       </td>
                       <td
-                        className={`whitespace-nowrap px-4 py-3 ${isLight ? 'text-slate-600' : 'text-slate-300'}`}
+                        className={`truncate px-3 py-2.5 ${isLight ? 'text-slate-600' : 'text-slate-300'}`}
                       >
                         {formatDateTime(vehicle.veh_ingress_date)}
                       </td>
