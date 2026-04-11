@@ -9,8 +9,8 @@ import {
   updateUserPassword,
   deactivateUser,
   deleteUser,
-  findAdminUser,
-  deactivateAdmin,
+  countUsers,
+  deactivateFirstUser,
 } from '../repositories/user.repository.js';
 import type {
   User,
@@ -31,7 +31,6 @@ function toSafeUser(user: User): SafeUser {
     user_username: user.user_username,
     user_email: user.user_email,
     user_status: user.user_status,
-    user_role: user.user_role,
     user_version: user.user_version,
   };
 }
@@ -110,10 +109,9 @@ export function registerUser(dto: CreateUserDto): {
 
   const id = createUser({ ...dto, user_password: hashedPassword });
 
-  // Si hay un admin existente, desactivarlo
-  const admin = findAdminUser();
-  if (admin && admin.user_id !== id) {
-    deactivateAdmin();
+  // Si ya había usuarios, desactivar el primero (admin inicial)
+  if (countUsers() > 1) {
+    deactivateFirstUser();
   }
 
   return { success: true, id };

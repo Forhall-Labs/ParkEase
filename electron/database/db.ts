@@ -145,17 +145,13 @@ function runMigrations(): void {
       `);
     },
 
-    '006_add_user_role_and_seed_admin': () => {
-      db.exec(
-        `ALTER TABLE psm_users ADD COLUMN user_role TEXT NOT NULL DEFAULT 'user' CHECK (user_role IN ('admin', 'user'));`
-      );
-
+    '006_seed_admin_user': () => {
       const hashedPassword = bcrypt.hashSync('admin123', 10);
 
       db.prepare(
         `
-        INSERT INTO psm_users (user_name, user_lastname, user_username, user_password, user_email, user_status, user_role, user_version)
-        VALUES ('Administrador', 'Sistema', 'admin', ?, 'admin@psm.local', 'A', 'admin', 1)
+        INSERT INTO psm_users (user_name, user_lastname, user_username, user_password, user_email, user_status, user_version)
+        VALUES ('Administrador', 'Sistema', 'admin', ?, 'admin@psm.local', 'A', 1)
       `
       ).run(hashedPassword);
     },

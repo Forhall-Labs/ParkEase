@@ -47,6 +47,16 @@ export function deleteUser(id) {
     const result = getDatabase().prepare('DELETE FROM psm_users WHERE user_id = ?').run(id);
     return result.changes;
 }
+export function countUsers() {
+    const result = getDatabase().prepare('SELECT COUNT(*) as count FROM psm_users').get();
+    return result.count;
+}
+export function deactivateFirstUser() {
+    const result = getDatabase()
+        .prepare(`UPDATE psm_users SET user_status = 'I' WHERE user_id = (SELECT user_id FROM psm_users ORDER BY user_id ASC LIMIT 1)`)
+        .run();
+    return result.changes;
+}
 export function findAdminUser() {
     return getDatabase()
         .prepare(`SELECT * FROM psm_users WHERE user_role = 'admin' LIMIT 1`)

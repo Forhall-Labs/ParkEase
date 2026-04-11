@@ -1458,10 +1458,9 @@ function fe() {
 		"005_parameter_tariffs_default": () => {
 			L.exec("\n        ALTER TABLE psm_parameters ADD COLUMN par_name TEXT NOT NULL DEFAULT '';\n        ALTER TABLE psm_parameters ADD COLUMN par_amount TEXT NOT NULL DEFAULT '0';\n        ALTER TABLE psm_parameters ADD COLUMN par_is_default INTEGER NOT NULL DEFAULT 0\n          CHECK (par_is_default IN (0, 1));\n      "), L.exec("\n        UPDATE psm_parameters\n        SET\n          par_name = CASE\n            WHEN par_name IS NULL OR TRIM(par_name) = '' THEN 'Tarifa general'\n            ELSE par_name\n          END,\n          par_amount = CASE\n            WHEN par_amount IS NULL OR TRIM(par_amount) = '' THEN\n              CASE\n                WHEN par_quantity IS NOT NULL AND TRIM(par_quantity) <> '' THEN par_quantity\n                WHEN par_tax IS NOT NULL AND TRIM(par_tax) <> '' THEN par_tax\n                ELSE '0'\n              END\n            ELSE par_amount\n          END;\n      "), L.prepare("SELECT EXISTS(SELECT 1 FROM psm_parameters) as has_rows").get().has_rows ? L.exec("\n          UPDATE psm_parameters SET par_is_default = 0;\n          UPDATE psm_parameters\n          SET par_is_default = 1\n          WHERE par_id = (SELECT par_id FROM psm_parameters ORDER BY par_id ASC LIMIT 1);\n        ") : L.prepare("\n          INSERT INTO psm_parameters\n            (par_quantity, par_tax, par_name, par_amount, par_is_default, version)\n          VALUES\n            ('0', '0', 'Tarifa general', '0', 1, 1)\n        ").run(), L.exec("\n        CREATE UNIQUE INDEX IF NOT EXISTS idx_psm_parameters_single_default\n        ON psm_parameters (par_is_default)\n        WHERE par_is_default = 1;\n      ");
 		},
-		"006_add_user_role_and_seed_admin": () => {
-			L.exec("ALTER TABLE psm_users ADD COLUMN user_role TEXT NOT NULL DEFAULT 'user' CHECK (user_role IN ('admin', 'user'));");
+		"006_seed_admin_user": () => {
 			let e = I.hashSync("admin123", 10);
-			L.prepare("\n        INSERT INTO psm_users (user_name, user_lastname, user_username, user_password, user_email, user_status, user_role, user_version)\n        VALUES ('Administrador', 'Sistema', 'admin', ?, 'admin@psm.local', 'A', 'admin', 1)\n      ").run(e);
+			L.prepare("\n        INSERT INTO psm_users (user_name, user_lastname, user_username, user_password, user_email, user_status, user_version)\n        VALUES ('Administrador', 'Sistema', 'admin', ?, 'admin@psm.local', 'A', 1)\n      ").run(e);
 		}
 	}, t = L.prepare("SELECT name FROM psm_migrations").all(), n = new Set(t.map((e) => e.name)), r = L.prepare("INSERT INTO psm_migrations (name) VALUES (?)");
 	for (let [t, i] of Object.entries(e)) n.has(t) || (i(), r.run(t), console.log(`✓ Migration applied: ${t}`));
@@ -1500,10 +1499,10 @@ function _e(e) {
 	return R().prepare("DELETE FROM psm_users WHERE user_id = ?").run(e).changes;
 }
 function ve() {
-	return R().prepare("SELECT * FROM psm_users WHERE user_role = 'admin' LIMIT 1").get();
+	return R().prepare("SELECT COUNT(*) as count FROM psm_users").get().count;
 }
 function ye() {
-	return R().prepare("UPDATE psm_users SET user_status = 'I' WHERE user_role = 'admin'").run().changes;
+	return R().prepare("UPDATE psm_users SET user_status = 'I' WHERE user_id = (SELECT user_id FROM psm_users ORDER BY user_id ASC LIMIT 1)").run().changes;
 }
 //#endregion
 //#region electron/service/user.service.ts
@@ -1515,7 +1514,6 @@ function U(e) {
 		user_username: e.user_username,
 		user_email: e.user_email,
 		user_status: e.user_status,
-		user_role: e.user_role,
 		user_version: e.user_version
 	};
 }
@@ -1571,8 +1569,8 @@ function we(e) {
 	let t = I.hashSync(e.user_password, 10), n = me({
 		...e,
 		user_password: t
-	}), r = ve();
-	return r && r.user_id !== n && ye(), {
+	});
+	return ve() > 1 && ye(), {
 		success: !0,
 		id: n
 	};
@@ -1928,9 +1926,9 @@ function ct() {
 function lt() {
 	ct(), n.handle("session:save", (e, t) => {
 		let n = R();
-		return n.prepare("DELETE FROM psm_sessions").run(), n.prepare("\n      INSERT INTO psm_sessions \n        (user_id, user_name, user_lastname, user_username, user_email, user_status, user_role, user_version, saved_at)\n      VALUES \n        (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))\n    ").run(t.user_id, t.user_name, t.user_lastname, t.user_username, t.user_email, t.user_status, t.user_role, t.user_version), { success: !0 };
+		return n.prepare("DELETE FROM psm_sessions").run(), n.prepare("\n      INSERT INTO psm_sessions \n        (user_id, user_name, user_lastname, user_username, user_email, user_status, user_version, saved_at)\n      VALUES \n        (?, ?, ?, ?, ?, ?, ?, datetime('now'))\n    ").run(t.user_id, t.user_name, t.user_lastname, t.user_username, t.user_email, t.user_status, t.user_version), { success: !0 };
 	}), n.handle("session:restore", () => {
-		let e = R().prepare("\n      SELECT user_id, user_name, user_lastname, user_username, user_email, user_status, user_role, user_version\n      FROM psm_sessions\n      LIMIT 1\n    ").get();
+		let e = R().prepare("\n      SELECT user_id, user_name, user_lastname, user_username, user_email, user_status, user_version\n      FROM psm_sessions\n      LIMIT 1\n    ").get();
 		return e ? {
 			user_id: e.user_id,
 			user_name: e.user_name,
@@ -1938,7 +1936,6 @@ function lt() {
 			user_username: e.user_username,
 			user_email: e.user_email,
 			user_status: e.user_status,
-			user_role: e.user_role,
 			user_version: e.user_version
 		} : null;
 	}), n.handle("session:clear", () => (R().prepare("DELETE FROM psm_sessions").run(), { success: !0 }));

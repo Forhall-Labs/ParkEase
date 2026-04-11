@@ -6,7 +6,6 @@ export interface User {
   user_password: string;
   user_email: string;
   user_status: 'A' | 'I';
-  user_role: 'admin' | 'user';
   user_version: number;
 }
 
