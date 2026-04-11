@@ -15,6 +15,7 @@
   border: 1px solid var(--color-border-default);
   background-color: var(--color-surface-panel);
   color: var(--color-text-primary);
+  box-shadow: var(--shadow-panel);
 }
 
 .surface-card {
@@ -22,6 +23,7 @@
   border: 1px solid var(--color-border-default);
   background-color: var(--color-surface-card);
   color: var(--color-text-primary);
+  box-shadow: var(--shadow-card);
 }
 
 .ui-section-padding {
