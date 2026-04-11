@@ -7,6 +7,7 @@ tags:
   - skip-link
   - reduced-motion
   - transform-animations
+requirements_completed: [ACC-02]
 dependency_graph:
   requires:
     - src/layout/layout.tsx

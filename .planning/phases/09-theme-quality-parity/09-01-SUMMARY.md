@@ -3,6 +3,7 @@ phase: 09-theme-quality-parity
 plan: 01
 subsystem: styles
 tags: [theme, tokens, light-theme, shadows, accessibility]
+requirements_completed: [THEM-01]
 dependency_graph:
   requires:
     - .planning/phases/05-design-tokens-and-primitives/05-CONTEXT.md

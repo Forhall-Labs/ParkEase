@@ -8,6 +8,7 @@ tags:
   - dropdown
   - accordion
   - primitives
+requirements_completed: [ACC-01]
 dependency_graph:
   requires:
     - .planning/phases/05-design-tokens-and-primitives/05-CONTEXT.md

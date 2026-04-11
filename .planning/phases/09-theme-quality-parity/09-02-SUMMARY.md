@@ -3,6 +3,7 @@ phase: 09-theme-quality-parity
 plan: 02
 subsystem: components
 tags: [theme, primitives, token-css, components]
+requirements_completed: [THEM-02]
 dependency_graph:
   requires:
     - .planning/phases/09-theme-quality-parity/09-01-SUMMARY.md

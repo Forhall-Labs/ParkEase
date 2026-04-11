@@ -3,6 +3,7 @@ phase: 05-design-tokens-and-primitives
 plan: 01
 subsystem: ui
 tags: [design-tokens, css, primitives, reports, theming]
+requirements_completed: [TOKN-01]
 
 # Dependency graph
 requires:

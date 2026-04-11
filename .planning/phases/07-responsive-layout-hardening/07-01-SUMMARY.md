@@ -4,6 +4,7 @@ plan: 01
 type: plan
 subsystem: responsive-layout
 tags: [responsive, layout, dropdown, accordion, sticky-headers]
+requirements_completed: [RESP-01, RESP-02, UIX-01]
 requires: []
 provides: [Dropdown, Accordion, sticky-table-headers, layout-context]
 affects: [reports, vehicles, layout, dashboard]
