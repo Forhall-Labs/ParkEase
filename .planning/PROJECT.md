@@ -1,44 +1,34 @@
-# Parqueo Parroquial San Marcos
+# ParkEase (Parqueo Parroquial San Marcos)
 
 ## What This Is
 
-A desktop parking management application built with Electron + React + TypeScript, designed for offline operation with local SQLite storage. It covers user/session management, vehicle entry and exit flows, tariff configuration, and operational reporting.
+A desktop parking management application built with Electron + React + TypeScript, designed for offline operation with local SQLite storage. Named "ParkEase" with the full name "Parqueo Parroquial San Marcos". Covers user/session management, vehicle entry and exit flows, tariff configuration, and operational reporting.
 
 ## Core Value
 
 A simple, offline parking lot management system that handles vehicle tracking, automatic fee calculation with local currency rounding, and reporting capabilities for day-to-day operations.
 
-## Current Milestone: v1.1 UX Refinement and Consistency
+## Current State
 
-**Goal:** Improve visual quality, consistency, accessibility, and responsive behavior across the application.
+**v1.1 shipped** — UX Refinement and Consistency milestone complete.
 
-**Target features:**
+### What Shipped in v1.1
 
-- Reports visual and interaction polish
-- Cross-screen UI consistency (Dashboard, Vehicles, Users, Parameters, Reports)
-- Accessibility improvements (focus states, contrast, keyboard usability, reduced motion)
-- Responsive layout hardening to avoid overlap and clipping
 - Design tokens and reusable UI primitives
-- Light theme quality pass
+- Cross-screen visual consistency with Material 3 hierarchy
+- Responsive layout hardening for narrow viewports
+- Accessibility baseline (focus states, keyboard nav, reduced-motion)
+- Light/dark theme parity
+- Named tariff system with auto-fallback
+- Desktop shell with fixed sidebar and centered content
+- CI/CD pipeline with quality gates and draft releases
 
-## Requirements
+## Validated Requirements
 
-### Validated
-
-- ✓ USR-01, USR-02, USR-03, USR-04, USR-05: User lifecycle + authentication flow
-- ✓ DASH-01, DASH-02, DASH-03: Dashboard occupancy/revenue/activity metrics
-- ✓ VEHI-01, VEHI-02, VEHI-03, VEHI-04, VEHI-05, VEHI-06: Vehicle entry and validation
-- ✓ PARA-01, PARA-02, PARA-03: Parameter configuration and persistence
-- ✓ VEHI-07, VEHI-08, VEHI-09, VEHI-10, VEHI-11, VEHI-12, VEHI-13, VEHI-14: Exit, fee calculation, payment completion
-- ✓ REPT-01, REPT-02, REPT-03, REPT-04, REPT-05, REPT-06: Daily/weekly/monthly/yearly reporting with totals and UI views
-
-### Active
-
-- [ ] UIX-01 to UIX-03: Reports and cross-screen visual consistency improvements
-- [ ] ACC-01 to ACC-02: Accessibility baseline and keyboard usability improvements
-- [ ] RESP-01 to RESP-02: Responsive hardening for key views
-- [ ] TOKN-01 to TOKN-02: Shared design tokens and reusable component patterns
-- [ ] THEM-01: Light theme quality parity
+| Milestone | Requirements                                                                                                                                       |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| v1.0 MVP  | USR-01 to USR-05, VEHI-01 to VEHI-14, PARA-01 to PARA-03, REPT-01 to REPT-06, DASH-01 to DASH-03                                                   |
+| v1.1      | TOKN-01, TOKN-02, UIX-01, UIX-02, UIX-03, RESP-01, RESP-02, ACC-01, ACC-02, THEM-01, THEM-02, RATE-01, RATE-02, CICD-01, CICD-02, CICD-03, CICD-04 |
 
 ### Out of Scope
 
@@ -78,13 +68,13 @@ A simple, offline parking lot management system that handles vehicle tracking, a
 
 ## Key Decisions
 
-| Decision | Rationale | Outcome |
-| --- | --- | --- |
-| SQLite for storage | File-based, low-operational overhead, offline-ready | Implemented |
-| Electron architecture | Required desktop packaging and local process control | Implemented |
-| Typed preload bridge | Prevent renderer/main contract drift | Implemented |
-| Rolling report windows | Predictable period behavior from selected date | Implemented |
-| Costa Rican rounding model | Local billing expectation | Implemented |
+| Decision                   | Rationale                                            | Outcome     |
+| -------------------------- | ---------------------------------------------------- | ----------- |
+| SQLite for storage         | File-based, low-operational overhead, offline-ready  | Implemented |
+| Electron architecture      | Required desktop packaging and local process control | Implemented |
+| Typed preload bridge       | Prevent renderer/main contract drift                 | Implemented |
+| Rolling report windows     | Predictable period behavior from selected date       | Implemented |
+| Costa Rican rounding model | Local billing expectation                            | Implemented |
 
 ## Evolution
 
@@ -99,4 +89,4 @@ This document should evolve at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-04-09 after milestone v1.1 initialization_
+_Last updated: 2026-04-11 after v1.1 milestone completion_
