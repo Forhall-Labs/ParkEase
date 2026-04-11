@@ -86,8 +86,8 @@ export function Dashboard({ theme = 'dark', onGoToVehicles, onQuickAddVehicle }:
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+    <div className="flex flex-col gap-5">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <DashboardCard
           title={t('dashboard.parkedVehicles')}
           info={stats.parkedCount.toString()}
@@ -110,22 +110,43 @@ export function Dashboard({ theme = 'dark', onGoToVehicles, onQuickAddVehicle }:
 
       <Card
         variant="panel"
-        className={`overflow-hidden ${isLight ? 'border-stone-200 bg-white' : 'border-white/10 bg-slate-900/60'}`}
+        className={`overflow-hidden p-0 ${isLight ? 'border-stone-200 bg-white' : 'border-white/10 bg-slate-900/60'}`}
       >
         <div
-          className={`flex items-center justify-between border-b px-4 py-3 ${isLight ? 'border-stone-200' : 'border-white/10'}`}
+          className={`flex items-center justify-between border-b px-5 py-4 ${isLight ? 'border-stone-200 bg-stone-50/50' : 'border-white/10 bg-slate-950/40'}`}
         >
-          <div>
-            <h3 className={`text-sm font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>
-              Vehículos en parqueo
-            </h3>
-            <p className={`text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
-              {activeVehicles.length} activo{activeVehicles.length !== 1 ? 's' : ''}
-            </p>
+          <div className="flex items-center gap-3">
+            <div
+              className={`flex h-10 w-10 items-center justify-center rounded-xl ${isLight ? 'bg-cyan-100' : 'bg-cyan-400/20'}`}
+            >
+              <svg
+                className={`h-5 w-5 ${isLight ? 'text-cyan-600' : 'text-cyan-400'}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 7h8m-8 0V3m0 4v4m0-4h8m-8 0v4m0-4a2 2 0 012-2 2v2a2 2 0 002 2v2m0-4H8"
+                />
+              </svg>
+            </div>
+            <div>
+              <h3
+                className={`text-base font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}
+              >
+                Vehículos en parqueo
+              </h3>
+              <p className={`text-sm ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                {activeVehicles.length} activo{activeVehicles.length !== 1 ? 's' : ''}
+              </p>
+            </div>
           </div>
           <div className="flex gap-2">
             <Button type="button" variant="filled" size="sm" onClick={onQuickAddVehicle}>
-              + Ingresar
+              + Nuevo
             </Button>
             <Button type="button" variant="outlined" size="sm" onClick={onGoToVehicles}>
               Ver todos
@@ -136,49 +157,77 @@ export function Dashboard({ theme = 'dark', onGoToVehicles, onQuickAddVehicle }:
         <div className="divide-y divide-inherit">
           {loadingVehicles ? (
             <div
-              className={`px-4 py-8 text-center text-sm ${isLight ? 'text-slate-500' : 'text-slate-400'}`}
+              className={`px-5 py-8 text-center text-sm ${isLight ? 'text-slate-500' : 'text-slate-400'}`}
             >
               {t('common.loading')}
             </div>
           ) : activeVehicles.length === 0 ? (
             <div
-              className={`px-4 py-8 text-center text-sm ${isLight ? 'text-slate-500' : 'text-slate-400'}`}
+              className={`px-5 py-8 text-center text-sm ${isLight ? 'text-slate-500' : 'text-slate-400'}`}
             >
               {t('vehicles.noVehicles')}
             </div>
           ) : (
-            activeVehicles.slice(0, 5).map((vehicle) => (
+            activeVehicles.slice(0, 6).map((vehicle, index) => (
               <div
                 key={vehicle.veh_id}
-                className={`flex items-center justify-between px-4 py-2.5 transition-colors hover:${isLight ? 'bg-stone-50' : 'bg-slate-800/40'}`}
+                className={`flex items-center justify-between px-5 py-3 transition-colors ${isLight ? 'hover:bg-stone-50' : 'hover:bg-slate-800/30'}`}
               >
-                <div className="flex items-center gap-3">
-                  <span
-                    className={`inline-flex shrink-0 rounded px-2 py-0.5 text-xs font-semibold ${isLight ? 'bg-stone-100 text-slate-800' : 'bg-cyan-400/10 text-cyan-200'}`}
+                <div className="flex items-center gap-4">
+                  <div
+                    className={`flex h-8 w-8 items-center justify-center rounded-lg text-xs font-bold ${isLight ? 'bg-slate-100 text-slate-700' : 'bg-slate-800 text-cyan-300'}`}
                   >
-                    {vehicle.veh_plate}
-                  </span>
-                  <span className={`text-xs ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
-                    {vehicle.veh_owner || vehicle.veh_reference || '-'}
-                  </span>
+                    {index + 1}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={`rounded-lg px-2.5 py-1 text-sm font-bold tracking-wide ${isLight ? 'bg-slate-900 text-white' : 'bg-cyan-400/20 text-cyan-300'}`}
+                    >
+                      {vehicle.veh_plate}
+                    </span>
+                    <span className={`text-sm ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
+                      {vehicle.veh_owner || vehicle.veh_reference || '-'}
+                    </span>
+                  </div>
                 </div>
-                <span className={`text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
-                  {formatDateTime(vehicle.veh_ingress_date)}
-                </span>
+                <div className="flex items-center gap-4">
+                  <span className={`text-xs ${isLight ? 'text-slate-400' : 'text-slate-500'}`}>
+                    {formatDateTime(vehicle.veh_ingress_date)}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={onGoToVehicles}
+                    className={
+                      isLight
+                        ? 'text-cyan-600 hover:bg-cyan-50'
+                        : 'text-cyan-400 hover:bg-cyan-400/10'
+                    }
+                  >
+                    →
+                  </Button>
+                </div>
               </div>
             ))
           )}
         </div>
 
-        {activeVehicles.length > 5 && (
-          <div className={`border-t px-4 py-2 ${isLight ? 'border-stone-200' : 'border-white/10'}`}>
-            <button
-              onClick={onGoToVehicles}
-              className={`text-xs ${isLight ? 'text-cyan-700 hover:text-cyan-600' : 'text-cyan-300 hover:text-cyan-200'}`}
-            >
-              Ver {activeVehicles.length - 5} más →
-            </button>
-          </div>
+        {activeVehicles.length > 6 && (
+          <button
+            onClick={onGoToVehicles}
+            className={`flex w-full items-center justify-center gap-2 border-t px-5 py-3 text-sm font-medium transition-colors ${isLight ? 'border-stone-200 text-cyan-600 hover:bg-stone-50' : 'border-white/10 text-cyan-400 hover:bg-slate-800/30'}`}
+          >
+            Ver {activeVehicles.length - 6} vehículos más
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7-7m0 0v14"
+              />
+            </svg>
+          </button>
         )}
       </Card>
     </div>
