@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import { findUserByUsername, findUserByEmail, findAllUsers, findUserById, createUser, updateUser, updateUserPassword, deactivateUser, deleteUser, } from '../repositories/user.repository.js';
+import { findUserByUsername, findUserByEmail, findAllUsers, findUserById, createUser, updateUser, updateUserPassword, deactivateUser, deleteUser, findAdminUser, deactivateAdmin, } from '../repositories/user.repository.js';
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function toSafeUser(user) {
     return {
@@ -9,6 +9,7 @@ function toSafeUser(user) {
         user_username: user.user_username,
         user_email: user.user_email,
         user_status: user.user_status,
+        user_role: user.user_role,
         user_version: user.user_version,
     };
 }
@@ -64,6 +65,11 @@ export function registerUser(dto) {
     // Hashear contraseña
     const hashedPassword = bcrypt.hashSync(dto.user_password, 10);
     const id = createUser({ ...dto, user_password: hashedPassword });
+    // Si hay un admin existente, desactivarlo
+    const admin = findAdminUser();
+    if (admin && admin.user_id !== id) {
+        deactivateAdmin();
+    }
     return { success: true, id };
 }
 // ─── Actualizar usuario ───────────────────────────────────────────────────────

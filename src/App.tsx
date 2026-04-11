@@ -240,57 +240,27 @@ function App() {
                   </label>
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-cyan-400 px-4 py-3 font-semibold text-slate-950 transition hover:-translate-y-0.5 hover:bg-cyan-300 active:translate-y-0 motion-reduce:transform-none motion-reduce:transition-none"
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-cyan-400 px-4 py-3 font-semibold text-slate-950 transition hover:-translate-y-0.5 hover:bg-cyan-300 active:translate-y-0 motion-reduce:transform-none motion-reduce:transition-none"
+                >
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    className="h-5 w-5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   >
-                    <svg
-                      aria-hidden="true"
-                      viewBox="0 0 24 24"
-                      className="h-5 w-5"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M10 17l5-5-5-5" />
-                      <path d="M15 12H3" />
-                      <path d="M21 3v18" />
-                    </svg>
-                    {isLoading ? t('login.loggingIn') : t('login.enter')}
-                  </button>
-                  <button
-                    type="button"
-                    className={`inline-flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 font-semibold transition hover:-translate-y-0.5 active:translate-y-0 motion-reduce:transform-none motion-reduce:transition-none ${
-                      isLight
-                        ? 'border-stone-200 bg-stone-50 text-slate-700 hover:bg-stone-100'
-                        : 'border-white/10 bg-white/5 text-white hover:bg-white/10'
-                    }`}
-                  >
-                    <svg aria-hidden="true" viewBox="0 0 48 48" className="h-5 w-5">
-                      <path
-                        fill="#EA4335"
-                        d="M24 9.5c3.54 0 6.73 1.22 9.26 3.6l6.93-6.93C35.98 2.36 30.4 0 24 0 14.62 0 6.54 5.38 2.56 13.22l8.05 6.26C12.52 13.77 17.74 9.5 24 9.5z"
-                      />
-                      <path
-                        fill="#4285F4"
-                        d="M46.5 24.5c0-1.45-.13-2.84-.37-4.19H24v7.93h12.71c-.55 2.97-2.23 5.48-4.77 7.16l7.31 5.69C43.76 36.57 46.5 31.05 46.5 24.5z"
-                      />
-                      <path
-                        fill="#FBBC05"
-                        d="M10.61 28.98A14.37 14.37 0 0 1 9.5 24c0-1.73.3-3.41.84-4.92L2.29 12.82A24 24 0 0 0 0 24c0 3.86.92 7.5 2.56 10.78l8.05-5.8z"
-                      />
-                      <path
-                        fill="#34A853"
-                        d="M24 48c6.53 0 12.01-2.15 16.01-5.86l-7.31-5.69c-2.04 1.39-4.65 2.21-8.7 2.21-6.26 0-11.48-4.27-13.39-9.99l-8.05 5.8C6.54 42.62 14.62 48 24 48z"
-                      />
-                    </svg>
-                    <span>Google</span>
-                  </button>
-                </div>
+                    <path d="M10 17l5-5-5-5" />
+                    <path d="M15 12H3" />
+                    <path d="M21 3v18" />
+                  </svg>
+                  {isLoading ? t('login.loggingIn') : t('login.enter')}
+                </button>
               </form>
             </div>
           </section>

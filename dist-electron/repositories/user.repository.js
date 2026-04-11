@@ -1,23 +1,15 @@
 import { getDatabase } from '../database/db.js';
 export function findAllUsers() {
-    return getDatabase()
-        .prepare('SELECT * FROM psm_users ORDER BY user_id ASC')
-        .all();
+    return getDatabase().prepare('SELECT * FROM psm_users ORDER BY user_id ASC').all();
 }
 export function findUserById(id) {
-    return getDatabase()
-        .prepare('SELECT * FROM psm_users WHERE user_id = ?')
-        .get(id);
+    return getDatabase().prepare('SELECT * FROM psm_users WHERE user_id = ?').get(id);
 }
 export function findUserByUsername(username) {
-    return getDatabase()
-        .prepare('SELECT * FROM psm_users WHERE user_username = ?')
-        .get(username);
+    return getDatabase().prepare('SELECT * FROM psm_users WHERE user_username = ?').get(username);
 }
 export function findUserByEmail(email) {
-    return getDatabase()
-        .prepare('SELECT * FROM psm_users WHERE user_email = ?')
-        .get(email);
+    return getDatabase().prepare('SELECT * FROM psm_users WHERE user_email = ?').get(email);
 }
 export function createUser(data) {
     const result = getDatabase()
@@ -52,8 +44,17 @@ export function deactivateUser(id) {
     return result.changes;
 }
 export function deleteUser(id) {
+    const result = getDatabase().prepare('DELETE FROM psm_users WHERE user_id = ?').run(id);
+    return result.changes;
+}
+export function findAdminUser() {
+    return getDatabase()
+        .prepare(`SELECT * FROM psm_users WHERE user_role = 'admin' LIMIT 1`)
+        .get();
+}
+export function deactivateAdmin() {
     const result = getDatabase()
-        .prepare('DELETE FROM psm_users WHERE user_id = ?')
-        .run(id);
+        .prepare(`UPDATE psm_users SET user_status = 'I' WHERE user_role = 'admin'`)
+        .run();
     return result.changes;
 }

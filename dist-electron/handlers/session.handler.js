@@ -28,10 +28,10 @@ export function registerSessionHandlers() {
         // Insertar nueva sesión
         db.prepare(`
       INSERT INTO psm_sessions 
-        (user_id, user_name, user_lastname, user_username, user_email, user_status, user_version, saved_at)
+        (user_id, user_name, user_lastname, user_username, user_email, user_status, user_role, user_version, saved_at)
       VALUES 
-        (?, ?, ?, ?, ?, ?, ?, datetime('now'))
-    `).run(user.user_id, user.user_name, user.user_lastname, user.user_username, user.user_email, user.user_status, user.user_version);
+        (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+    `).run(user.user_id, user.user_name, user.user_lastname, user.user_username, user.user_email, user.user_status, user.user_role, user.user_version);
         return { success: true };
     });
     // Restaurar sesión
@@ -39,7 +39,7 @@ export function registerSessionHandlers() {
         const db = getDatabase();
         const session = db
             .prepare(`
-      SELECT user_id, user_name, user_lastname, user_username, user_email, user_status, user_version
+      SELECT user_id, user_name, user_lastname, user_username, user_email, user_status, user_role, user_version
       FROM psm_sessions
       LIMIT 1
     `)
@@ -54,6 +54,7 @@ export function registerSessionHandlers() {
             user_username: session.user_username,
             user_email: session.user_email,
             user_status: session.user_status,
+            user_role: session.user_role,
             user_version: session.user_version,
         };
     });
