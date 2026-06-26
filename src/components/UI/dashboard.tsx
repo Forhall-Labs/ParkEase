@@ -17,6 +17,7 @@ interface DashboardProps {
   onQuickAddVehicle?: () => void;
   triggerQuickAddToken?: number;
   onQuickAddHandled?: () => void;
+  isAdmin?: boolean;
 }
 
 function useDashboardStats() {
@@ -238,12 +239,14 @@ export function Vehicles({
   theme = 'dark',
   triggerQuickAddToken,
   onQuickAddHandled,
+  isAdmin = false,
 }: DashboardProps) {
   return (
     <VehiclesTable
       theme={theme}
       triggerQuickAddToken={triggerQuickAddToken}
       onQuickAddHandled={onQuickAddHandled}
+      isAdmin={isAdmin}
     />
   );
 }

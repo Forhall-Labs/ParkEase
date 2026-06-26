@@ -160,6 +160,15 @@ function runMigrations(): void {
       `
       ).run(hashedPassword);
     },
+
+    '007_add_user_role': () => {
+      try {
+        db.exec(`ALTER TABLE psm_users ADD COLUMN user_role TEXT NOT NULL DEFAULT 'user' CHECK (user_role IN ('admin', 'user'))`);
+      } catch {
+        // column already exists
+      }
+      db.exec(`UPDATE psm_users SET user_role = 'admin' WHERE user_username = 'admin'`);
+    },
   };
 
   const applied = db.prepare('SELECT name FROM psm_migrations').all() as { name: string }[];

@@ -46,12 +46,14 @@ interface VehiclesTableProps {
   theme?: 'dark' | 'light';
   triggerQuickAddToken?: number;
   onQuickAddHandled?: () => void;
+  isAdmin?: boolean;
 }
 
 export function VehiclesTable({
   theme = 'dark',
   triggerQuickAddToken,
   onQuickAddHandled,
+  isAdmin = false,
 }: VehiclesTableProps) {
   const [searchFilter, setSearchFilter] = useState('');
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -528,13 +530,15 @@ export function VehiclesTable({
                     >
                       {t('vehicles.reprint')}
                     </Button>
-                    <Button
-                      onClick={() => handleDeleteVehicle(vehicle.veh_id!)}
-                      variant="danger"
-                      size="sm"
-                    >
-                      {t('vehicles.delete')}
-                    </Button>
+                    {isAdmin && (
+                      <Button
+                        onClick={() => handleDeleteVehicle(vehicle.veh_id!)}
+                        variant="danger"
+                        size="sm"
+                      >
+                        {t('vehicles.delete')}
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))

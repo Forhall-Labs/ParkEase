@@ -15,6 +15,7 @@ function ensureSessionTable(): void {
       user_username TEXT  NOT NULL,
       user_email   TEXT   NOT NULL,
       user_status  TEXT   NOT NULL,
+      user_role    TEXT   NOT NULL DEFAULT 'user',
       user_version INTEGER NOT NULL,
       saved_at     TEXT   NOT NULL DEFAULT (datetime('now'))
     );
@@ -36,10 +37,10 @@ export function registerSessionHandlers(): void {
     // Insertar nueva sesión
     db.prepare(
       `
-      INSERT INTO psm_sessions 
-        (user_id, user_name, user_lastname, user_username, user_email, user_status, user_version, saved_at)
-      VALUES 
-        (?, ?, ?, ?, ?, ?, ?, datetime('now'))
+      INSERT INTO psm_sessions
+        (user_id, user_name, user_lastname, user_username, user_email, user_status, user_role, user_version, saved_at)
+      VALUES
+        (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
     `
     ).run(
       user.user_id,
@@ -48,6 +49,7 @@ export function registerSessionHandlers(): void {
       user.user_username,
       user.user_email,
       user.user_status,
+      user.user_role,
       user.user_version
     );
 
@@ -61,7 +63,7 @@ export function registerSessionHandlers(): void {
     const session = db
       .prepare(
         `
-      SELECT user_id, user_name, user_lastname, user_username, user_email, user_status, user_version
+      SELECT user_id, user_name, user_lastname, user_username, user_email, user_status, user_role, user_version
       FROM psm_sessions
       LIMIT 1
     `
@@ -74,6 +76,7 @@ export function registerSessionHandlers(): void {
           user_username: string;
           user_email: string;
           user_status: 'A' | 'I';
+          user_role: 'admin' | 'user';
           user_version: number;
         }
       | undefined;
@@ -89,6 +92,7 @@ export function registerSessionHandlers(): void {
       user_username: session.user_username,
       user_email: session.user_email,
       user_status: session.user_status,
+      user_role: session.user_role,
       user_version: session.user_version,
     };
   });

@@ -54,6 +54,7 @@ function App() {
               theme={theme}
               triggerQuickAddToken={quickAddVehicleToken}
               onQuickAddHandled={() => setQuickAddVehicleToken(0)}
+              isAdmin={currentUser.user_role === 'admin'}
             />
           );
         case '/reportes':
