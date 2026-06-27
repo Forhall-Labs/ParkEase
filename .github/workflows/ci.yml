@@ -26,5 +26,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run CI verification gate
-        run: npm run build && node scripts/ci-test-gate.mjs
+      - name: Lint and type-check
+        run: npm run lint && npm run typecheck
+
+      - name: Build
+        run: npx vite build
+
+      - name: Run tests
+        run: npm test

@@ -4,43 +4,7 @@ import type { Vehicle, CreateVehicleDto, Parameter } from '../types/electron-api
 import { t } from '../i18n';
 import { ConfirmModal, ModalShell } from './UI/Modal';
 import { Button, Card, Input, SectionHeader } from './primitives';
-
-interface PlateValidationResult {
-  isValid: boolean;
-  vehicleType: 'Regular' | 'Motorcycle' | 'Light truck' | null;
-  errorMessage: string | null;
-}
-
-function validatePlate(plate: string): PlateValidationResult {
-  if (!plate || plate.trim() === '') {
-    return { isValid: false, vehicleType: null, errorMessage: t('validation.plateRequired') };
-  }
-
-  // Regular vehicle: 3 uppercase letters + "-" + 1-3 digits (e.g., BNX-799, ABC-123)
-  const regularRegex = /^[A-Z]{3}-\d{1,3}$/;
-  // Motorcycle: "MOT-" + 1-6 digits (e.g., MOT-123456)
-  const motorcycleRegex = /^MOT-\d{1,6}$/;
-  // Light truck: "CL-" + 1-6 digits (e.g., CL-123456)
-  const lightTruckRegex = /^CL-\d{1,6}$/;
-
-  if (regularRegex.test(plate)) {
-    return { isValid: true, vehicleType: 'Regular', errorMessage: null };
-  }
-
-  if (motorcycleRegex.test(plate)) {
-    return { isValid: true, vehicleType: 'Motorcycle', errorMessage: null };
-  }
-
-  if (lightTruckRegex.test(plate)) {
-    return { isValid: true, vehicleType: 'Light truck', errorMessage: null };
-  }
-
-  return {
-    isValid: false,
-    vehicleType: null,
-    errorMessage: t('validation.plateFormat'),
-  };
-}
+import { autoFormatPlate, validatePlate, type PlateValidationResult } from '../utils/plate-utils';
 
 interface VehiclesTableProps {
   theme?: 'dark' | 'light';
@@ -99,13 +63,39 @@ export function VehiclesTable({
     vehicle: null,
   });
   const [plateValidation, setPlateValidation] = useState<PlateValidationResult | null>(null);
+  const [parkingInfo, setParkingInfo] = useState({
+    name: 'ParkEase',
+    address: '',
+    phone: '',
+    email: '',
+  });
 
   const isLight = theme === 'light';
 
   useEffect(() => {
     loadVehicles();
     loadParameters();
+    loadParkingInfo();
   }, []);
+
+  async function loadParkingInfo() {
+    try {
+      const [name, address, phone, email] = await Promise.all([
+        window.electronAPI?.settings?.get('parking_name'),
+        window.electronAPI?.settings?.get('parking_address'),
+        window.electronAPI?.settings?.get('parking_phone'),
+        window.electronAPI?.settings?.get('parking_email'),
+      ]);
+      setParkingInfo({
+        name: name ?? 'ParkEase',
+        address: address ?? '',
+        phone: phone ?? '',
+        email: email ?? '',
+      });
+    } catch {
+      // keep defaults
+    }
+  }
 
   async function loadParameters() {
     try {
@@ -207,7 +197,6 @@ export function VehiclesTable({
 
     const labels = {
       title: isEnglish ? 'Parking Receipt' : 'Recibo de Parqueo',
-      subtitle: 'ParkEase',
       plate: isEnglish ? 'Plate' : 'Placa',
       owner: isEnglish ? 'Owner' : 'Propietario',
       entryDate: isEnglish ? 'Entry Date' : 'Fecha Ingreso',
@@ -216,10 +205,23 @@ export function VehiclesTable({
       reference: isEnglish ? 'Reference' : 'Referencia',
       exitTime: isEnglish ? 'Exit Time' : 'Hora de Salida',
       exitTimeValue: isEnglish ? 'To be defined' : 'Por definir',
-      footer: isEnglish
-        ? 'Thank you for using ParkEase\nKeep this receipt'
-        : 'Gracias por usar ParkEase\nConserve este recibo',
+      thankYou: isEnglish ? 'Thank you for your visit!' : '¡Gracias por su visita!',
+      keepReceipt: isEnglish ? 'Keep this receipt' : 'Conserve este recibo',
     };
+
+    const parkingName = parkingInfo.name || 'ParkEase';
+    const footerLines = [
+      parkingName,
+      parkingInfo.address,
+      parkingInfo.phone
+        ? isEnglish
+          ? `Tel: ${parkingInfo.phone}`
+          : `Tel: ${parkingInfo.phone}`
+        : '',
+      parkingInfo.email,
+    ]
+      .filter(Boolean)
+      .join('\n');
 
     const content = `
       <!DOCTYPE html>
@@ -232,20 +234,18 @@ export function VehiclesTable({
           .header { text-align: center; margin-bottom: 20px; }
           .logo { font-size: 24px; font-weight: bold; color: #0891b2; }
           .title { font-size: 18px; font-weight: bold; margin-top: 10px; }
-          .subtitle { font-size: 12px; color: #64748b; margin-bottom: 20px; }
           .divider { border-bottom: 1px dashed #ccc; margin: 15px 0; }
           .row { display: flex; justify-content: space-between; margin: 8px 0; font-size: 12px; }
           .label { color: #64748b; }
           .value { font-weight: bold; }
-          .total { font-size: 16px; font-weight: bold; color: #0891b2; margin-top: 10px; }
-          .footer { text-align: center; margin-top: 20px; font-size: 10px; color: #94a3b8; white-space: pre-line; }
+          .footer { text-align: center; margin-top: 20px; padding-top: 12px; border-top: 1px dashed #ccc; font-size: 10px; color: #64748b; white-space: pre-line; line-height: 1.6; }
+          .footer-thanks { font-size: 11px; font-weight: bold; color: #0891b2; margin-bottom: 6px; }
         </style>
       </head>
       <body>
         <div class="header">
-          <div class="logo">🅿️ ParkEase</div>
+          <div class="logo">🅿️ ${parkingName}</div>
           <div class="title">${labels.title}</div>
-          <div class="subtitle">${labels.subtitle}</div>
         </div>
         <div class="divider"></div>
         <div class="row">
@@ -278,7 +278,9 @@ export function VehiclesTable({
           <span class="value">${labels.exitTimeValue}</span>
         </div>
         <div class="footer">
-          ${labels.footer}
+          <div class="footer-thanks">${labels.thankYou}</div>
+          <div>${labels.keepReceipt}</div>
+          ${footerLines ? `<div style="margin-top:8px">${footerLines.replace(/\n/g, '<br/>')}</div>` : ''}
         </div>
         <script>
           window.onload = function() {
@@ -576,7 +578,7 @@ export function VehiclesTable({
               type="text"
               value={formData.veh_plate}
               onChange={(e) => {
-                const plate = e.target.value.toUpperCase();
+                const plate = autoFormatPlate(e.target.value);
                 setFormData({ ...formData, veh_plate: plate });
                 setPlateValidation(validatePlate(plate));
               }}

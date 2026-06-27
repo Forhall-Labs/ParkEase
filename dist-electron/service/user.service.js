@@ -9,6 +9,7 @@ function toSafeUser(user) {
         user_username: user.user_username,
         user_email: user.user_email,
         user_status: user.user_status,
+        user_role: user.user_role ?? 'user',
         user_version: user.user_version,
     };
 }

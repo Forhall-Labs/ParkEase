@@ -128,10 +128,10 @@ export function findVehicleById(id: number): Vehicle | undefined {
     | undefined;
 }
 
-export function findVehicleByPlate(plate: string): Vehicle | undefined {
-  return getDatabase().prepare('SELECT * FROM psm_vehicles WHERE veh_plate = ?').get(plate) as
-    | Vehicle
-    | undefined;
+export function findActiveVehicleByPlate(plate: string): Vehicle | undefined {
+  return getDatabase()
+    .prepare("SELECT * FROM psm_vehicles WHERE veh_plate = ? AND veh_status = 'P'")
+    .get(plate) as Vehicle | undefined;
 }
 
 export function findVehicleByReference(reference: string): Vehicle | undefined {

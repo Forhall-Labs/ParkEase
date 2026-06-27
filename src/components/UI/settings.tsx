@@ -33,12 +33,31 @@ export function Settings({ theme = 'dark', onThemeChange }: SettingsProps) {
 
   useEffect(() => {
     loadParameters();
-    // Initialize i18n
+    loadParkingInfo();
     const savedLang = localStorage.getItem('app-language');
     if (savedLang === 'es' || savedLang === 'en') {
       setLanguage(savedLang as 'es' | 'en');
     }
   }, []);
+
+  async function loadParkingInfo() {
+    try {
+      const [name, address, phone, email] = await Promise.all([
+        window.electronAPI?.settings?.get('parking_name'),
+        window.electronAPI?.settings?.get('parking_address'),
+        window.electronAPI?.settings?.get('parking_phone'),
+        window.electronAPI?.settings?.get('parking_email'),
+      ]);
+      setParkingInfo({
+        name: name ?? 'ParkEase',
+        address: address ?? 'San Marcos, Costa Rica',
+        phone: phone ?? '',
+        email: email ?? '',
+      });
+    } catch (err) {
+      console.error('Error loading parking info:', err);
+    }
+  }
 
   async function loadParameters() {
     try {
