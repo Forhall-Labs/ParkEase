@@ -25,6 +25,7 @@
     "build:win": "npm run build && electron-builder --win --publish never",
     "lint": "eslint .",
     "typecheck": "tsc -b --pretty false",
+    "pretest": "node -e \"if(!process.env.CI) require('child_process').execSync('npm rebuild better-sqlite3',{stdio:'inherit'})\"",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
