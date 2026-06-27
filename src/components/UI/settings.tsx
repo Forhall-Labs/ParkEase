@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { Parameter, CreateParameterDto, UpdateParameterDto } from '../../types/electron-api';
 import { t, setLanguage } from '../../i18n';
 import { Button, Card, SectionHeader } from '../primitives';
@@ -20,6 +20,8 @@ export function Settings({ theme = 'dark', onThemeChange }: SettingsProps) {
   const [parameters, setParameters] = useState<Parameter[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [parkingSaved, setParkingSaved] = useState(false);
+  const parkingSavedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [editingParam, setEditingParam] = useState<Parameter | null>(null);
   const [formData, setFormData] = useState<CreateParameterDto>({
@@ -149,6 +151,9 @@ export function Settings({ theme = 'dark', onThemeChange }: SettingsProps) {
       await window.electronAPI?.settings?.save('parking_address', parkingInfo.address);
       await window.electronAPI?.settings?.save('parking_phone', parkingInfo.phone);
       await window.electronAPI?.settings?.save('parking_email', parkingInfo.email);
+      setParkingSaved(true);
+      if (parkingSavedTimer.current) clearTimeout(parkingSavedTimer.current);
+      parkingSavedTimer.current = setTimeout(() => setParkingSaved(false), 3000);
     } catch (err) {
       console.error('Error saving parking info:', err);
     }
@@ -272,6 +277,19 @@ export function Settings({ theme = 'dark', onThemeChange }: SettingsProps) {
           <h3 className={`mb-4 text-lg font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>
             {t('settings.parking.title')}
           </h3>
+
+          {parkingSaved && (
+            <div
+              className={`mb-4 flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition-all ${
+                isLight
+                  ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
+                  : 'border-emerald-400/30 bg-emerald-500/10 text-emerald-300'
+              }`}
+            >
+              <span>✓</span>
+              <span>{t('settings.parking.saved')}</span>
+            </div>
+          )}
 
           <div className="space-y-4">
             <div>

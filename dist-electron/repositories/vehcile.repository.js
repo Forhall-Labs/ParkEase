@@ -83,8 +83,10 @@ export function findActiveVehicles() {
 export function findVehicleById(id) {
     return getDatabase().prepare('SELECT * FROM psm_vehicles WHERE veh_id = ?').get(id);
 }
-export function findVehicleByPlate(plate) {
-    return getDatabase().prepare('SELECT * FROM psm_vehicles WHERE veh_plate = ?').get(plate);
+export function findActiveVehicleByPlate(plate) {
+    return getDatabase()
+        .prepare("SELECT * FROM psm_vehicles WHERE veh_plate = ? AND veh_status = 'P'")
+        .get(plate);
 }
 export function findVehicleByReference(reference) {
     return getDatabase()

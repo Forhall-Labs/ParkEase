@@ -189,9 +189,6 @@ export function VehiclesTable({
   }
 
   function printReceipt(data: CreateVehicleDto) {
-    const printWindow = window.open('', '_blank', 'width=400,height=600');
-    if (!printWindow) return;
-
     const lang = localStorage.getItem('app-language') || 'es';
     const isEnglish = lang === 'en';
 
@@ -291,8 +288,12 @@ export function VehiclesTable({
       </html>
     `;
 
-    printWindow.document.write(content);
-    printWindow.document.close();
+    const blob = new Blob([content], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const printWindow = window.open(url, '_blank', 'width=400,height=650');
+    if (printWindow) {
+      printWindow.addEventListener('beforeunload', () => URL.revokeObjectURL(url));
+    }
   }
 
   function printVehicleReceipt(vehicle: Vehicle) {

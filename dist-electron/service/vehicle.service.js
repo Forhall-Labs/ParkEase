@@ -1,4 +1,4 @@
-import { findAllVehicles, findActiveVehicles, findVehicleById, findVehicleByPlate, findVehicleByReference, createVehicle, checkoutVehicle, updateVehicle, deleteVehicle, findVehicleReport, } from '../repositories/vehcile.repository.js';
+import { findAllVehicles, findActiveVehicles, findVehicleById, findActiveVehicleByPlate, findVehicleByReference, createVehicle, checkoutVehicle, updateVehicle, deleteVehicle, findVehicleReport, } from '../repositories/vehcile.repository.js';
 // ─── Queries ──────────────────────────────────────────────────────────────────
 export function getAllVehicles() {
     return findAllVehicles();
@@ -11,9 +11,9 @@ export function getVehicleById(id) {
 }
 // ─── Registrar ingreso ────────────────────────────────────────────────────────
 export function registerVehicle(dto) {
-    // Validar placa duplicada
-    const byPlate = findVehicleByPlate(dto.veh_plate);
-    if (byPlate && byPlate.veh_status === 'P') {
+    // Validar placa activa duplicada (misma placa puede reingresar si ya salió)
+    const byPlate = findActiveVehicleByPlate(dto.veh_plate);
+    if (byPlate) {
         return { success: false, message: `La placa ${dto.veh_plate} ya tiene un ingreso activo.` };
     }
     // Validar referencia duplicada
@@ -46,11 +46,11 @@ export function editVehicle(id, dto) {
     if (!existing) {
         return { success: false, message: 'Vehículo no encontrado.' };
     }
-    // Validar placa duplicada con otro vehículo
+    // Bloquear si otra sesión activa tiene la misma placa
     if (dto.veh_plate) {
-        const byPlate = findVehicleByPlate(dto.veh_plate);
+        const byPlate = findActiveVehicleByPlate(dto.veh_plate);
         if (byPlate && byPlate.veh_id !== id) {
-            return { success: false, message: `La placa ${dto.veh_plate} ya está registrada.` };
+            return { success: false, message: `La placa ${dto.veh_plate} ya tiene un ingreso activo.` };
         }
     }
     updateVehicle(id, dto);

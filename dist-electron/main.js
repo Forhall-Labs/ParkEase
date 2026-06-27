@@ -2015,6 +2015,25 @@ function runMigrations() {
 				db.exec(`ALTER TABLE psm_users ADD COLUMN user_role TEXT NOT NULL DEFAULT 'user' CHECK (user_role IN ('admin', 'user'))`);
 			} catch {}
 			db.exec(`UPDATE psm_users SET user_role = 'admin' WHERE user_username = 'admin'`);
+		},
+		"008_remove_plate_unique": () => {
+			db.exec(`
+        CREATE TABLE IF NOT EXISTS psm_vehicles_new (
+          veh_id           INTEGER PRIMARY KEY AUTOINCREMENT,
+          veh_owner        TEXT,
+          veh_reference    TEXT    NOT NULL UNIQUE,
+          veh_plate        TEXT    NOT NULL,
+          veh_ingress_date TEXT    NOT NULL,
+          veh_egress_date  TEXT,
+          veh_status       TEXT    NOT NULL DEFAULT 'P'
+                                   CHECK (veh_status IN ('P', 'S')),
+          veh_tax          TEXT    NOT NULL,
+          veh_version      INTEGER NOT NULL DEFAULT 1
+        );
+        INSERT INTO psm_vehicles_new SELECT * FROM psm_vehicles;
+        DROP TABLE psm_vehicles;
+        ALTER TABLE psm_vehicles_new RENAME TO psm_vehicles;
+      `);
 		}
 	};
 	const applied = db.prepare("SELECT name FROM psm_migrations").all();
@@ -2308,8 +2327,8 @@ function findActiveVehicles() {
 function findVehicleById(id) {
 	return getDatabase().prepare("SELECT * FROM psm_vehicles WHERE veh_id = ?").get(id);
 }
-function findVehicleByPlate(plate) {
-	return getDatabase().prepare("SELECT * FROM psm_vehicles WHERE veh_plate = ?").get(plate);
+function findActiveVehicleByPlate(plate) {
+	return getDatabase().prepare("SELECT * FROM psm_vehicles WHERE veh_plate = ? AND veh_status = 'P'").get(plate);
 }
 function findVehicleByReference(reference) {
 	return getDatabase().prepare("SELECT * FROM psm_vehicles WHERE veh_reference = ?").get(reference);
@@ -2358,8 +2377,7 @@ function getVehicleById(id) {
 	return findVehicleById(id);
 }
 function registerVehicle(dto) {
-	const byPlate = findVehicleByPlate(dto.veh_plate);
-	if (byPlate && byPlate.veh_status === "P") return {
+	if (findActiveVehicleByPlate(dto.veh_plate)) return {
 		success: false,
 		message: `La placa ${dto.veh_plate} ya tiene un ingreso activo.`
 	};
@@ -2394,10 +2412,10 @@ function editVehicle(id, dto) {
 		message: "Vehículo no encontrado."
 	};
 	if (dto.veh_plate) {
-		const byPlate = findVehicleByPlate(dto.veh_plate);
+		const byPlate = findActiveVehicleByPlate(dto.veh_plate);
 		if (byPlate && byPlate.veh_id !== id) return {
 			success: false,
-			message: `La placa ${dto.veh_plate} ya está registrada.`
+			message: `La placa ${dto.veh_plate} ya tiene un ingreso activo.`
 		};
 	}
 	updateVehicle(id, dto);

@@ -220,6 +220,7 @@ export const translations = {
         address: 'Dirección',
         phone: 'Teléfono',
         email: 'Email',
+        saved: 'Información guardada correctamente',
       },
       rates: {
         title: 'Tarifas',
@@ -465,6 +466,7 @@ export const translations = {
         address: 'Address',
         phone: 'Phone',
         email: 'Email',
+        saved: 'Information saved successfully',
       },
       rates: {
         title: 'Rates',

@@ -10,6 +10,9 @@ export function getDatabase() {
     }
     return db;
 }
+export function _setDatabaseForTest(testDb) {
+    db = testDb;
+}
 // ─── Inicialización ───────────────────────────────────────────────────────────
 export function initDatabase() {
     const DB_PATH = join(app.getPath('userData'), 'psm.db');
@@ -140,6 +143,26 @@ function runMigrations() {
                 // column already exists
             }
             db.exec(`UPDATE psm_users SET user_role = 'admin' WHERE user_username = 'admin'`);
+        },
+        // veh_plate UNIQUE eliminado: misma placa puede ingresar varias veces (distintas sesiones)
+        '008_remove_plate_unique': () => {
+            db.exec(`
+        CREATE TABLE IF NOT EXISTS psm_vehicles_new (
+          veh_id           INTEGER PRIMARY KEY AUTOINCREMENT,
+          veh_owner        TEXT,
+          veh_reference    TEXT    NOT NULL UNIQUE,
+          veh_plate        TEXT    NOT NULL,
+          veh_ingress_date TEXT    NOT NULL,
+          veh_egress_date  TEXT,
+          veh_status       TEXT    NOT NULL DEFAULT 'P'
+                                   CHECK (veh_status IN ('P', 'S')),
+          veh_tax          TEXT    NOT NULL,
+          veh_version      INTEGER NOT NULL DEFAULT 1
+        );
+        INSERT INTO psm_vehicles_new SELECT * FROM psm_vehicles;
+        DROP TABLE psm_vehicles;
+        ALTER TABLE psm_vehicles_new RENAME TO psm_vehicles;
+      `);
         },
     };
     const applied = db.prepare('SELECT name FROM psm_migrations').all();
