@@ -2,8 +2,6 @@ name: Build and Release Windows
 
 on:
   push:
-    branches:
-      - main
     tags:
       - 'v*'
   workflow_dispatch:
@@ -42,17 +40,6 @@ jobs:
           Write-Host "Listing dist directory"
           Get-ChildItem -Path dist -Recurse | Select-Object FullName, Length
 
-      - name: Set build label
-        id: label
-        shell: pwsh
-        run: |
-          if ("${{ github.ref }}" -like "refs/tags/*") {
-            echo "name=${{ github.ref_name }}" >> $env:GITHUB_OUTPUT
-          } else {
-            $sha = "${{ github.sha }}".Substring(0, 7)
-            echo "name=${{ github.ref_name }}-$sha" >> $env:GITHUB_OUTPUT
-          }
-
       - name: Package portable zip
         shell: pwsh
         run: |
@@ -61,7 +48,7 @@ jobs:
             throw "Portable directory not found: $portableDir"
           }
 
-          $zipName = "psm-app-portable-${{ steps.label.outputs.name }}.zip"
+          $zipName = "psm-app-portable-${{ github.ref_name }}.zip"
           if (Test-Path $zipName) {
             Remove-Item $zipName -Force
           }
@@ -79,7 +66,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: psm-app-windows-portable
-          path: psm-app-portable-${{ steps.label.outputs.name }}.zip
+          path: psm-app-portable-${{ github.ref_name }}.zip
           if-no-files-found: error
 
       - name: Create draft GitHub release
@@ -91,4 +78,4 @@ jobs:
           fail_on_unmatched_files: true
           files: |
             dist/*.exe
-            psm-app-portable-${{ steps.label.outputs.name }}.zip
+            psm-app-portable-${{ github.ref_name }}.zip
