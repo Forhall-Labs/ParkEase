@@ -1,43 +1,73 @@
-# Parqueo Parroquial San Marcos
+# React + TypeScript + Vite
 
-## Overview
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-**Parqueo Parroquial San Marcos** is my first project designed for a parking lot system. It allows parameter customization, car entry and exit management, tracking recently exited vehicles, and generating detailed reports, including daily, weekly, monthly, or yearly summaries. This comprehensive system is tailored for small enterprises.
+Currently, two official plugins are available:
 
-## Features
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
 
-- **Parameter Management**: Easily configure parking spaces and pricing.
-- **Car Entry and Exit**: Real-time price calculation upon exit and an efficient workflow for managing vehicle ingress and egress.
-- **Recently Exited Vehicles**: View a quick list of cars that have recently left the parking lot.
-- **Task Monitoring**: A customizable dashboard for managing and monitoring parking lot operations.
-- **Customizable Interface**: Adapt the system layout to specific business needs.
-- **Report Generation**: Generate real-time reports on revenue and vehicle exits, filtered by day, week, month, or year.
+## React Compiler
 
-## Technologies Used
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-The project utilizes a modern and reliable tech stack:
+## Expanding the ESLint configuration
 
-- **Java 21**: Core programming language.
-- **JavaFX 21**: For an intuitive and interactive graphical user interface.
-- **Oracle 21c XE (Docker)**: Database management (optionally installable directly on a local machine).
-- **SQL**: For database queries and operations.
-- **JPA**: Java Persistence API for seamless object-relational mapping.
-- **Apache POI**: For generating Excel reports.
-- **IDE**: Visual Studio Code (VS Code).
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
 
-## Installation and Setup
+```js
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
 
-To set up and run **Parqueo Parroquial San Marcos**, follow these steps:
+      // Remove tseslint.configs.recommended and replace with this
+      tseslint.configs.recommendedTypeChecked,
+      // Alternatively, use this for stricter rules
+      tseslint.configs.strictTypeChecked,
+      // Optionally, add this for stylistic rules
+      tseslint.configs.stylisticTypeChecked,
 
-1. **Install Java JDK 21**: Ensure that JDK 21 is installed and properly configured on your system.
+      // Other configs...
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+```
 
-2. **Set Up the Oracle Database**:
-   - Install Oracle Database 21c XE on your local machine or as a Docker container.
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
-3. **Run the Application**:
-   - Build the project and package it as a JAR file.
-   - Execute the JAR file to launch the application.
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
 
-## Contributors
-
-- **Developer**: Alejandro León Marín
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+      // Enable lint rules for React
+      reactX.configs['recommended-typescript'],
+      // Enable lint rules for React DOM
+      reactDom.configs.recommended,
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+```

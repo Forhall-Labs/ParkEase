@@ -1,0 +1,73 @@
+name: 🔧 Tarea Técnica
+description: Tarea de desarrollo, refactor, configuración o deuda técnica
+title: "[TECH] "
+labels: ["technical"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Tarea Técnica
+        Para tareas de desarrollo que no son bugs ni features visibles al usuario.
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: 🏷️ Tipo de tarea
+      options:
+        - Refactor de código
+        - Configuración / Setup
+        - Migración de base de datos
+        - Mejora de rendimiento
+        - Actualización de dependencias
+        - Tests / Pruebas
+        - Documentación
+        - CI/CD
+        - Seguridad
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 📋 Descripción
+      description: ¿Qué hay que hacer y por qué?
+      placeholder: "Agregar índice a veh_plate en SQLite para mejorar la velocidad de búsqueda..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: tasks
+    attributes:
+      label: ✅ Subtareas
+      description: Lista de pasos o subtareas a completar.
+      placeholder: |
+        - [ ] Crear migration script
+        - [ ] Probar con datos de prueba
+        - [ ] Verificar en Windows
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 📊 Prioridad
+      options:
+        - "Alta - Bloquea desarrollo"
+        - "Media - Importante pero no urgente"
+        - "Baja - Deuda técnica"
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: ⚠️ Impacto o riesgos
+      description: ¿Qué puede verse afectado por este cambio?
+      placeholder: "Requiere correr migration script en producción antes de actualizar la app."
+
+  - type: textarea
+    id: context
+    attributes:
+      label: 📝 Contexto adicional

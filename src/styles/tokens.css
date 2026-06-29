@@ -1,0 +1,81 @@
+/*
+  Semantic token contract (single source of truth)
+  ------------------------------------------------
+  - Keep names role-based (surface, text, border, accent, feedback), never palette-based APIs.
+  - Consume these variables from primitives/components to avoid ad-hoc per-screen values.
+*/
+
+:root {
+  /* Color roles - dark baseline */
+  --color-surface-app: #020617;
+  --color-surface-panel: #0f172a;
+  --color-surface-card: #111827;
+  --color-surface-muted: #1e293b;
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #cbd5e1;
+  --color-text-muted: #94a3b8;
+  --color-border-default: rgb(148 163 184 / 0.35);
+  --color-border-strong: rgb(148 163 184 / 0.55);
+  --color-accent-primary: #38bdf8;
+  --color-accent-contrast: #082f49;
+  --color-focus-ring: rgb(56 189 248 / 0.45);
+  --color-feedback-info: #38bdf8;
+  --color-feedback-success: #34d399;
+  --color-feedback-warning: #fbbf24;
+  --color-feedback-danger: #fb7185;
+
+  /* Shadows - dark baseline */
+  --shadow-card: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+  --shadow-panel: 0 1px 3px 0 rgb(0 0 0 / 0.2), 0 1px 2px -1px rgb(0 0 0 / 0.2);
+
+  /* Spacing scale */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+
+  /* Radius scale */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 1.875rem;
+
+  /* Typography roles */
+  --font-family-sans: 'Sora', ui-sans-serif, system-ui, sans-serif;
+  --font-size-label: 0.6875rem;
+  --font-size-body: 0.875rem;
+  --font-size-heading: 1.875rem;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --tracking-label: 0.2em;
+}
+
+:root[data-theme='light'],
+:root.light,
+:root.theme-light {
+  --color-surface-app: #f8fafc;
+  --color-surface-panel: #ffffff;
+  --color-surface-card: #ffffff;
+  --color-surface-muted: #e2e8f0;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #334155;
+  --color-text-muted: #64748b;
+  --color-border-default: rgb(148 163 184 / 0.45);
+  --color-border-strong: rgb(100 116 139 / 0.55);
+  --color-accent-primary: #0369a1;
+  --color-accent-contrast: #f0f9ff;
+  --color-focus-ring: rgb(3 105 161 / 0.35);
+  --color-feedback-info: #0284c7;
+  --color-feedback-success: #059669;
+  --color-feedback-warning: #d97706;
+  --color-feedback-danger: #dc2626;
+
+  /* Shadows - light theme */
+  --shadow-card: 0 4px 6px -1px rgb(148 163 184 / 0.15), 0 2px 4px -2px rgb(148 163 184 / 0.1);
+  --shadow-panel: 0 1px 3px 0 rgb(148 163 184 / 0.1), 0 1px 2px -1px rgb(148 163 184 / 0.08);
+}
