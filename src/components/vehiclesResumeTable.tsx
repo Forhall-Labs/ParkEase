@@ -227,21 +227,21 @@ export function VehiclesTable({
         <title>${labels.title}</title>
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: 'Courier New', monospace; padding: 20px; width: 280px; }
-          .header { text-align: center; margin-bottom: 20px; }
-          .logo { font-size: 24px; font-weight: bold; color: #0891b2; }
-          .title { font-size: 18px; font-weight: bold; margin-top: 10px; }
-          .divider { border-bottom: 1px dashed #ccc; margin: 15px 0; }
-          .row { display: flex; justify-content: space-between; margin: 8px 0; font-size: 12px; }
-          .label { color: #64748b; }
-          .value { font-weight: bold; }
-          .footer { text-align: center; margin-top: 20px; padding-top: 12px; border-top: 1px dashed #ccc; font-size: 10px; color: #64748b; white-space: pre-line; line-height: 1.6; }
-          .footer-thanks { font-size: 11px; font-weight: bold; color: #0891b2; margin-bottom: 6px; }
+          body { font-family: 'Courier New', monospace; padding: 4px; width: 58mm; margin: 0 auto; color: #000; }
+          .header { text-align: center; margin-bottom: 16px; }
+          .logo { font-size: 14px; font-weight: bold; color: #000; }
+          .title { font-size: 12px; font-weight: bold; margin-top: 6px; color: #000; }
+          .divider { border-bottom: 2px dashed #000; margin: 8px 0; }
+          .row { display: flex; justify-content: space-between; margin: 4px 0; font-size: 11px; color: #000; }
+          .label { font-weight: bold; color: #000; }
+          .value { font-weight: bold; color: #000; }
+          .footer { text-align: center; margin-top: 10px; padding-top: 8px; border-top: 2px dashed #000; font-size: 10px; color: #000; white-space: pre-line; line-height: 1.5; font-weight: bold; }
+          .footer-thanks { font-size: 11px; font-weight: bold; color: #000; margin-bottom: 4px; }
         </style>
       </head>
       <body>
         <div class="header">
-          <div class="logo">🅿️ ${parkingName}</div>
+          <div class="logo">${parkingName}</div>
           <div class="title">${labels.title}</div>
         </div>
         <div class="divider"></div>
@@ -290,7 +290,7 @@ export function VehiclesTable({
 
     const blob = new Blob([content], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
-    const printWindow = window.open(url, '_blank', 'width=400,height=650');
+    const printWindow = window.open(url, '_blank', 'width=220,height=600');
     if (printWindow) {
       printWindow.addEventListener('beforeunload', () => URL.revokeObjectURL(url));
     }
