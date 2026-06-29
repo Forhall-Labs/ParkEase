@@ -1,296 +1,136 @@
-import { BrowserWindow, app, ipcMain, screen } from "electron";
-import { dirname, join } from "path";
-import { fileURLToPath } from "url";
-import { appendFileSync, existsSync, mkdirSync } from "fs";
-import Database from "better-sqlite3";
-import nodeCrypto from "crypto";
+import { BrowserWindow as e, app as t, ipcMain as n, screen as r } from "electron";
+import { dirname as i, join as a } from "path";
+import { fileURLToPath as o } from "url";
+import { appendFileSync as s, existsSync as c, mkdirSync as l } from "fs";
+import u from "better-sqlite3";
+import d from "crypto";
 //#region node_modules/bcryptjs/index.js
-/**
-* The random implementation to use as a fallback.
-* @type {?function(number):!Array.<number>}
-* @inner
-*/
-var randomFallback = null;
-/**
-* Generates cryptographically secure random bytes.
-* @function
-* @param {number} len Bytes length
-* @returns {!Array.<number>} Random bytes
-* @throws {Error} If no random implementation is available
-* @inner
-*/
-function randomBytes(len) {
+var f = null;
+function p(e) {
 	try {
-		return crypto.getRandomValues(new Uint8Array(len));
+		return crypto.getRandomValues(new Uint8Array(e));
 	} catch {}
 	try {
-		return nodeCrypto.randomBytes(len);
+		return d.randomBytes(e);
 	} catch {}
-	if (!randomFallback) throw Error("Neither WebCryptoAPI nor a crypto module is available. Use bcrypt.setRandomFallback to set an alternative");
-	return randomFallback(len);
+	if (!f) throw Error("Neither WebCryptoAPI nor a crypto module is available. Use bcrypt.setRandomFallback to set an alternative");
+	return f(e);
 }
-/**
-* Sets the pseudo random number generator to use as a fallback if neither node's `crypto` module nor the Web Crypto
-*  API is available. Please note: It is highly important that the PRNG used is cryptographically secure and that it
-*  is seeded properly!
-* @param {?function(number):!Array.<number>} random Function taking the number of bytes to generate as its
-*  sole argument, returning the corresponding array of cryptographically secure random byte values.
-* @see http://nodejs.org/api/crypto.html
-* @see http://www.w3.org/TR/WebCryptoAPI/
-*/
-function setRandomFallback(random) {
-	randomFallback = random;
+function ee(e) {
+	f = e;
 }
-/**
-* Synchronously generates a salt.
-* @param {number=} rounds Number of rounds to use, defaults to 10 if omitted
-* @param {number=} seed_length Not supported.
-* @returns {string} Resulting salt
-* @throws {Error} If a random fallback is required but not set
-*/
-function genSaltSync(rounds, seed_length) {
-	rounds = rounds || GENSALT_DEFAULT_LOG2_ROUNDS;
-	if (typeof rounds !== "number") throw Error("Illegal arguments: " + typeof rounds + ", " + typeof seed_length);
-	if (rounds < 4) rounds = 4;
-	else if (rounds > 31) rounds = 31;
-	var salt = [];
-	salt.push("$2b$");
-	if (rounds < 10) salt.push("0");
-	salt.push(rounds.toString());
-	salt.push("$");
-	salt.push(base64_encode(randomBytes(BCRYPT_SALT_LEN), BCRYPT_SALT_LEN));
-	return salt.join("");
+function m(e, t) {
+	if (e ||= D, typeof e != "number") throw Error("Illegal arguments: " + typeof e + ", " + typeof t);
+	e < 4 ? e = 4 : e > 31 && (e = 31);
+	var n = [];
+	return n.push("$2b$"), e < 10 && n.push("0"), n.push(e.toString()), n.push("$"), n.push(w(p(E), E)), n.join("");
 }
-/**
-* Asynchronously generates a salt.
-* @param {(number|function(Error, string=))=} rounds Number of rounds to use, defaults to 10 if omitted
-* @param {(number|function(Error, string=))=} seed_length Not supported.
-* @param {function(Error, string=)=} callback Callback receiving the error, if any, and the resulting salt
-* @returns {!Promise} If `callback` has been omitted
-* @throws {Error} If `callback` is present but not a function
-*/
-function genSalt(rounds, seed_length, callback) {
-	if (typeof seed_length === "function") callback = seed_length, seed_length = void 0;
-	if (typeof rounds === "function") callback = rounds, rounds = void 0;
-	if (typeof rounds === "undefined") rounds = GENSALT_DEFAULT_LOG2_ROUNDS;
-	else if (typeof rounds !== "number") throw Error("illegal arguments: " + typeof rounds);
-	function _async(callback) {
-		nextTick(function() {
+function h(e, t, n) {
+	if (typeof t == "function" && (n = t, t = void 0), typeof e == "function" && (n = e, e = void 0), e === void 0) e = D;
+	else if (typeof e != "number") throw Error("illegal arguments: " + typeof e);
+	function r(t) {
+		b(function() {
 			try {
-				callback(null, genSaltSync(rounds));
-			} catch (err) {
-				callback(err);
+				t(null, m(e));
+			} catch (e) {
+				t(e);
 			}
 		});
 	}
-	if (callback) {
-		if (typeof callback !== "function") throw Error("Illegal callback: " + typeof callback);
-		_async(callback);
-	} else return new Promise(function(resolve, reject) {
-		_async(function(err, res) {
-			if (err) {
-				reject(err);
+	if (n) {
+		if (typeof n != "function") throw Error("Illegal callback: " + typeof n);
+		r(n);
+	} else return new Promise(function(e, t) {
+		r(function(n, r) {
+			if (n) {
+				t(n);
 				return;
 			}
-			resolve(res);
+			e(r);
 		});
 	});
 }
-/**
-* Synchronously generates a hash for the given password.
-* @param {string} password Password to hash
-* @param {(number|string)=} salt Salt length to generate or salt to use, default to 10
-* @returns {string} Resulting hash
-*/
-function hashSync(password, salt) {
-	if (typeof salt === "undefined") salt = GENSALT_DEFAULT_LOG2_ROUNDS;
-	if (typeof salt === "number") salt = genSaltSync(salt);
-	if (typeof password !== "string" || typeof salt !== "string") throw Error("Illegal arguments: " + typeof password + ", " + typeof salt);
-	return _hash(password, salt);
+function g(e, t) {
+	if (t === void 0 && (t = D), typeof t == "number" && (t = m(t)), typeof e != "string" || typeof t != "string") throw Error("Illegal arguments: " + typeof e + ", " + typeof t);
+	return F(e, t);
 }
-/**
-* Asynchronously generates a hash for the given password.
-* @param {string} password Password to hash
-* @param {number|string} salt Salt length to generate or salt to use
-* @param {function(Error, string=)=} callback Callback receiving the error, if any, and the resulting hash
-* @param {function(number)=} progressCallback Callback successively called with the percentage of rounds completed
-*  (0.0 - 1.0), maximally once per `MAX_EXECUTION_TIME = 100` ms.
-* @returns {!Promise} If `callback` has been omitted
-* @throws {Error} If `callback` is present but not a function
-*/
-function hash(password, salt, callback, progressCallback) {
-	function _async(callback) {
-		if (typeof password === "string" && typeof salt === "number") genSalt(salt, function(err, salt) {
-			_hash(password, salt, callback, progressCallback);
-		});
-		else if (typeof password === "string" && typeof salt === "string") _hash(password, salt, callback, progressCallback);
-		else nextTick(callback.bind(this, Error("Illegal arguments: " + typeof password + ", " + typeof salt)));
+function _(e, t, n, r) {
+	function i(n) {
+		typeof e == "string" && typeof t == "number" ? h(t, function(t, i) {
+			F(e, i, n, r);
+		}) : typeof e == "string" && typeof t == "string" ? F(e, t, n, r) : b(n.bind(this, Error("Illegal arguments: " + typeof e + ", " + typeof t)));
 	}
-	if (callback) {
-		if (typeof callback !== "function") throw Error("Illegal callback: " + typeof callback);
-		_async(callback);
-	} else return new Promise(function(resolve, reject) {
-		_async(function(err, res) {
-			if (err) {
-				reject(err);
+	if (n) {
+		if (typeof n != "function") throw Error("Illegal callback: " + typeof n);
+		i(n);
+	} else return new Promise(function(e, t) {
+		i(function(n, r) {
+			if (n) {
+				t(n);
 				return;
 			}
-			resolve(res);
+			e(r);
 		});
 	});
 }
-/**
-* Compares two strings of the same length in constant time.
-* @param {string} known Must be of the correct length
-* @param {string} unknown Must be the same length as `known`
-* @returns {boolean}
-* @inner
-*/
-function safeStringCompare(known, unknown) {
-	var diff = known.length ^ unknown.length;
-	for (var i = 0; i < known.length; ++i) diff |= known.charCodeAt(i) ^ unknown.charCodeAt(i);
-	return diff === 0;
+function v(e, t) {
+	for (var n = e.length ^ t.length, r = 0; r < e.length; ++r) n |= e.charCodeAt(r) ^ t.charCodeAt(r);
+	return n === 0;
 }
-/**
-* Synchronously tests a password against a hash.
-* @param {string} password Password to compare
-* @param {string} hash Hash to test against
-* @returns {boolean} true if matching, otherwise false
-* @throws {Error} If an argument is illegal
-*/
-function compareSync(password, hash) {
-	if (typeof password !== "string" || typeof hash !== "string") throw Error("Illegal arguments: " + typeof password + ", " + typeof hash);
-	if (hash.length !== 60) return false;
-	return safeStringCompare(hashSync(password, hash.substring(0, hash.length - 31)), hash);
+function te(e, t) {
+	if (typeof e != "string" || typeof t != "string") throw Error("Illegal arguments: " + typeof e + ", " + typeof t);
+	return t.length === 60 ? v(g(e, t.substring(0, t.length - 31)), t) : !1;
 }
-/**
-* Asynchronously tests a password against a hash.
-* @param {string} password Password to compare
-* @param {string} hashValue Hash to test against
-* @param {function(Error, boolean)=} callback Callback receiving the error, if any, otherwise the result
-* @param {function(number)=} progressCallback Callback successively called with the percentage of rounds completed
-*  (0.0 - 1.0), maximally once per `MAX_EXECUTION_TIME = 100` ms.
-* @returns {!Promise} If `callback` has been omitted
-* @throws {Error} If `callback` is present but not a function
-*/
-function compare(password, hashValue, callback, progressCallback) {
-	function _async(callback) {
-		if (typeof password !== "string" || typeof hashValue !== "string") {
-			nextTick(callback.bind(this, Error("Illegal arguments: " + typeof password + ", " + typeof hashValue)));
+function ne(e, t, n, r) {
+	function i(n) {
+		if (typeof e != "string" || typeof t != "string") {
+			b(n.bind(this, Error("Illegal arguments: " + typeof e + ", " + typeof t)));
 			return;
 		}
-		if (hashValue.length !== 60) {
-			nextTick(callback.bind(this, null, false));
+		if (t.length !== 60) {
+			b(n.bind(this, null, !1));
 			return;
 		}
-		hash(password, hashValue.substring(0, 29), function(err, comp) {
-			if (err) callback(err);
-			else callback(null, safeStringCompare(comp, hashValue));
-		}, progressCallback);
+		_(e, t.substring(0, 29), function(e, r) {
+			e ? n(e) : n(null, v(r, t));
+		}, r);
 	}
-	if (callback) {
-		if (typeof callback !== "function") throw Error("Illegal callback: " + typeof callback);
-		_async(callback);
-	} else return new Promise(function(resolve, reject) {
-		_async(function(err, res) {
-			if (err) {
-				reject(err);
+	if (n) {
+		if (typeof n != "function") throw Error("Illegal callback: " + typeof n);
+		i(n);
+	} else return new Promise(function(e, t) {
+		i(function(n, r) {
+			if (n) {
+				t(n);
 				return;
 			}
-			resolve(res);
+			e(r);
 		});
 	});
 }
-/**
-* Gets the number of rounds used to encrypt the specified hash.
-* @param {string} hash Hash to extract the used number of rounds from
-* @returns {number} Number of rounds used
-* @throws {Error} If `hash` is not a string
-*/
-function getRounds(hash) {
-	if (typeof hash !== "string") throw Error("Illegal arguments: " + typeof hash);
-	return parseInt(hash.split("$")[2], 10);
+function re(e) {
+	if (typeof e != "string") throw Error("Illegal arguments: " + typeof e);
+	return parseInt(e.split("$")[2], 10);
 }
-/**
-* Gets the salt portion from a hash. Does not validate the hash.
-* @param {string} hash Hash to extract the salt from
-* @returns {string} Extracted salt part
-* @throws {Error} If `hash` is not a string or otherwise invalid
-*/
-function getSalt(hash) {
-	if (typeof hash !== "string") throw Error("Illegal arguments: " + typeof hash);
-	if (hash.length !== 60) throw Error("Illegal hash length: " + hash.length + " != 60");
-	return hash.substring(0, 29);
+function y(e) {
+	if (typeof e != "string") throw Error("Illegal arguments: " + typeof e);
+	if (e.length !== 60) throw Error("Illegal hash length: " + e.length + " != 60");
+	return e.substring(0, 29);
 }
-/**
-* Tests if a password will be truncated when hashed, that is its length is
-* greater than 72 bytes when converted to UTF-8.
-* @param {string} password The password to test
-* @returns {boolean} `true` if truncated, otherwise `false`
-*/
-function truncates(password) {
-	if (typeof password !== "string") throw Error("Illegal arguments: " + typeof password);
-	return utf8Length(password) > 72;
+function ie(e) {
+	if (typeof e != "string") throw Error("Illegal arguments: " + typeof e);
+	return x(e) > 72;
 }
-/**
-* Continues with the callback after yielding to the event loop.
-* @function
-* @param {function(...[*])} callback Callback to execute
-* @inner
-*/
-var nextTick = typeof setImmediate === "function" ? setImmediate : typeof scheduler === "object" && typeof scheduler.postTask === "function" ? scheduler.postTask.bind(scheduler) : setTimeout;
-/** Calculates the byte length of a string encoded as UTF8. */
-function utf8Length(string) {
-	var len = 0, c = 0;
-	for (var i = 0; i < string.length; ++i) {
-		c = string.charCodeAt(i);
-		if (c < 128) len += 1;
-		else if (c < 2048) len += 2;
-		else if ((c & 64512) === 55296 && (string.charCodeAt(i + 1) & 64512) === 56320) {
-			++i;
-			len += 4;
-		} else len += 3;
-	}
-	return len;
+var b = typeof setImmediate == "function" ? setImmediate : typeof scheduler == "object" && typeof scheduler.postTask == "function" ? scheduler.postTask.bind(scheduler) : setTimeout;
+function x(e) {
+	for (var t = 0, n = 0, r = 0; r < e.length; ++r) n = e.charCodeAt(r), n < 128 ? t += 1 : n < 2048 ? t += 2 : (n & 64512) == 55296 && (e.charCodeAt(r + 1) & 64512) == 56320 ? (++r, t += 4) : t += 3;
+	return t;
 }
-/** Converts a string to an array of UTF8 bytes. */
-function utf8Array(string) {
-	var offset = 0, c1, c2;
-	var buffer = new Array(utf8Length(string));
-	for (var i = 0, k = string.length; i < k; ++i) {
-		c1 = string.charCodeAt(i);
-		if (c1 < 128) buffer[offset++] = c1;
-		else if (c1 < 2048) {
-			buffer[offset++] = c1 >> 6 | 192;
-			buffer[offset++] = c1 & 63 | 128;
-		} else if ((c1 & 64512) === 55296 && ((c2 = string.charCodeAt(i + 1)) & 64512) === 56320) {
-			c1 = 65536 + ((c1 & 1023) << 10) + (c2 & 1023);
-			++i;
-			buffer[offset++] = c1 >> 18 | 240;
-			buffer[offset++] = c1 >> 12 & 63 | 128;
-			buffer[offset++] = c1 >> 6 & 63 | 128;
-			buffer[offset++] = c1 & 63 | 128;
-		} else {
-			buffer[offset++] = c1 >> 12 | 224;
-			buffer[offset++] = c1 >> 6 & 63 | 128;
-			buffer[offset++] = c1 & 63 | 128;
-		}
-	}
-	return buffer;
+function ae(e) {
+	for (var t = 0, n, r, i = Array(x(e)), a = 0, o = e.length; a < o; ++a) n = e.charCodeAt(a), n < 128 ? i[t++] = n : n < 2048 ? (i[t++] = n >> 6 | 192, i[t++] = n & 63 | 128) : (n & 64512) == 55296 && ((r = e.charCodeAt(a + 1)) & 64512) == 56320 ? (n = 65536 + ((n & 1023) << 10) + (r & 1023), ++a, i[t++] = n >> 18 | 240, i[t++] = n >> 12 & 63 | 128, i[t++] = n >> 6 & 63 | 128, i[t++] = n & 63 | 128) : (i[t++] = n >> 12 | 224, i[t++] = n >> 6 & 63 | 128, i[t++] = n & 63 | 128);
+	return i;
 }
-/**
-* bcrypt's own non-standard base64 dictionary.
-* @type {!Array.<string>}
-* @const
-* @inner
-**/
-var BASE64_CODE = "./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".split("");
-/**
-* @type {!Array.<number>}
-* @const
-* @inner
-**/
-var BASE64_INDEX = [
+var S = "./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".split(""), C = [
 	-1,
 	-1,
 	-1,
@@ -420,107 +260,31 @@ var BASE64_INDEX = [
 	-1,
 	-1
 ];
-/**
-* Encodes a byte array to base64 with up to len bytes of input.
-* @param {!Array.<number>} b Byte array
-* @param {number} len Maximum input length
-* @returns {string}
-* @inner
-*/
-function base64_encode(b, len) {
-	var off = 0, rs = [], c1, c2;
-	if (len <= 0 || len > b.length) throw Error("Illegal len: " + len);
-	while (off < len) {
-		c1 = b[off++] & 255;
-		rs.push(BASE64_CODE[c1 >> 2 & 63]);
-		c1 = (c1 & 3) << 4;
-		if (off >= len) {
-			rs.push(BASE64_CODE[c1 & 63]);
+function w(e, t) {
+	var n = 0, r = [], i, a;
+	if (t <= 0 || t > e.length) throw Error("Illegal len: " + t);
+	for (; n < t;) {
+		if (i = e[n++] & 255, r.push(S[i >> 2 & 63]), i = (i & 3) << 4, n >= t) {
+			r.push(S[i & 63]);
 			break;
 		}
-		c2 = b[off++] & 255;
-		c1 |= c2 >> 4 & 15;
-		rs.push(BASE64_CODE[c1 & 63]);
-		c1 = (c2 & 15) << 2;
-		if (off >= len) {
-			rs.push(BASE64_CODE[c1 & 63]);
+		if (a = e[n++] & 255, i |= a >> 4 & 15, r.push(S[i & 63]), i = (a & 15) << 2, n >= t) {
+			r.push(S[i & 63]);
 			break;
 		}
-		c2 = b[off++] & 255;
-		c1 |= c2 >> 6 & 3;
-		rs.push(BASE64_CODE[c1 & 63]);
-		rs.push(BASE64_CODE[c2 & 63]);
+		a = e[n++] & 255, i |= a >> 6 & 3, r.push(S[i & 63]), r.push(S[a & 63]);
 	}
-	return rs.join("");
+	return r.join("");
 }
-/**
-* Decodes a base64 encoded string to up to len bytes of output.
-* @param {string} s String to decode
-* @param {number} len Maximum output length
-* @returns {!Array.<number>}
-* @inner
-*/
-function base64_decode(s, len) {
-	var off = 0, slen = s.length, olen = 0, rs = [], c1, c2, c3, c4, o, code;
-	if (len <= 0) throw Error("Illegal len: " + len);
-	while (off < slen - 1 && olen < len) {
-		code = s.charCodeAt(off++);
-		c1 = code < BASE64_INDEX.length ? BASE64_INDEX[code] : -1;
-		code = s.charCodeAt(off++);
-		c2 = code < BASE64_INDEX.length ? BASE64_INDEX[code] : -1;
-		if (c1 == -1 || c2 == -1) break;
-		o = c1 << 2 >>> 0;
-		o |= (c2 & 48) >> 4;
-		rs.push(String.fromCharCode(o));
-		if (++olen >= len || off >= slen) break;
-		code = s.charCodeAt(off++);
-		c3 = code < BASE64_INDEX.length ? BASE64_INDEX[code] : -1;
-		if (c3 == -1) break;
-		o = (c2 & 15) << 4 >>> 0;
-		o |= (c3 & 60) >> 2;
-		rs.push(String.fromCharCode(o));
-		if (++olen >= len || off >= slen) break;
-		code = s.charCodeAt(off++);
-		c4 = code < BASE64_INDEX.length ? BASE64_INDEX[code] : -1;
-		o = (c3 & 3) << 6 >>> 0;
-		o |= c4;
-		rs.push(String.fromCharCode(o));
-		++olen;
-	}
-	var res = [];
-	for (off = 0; off < olen; off++) res.push(rs[off].charCodeAt(0));
-	return res;
+function T(e, t) {
+	var n = 0, r = e.length, i = 0, a = [], o, s, c, l, u, d;
+	if (t <= 0) throw Error("Illegal len: " + t);
+	for (; n < r - 1 && i < t && (d = e.charCodeAt(n++), o = d < C.length ? C[d] : -1, d = e.charCodeAt(n++), s = d < C.length ? C[d] : -1, !(o == -1 || s == -1 || (u = o << 2 >>> 0, u |= (s & 48) >> 4, a.push(String.fromCharCode(u)), ++i >= t || n >= r) || (d = e.charCodeAt(n++), c = d < C.length ? C[d] : -1, c == -1) || (u = (s & 15) << 4 >>> 0, u |= (c & 60) >> 2, a.push(String.fromCharCode(u)), ++i >= t || n >= r)));) d = e.charCodeAt(n++), l = d < C.length ? C[d] : -1, u = (c & 3) << 6 >>> 0, u |= l, a.push(String.fromCharCode(u)), ++i;
+	var f = [];
+	for (n = 0; n < i; n++) f.push(a[n].charCodeAt(0));
+	return f;
 }
-/**
-* @type {number}
-* @const
-* @inner
-*/
-var BCRYPT_SALT_LEN = 16;
-/**
-* @type {number}
-* @const
-* @inner
-*/
-var GENSALT_DEFAULT_LOG2_ROUNDS = 10;
-/**
-* @type {number}
-* @const
-* @inner
-*/
-var BLOWFISH_NUM_ROUNDS = 16;
-/**
-* @type {number}
-* @const
-* @inner
-*/
-var MAX_EXECUTION_TIME = 100;
-/**
-* @type {Array.<number>}
-* @const
-* @inner
-*/
-var P_ORIG = [
+var E = 16, D = 10, oe = 16, se = 100, O = [
 	608135816,
 	2242054355,
 	320440878,
@@ -539,13 +303,7 @@ var P_ORIG = [
 	3041331479,
 	2450970073,
 	2306472731
-];
-/**
-* @type {Array.<number>}
-* @const
-* @inner
-*/
-var S_ORIG = [
+], k = [
 	3509652390,
 	2564797868,
 	805139163,
@@ -1570,13 +1328,7 @@ var S_ORIG = [
 	3463963227,
 	1469046755,
 	985887462
-];
-/**
-* @type {Array.<number>}
-* @const
-* @inner
-*/
-var C_ORIG = [
+], A = [
 	1332899944,
 	1700884034,
 	1701343084,
@@ -1584,1277 +1336,704 @@ var C_ORIG = [
 	1668446532,
 	1869963892
 ];
-/**
-* @param {Array.<number>} lr
-* @param {number} off
-* @param {Array.<number>} P
-* @param {Array.<number>} S
-* @returns {Array.<number>}
-* @inner
-*/
-function _encipher(lr, off, P, S) {
-	var n, l = lr[off], r = lr[off + 1];
-	l ^= P[0];
-	n = S[l >>> 24];
-	n += S[256 | l >> 16 & 255];
-	n ^= S[512 | l >> 8 & 255];
-	n += S[768 | l & 255];
-	r ^= n ^ P[1];
-	n = S[r >>> 24];
-	n += S[256 | r >> 16 & 255];
-	n ^= S[512 | r >> 8 & 255];
-	n += S[768 | r & 255];
-	l ^= n ^ P[2];
-	n = S[l >>> 24];
-	n += S[256 | l >> 16 & 255];
-	n ^= S[512 | l >> 8 & 255];
-	n += S[768 | l & 255];
-	r ^= n ^ P[3];
-	n = S[r >>> 24];
-	n += S[256 | r >> 16 & 255];
-	n ^= S[512 | r >> 8 & 255];
-	n += S[768 | r & 255];
-	l ^= n ^ P[4];
-	n = S[l >>> 24];
-	n += S[256 | l >> 16 & 255];
-	n ^= S[512 | l >> 8 & 255];
-	n += S[768 | l & 255];
-	r ^= n ^ P[5];
-	n = S[r >>> 24];
-	n += S[256 | r >> 16 & 255];
-	n ^= S[512 | r >> 8 & 255];
-	n += S[768 | r & 255];
-	l ^= n ^ P[6];
-	n = S[l >>> 24];
-	n += S[256 | l >> 16 & 255];
-	n ^= S[512 | l >> 8 & 255];
-	n += S[768 | l & 255];
-	r ^= n ^ P[7];
-	n = S[r >>> 24];
-	n += S[256 | r >> 16 & 255];
-	n ^= S[512 | r >> 8 & 255];
-	n += S[768 | r & 255];
-	l ^= n ^ P[8];
-	n = S[l >>> 24];
-	n += S[256 | l >> 16 & 255];
-	n ^= S[512 | l >> 8 & 255];
-	n += S[768 | l & 255];
-	r ^= n ^ P[9];
-	n = S[r >>> 24];
-	n += S[256 | r >> 16 & 255];
-	n ^= S[512 | r >> 8 & 255];
-	n += S[768 | r & 255];
-	l ^= n ^ P[10];
-	n = S[l >>> 24];
-	n += S[256 | l >> 16 & 255];
-	n ^= S[512 | l >> 8 & 255];
-	n += S[768 | l & 255];
-	r ^= n ^ P[11];
-	n = S[r >>> 24];
-	n += S[256 | r >> 16 & 255];
-	n ^= S[512 | r >> 8 & 255];
-	n += S[768 | r & 255];
-	l ^= n ^ P[12];
-	n = S[l >>> 24];
-	n += S[256 | l >> 16 & 255];
-	n ^= S[512 | l >> 8 & 255];
-	n += S[768 | l & 255];
-	r ^= n ^ P[13];
-	n = S[r >>> 24];
-	n += S[256 | r >> 16 & 255];
-	n ^= S[512 | r >> 8 & 255];
-	n += S[768 | r & 255];
-	l ^= n ^ P[14];
-	n = S[l >>> 24];
-	n += S[256 | l >> 16 & 255];
-	n ^= S[512 | l >> 8 & 255];
-	n += S[768 | l & 255];
-	r ^= n ^ P[15];
-	n = S[r >>> 24];
-	n += S[256 | r >> 16 & 255];
-	n ^= S[512 | r >> 8 & 255];
-	n += S[768 | r & 255];
-	l ^= n ^ P[16];
-	lr[off] = r ^ P[BLOWFISH_NUM_ROUNDS + 1];
-	lr[off + 1] = l;
-	return lr;
+function j(e, t, n, r) {
+	var i, a = e[t], o = e[t + 1];
+	return a ^= n[0], i = r[a >>> 24], i += r[256 | a >> 16 & 255], i ^= r[512 | a >> 8 & 255], i += r[768 | a & 255], o ^= i ^ n[1], i = r[o >>> 24], i += r[256 | o >> 16 & 255], i ^= r[512 | o >> 8 & 255], i += r[768 | o & 255], a ^= i ^ n[2], i = r[a >>> 24], i += r[256 | a >> 16 & 255], i ^= r[512 | a >> 8 & 255], i += r[768 | a & 255], o ^= i ^ n[3], i = r[o >>> 24], i += r[256 | o >> 16 & 255], i ^= r[512 | o >> 8 & 255], i += r[768 | o & 255], a ^= i ^ n[4], i = r[a >>> 24], i += r[256 | a >> 16 & 255], i ^= r[512 | a >> 8 & 255], i += r[768 | a & 255], o ^= i ^ n[5], i = r[o >>> 24], i += r[256 | o >> 16 & 255], i ^= r[512 | o >> 8 & 255], i += r[768 | o & 255], a ^= i ^ n[6], i = r[a >>> 24], i += r[256 | a >> 16 & 255], i ^= r[512 | a >> 8 & 255], i += r[768 | a & 255], o ^= i ^ n[7], i = r[o >>> 24], i += r[256 | o >> 16 & 255], i ^= r[512 | o >> 8 & 255], i += r[768 | o & 255], a ^= i ^ n[8], i = r[a >>> 24], i += r[256 | a >> 16 & 255], i ^= r[512 | a >> 8 & 255], i += r[768 | a & 255], o ^= i ^ n[9], i = r[o >>> 24], i += r[256 | o >> 16 & 255], i ^= r[512 | o >> 8 & 255], i += r[768 | o & 255], a ^= i ^ n[10], i = r[a >>> 24], i += r[256 | a >> 16 & 255], i ^= r[512 | a >> 8 & 255], i += r[768 | a & 255], o ^= i ^ n[11], i = r[o >>> 24], i += r[256 | o >> 16 & 255], i ^= r[512 | o >> 8 & 255], i += r[768 | o & 255], a ^= i ^ n[12], i = r[a >>> 24], i += r[256 | a >> 16 & 255], i ^= r[512 | a >> 8 & 255], i += r[768 | a & 255], o ^= i ^ n[13], i = r[o >>> 24], i += r[256 | o >> 16 & 255], i ^= r[512 | o >> 8 & 255], i += r[768 | o & 255], a ^= i ^ n[14], i = r[a >>> 24], i += r[256 | a >> 16 & 255], i ^= r[512 | a >> 8 & 255], i += r[768 | a & 255], o ^= i ^ n[15], i = r[o >>> 24], i += r[256 | o >> 16 & 255], i ^= r[512 | o >> 8 & 255], i += r[768 | o & 255], a ^= i ^ n[16], e[t] = o ^ n[oe + 1], e[t + 1] = a, e;
 }
-/**
-* @param {Array.<number>} data
-* @param {number} offp
-* @returns {{key: number, offp: number}}
-* @inner
-*/
-function _streamtoword(data, offp) {
-	for (var i = 0, word = 0; i < 4; ++i) word = word << 8 | data[offp] & 255, offp = (offp + 1) % data.length;
+function M(e, t) {
+	for (var n = 0, r = 0; n < 4; ++n) r = r << 8 | e[t] & 255, t = (t + 1) % e.length;
 	return {
-		key: word,
-		offp
+		key: r,
+		offp: t
 	};
 }
-/**
-* @param {Array.<number>} key
-* @param {Array.<number>} P
-* @param {Array.<number>} S
-* @inner
-*/
-function _key(key, P, S) {
-	var offset = 0, lr = [0, 0], plen = P.length, slen = S.length, sw;
-	for (var i = 0; i < plen; i++) sw = _streamtoword(key, offset), offset = sw.offp, P[i] = P[i] ^ sw.key;
-	for (i = 0; i < plen; i += 2) lr = _encipher(lr, 0, P, S), P[i] = lr[0], P[i + 1] = lr[1];
-	for (i = 0; i < slen; i += 2) lr = _encipher(lr, 0, P, S), S[i] = lr[0], S[i + 1] = lr[1];
+function N(e, t, n) {
+	for (var r = 0, i = [0, 0], a = t.length, o = n.length, s, c = 0; c < a; c++) s = M(e, r), r = s.offp, t[c] = t[c] ^ s.key;
+	for (c = 0; c < a; c += 2) i = j(i, 0, t, n), t[c] = i[0], t[c + 1] = i[1];
+	for (c = 0; c < o; c += 2) i = j(i, 0, t, n), n[c] = i[0], n[c + 1] = i[1];
 }
-/**
-* Expensive key schedule Blowfish.
-* @param {Array.<number>} data
-* @param {Array.<number>} key
-* @param {Array.<number>} P
-* @param {Array.<number>} S
-* @inner
-*/
-function _ekskey(data, key, P, S) {
-	var offp = 0, lr = [0, 0], plen = P.length, slen = S.length, sw;
-	for (var i = 0; i < plen; i++) sw = _streamtoword(key, offp), offp = sw.offp, P[i] = P[i] ^ sw.key;
-	offp = 0;
-	for (i = 0; i < plen; i += 2) sw = _streamtoword(data, offp), offp = sw.offp, lr[0] ^= sw.key, sw = _streamtoword(data, offp), offp = sw.offp, lr[1] ^= sw.key, lr = _encipher(lr, 0, P, S), P[i] = lr[0], P[i + 1] = lr[1];
-	for (i = 0; i < slen; i += 2) sw = _streamtoword(data, offp), offp = sw.offp, lr[0] ^= sw.key, sw = _streamtoword(data, offp), offp = sw.offp, lr[1] ^= sw.key, lr = _encipher(lr, 0, P, S), S[i] = lr[0], S[i + 1] = lr[1];
+function ce(e, t, n, r) {
+	for (var i = 0, a = [0, 0], o = n.length, s = r.length, c, l = 0; l < o; l++) c = M(t, i), i = c.offp, n[l] = n[l] ^ c.key;
+	for (i = 0, l = 0; l < o; l += 2) c = M(e, i), i = c.offp, a[0] ^= c.key, c = M(e, i), i = c.offp, a[1] ^= c.key, a = j(a, 0, n, r), n[l] = a[0], n[l + 1] = a[1];
+	for (l = 0; l < s; l += 2) c = M(e, i), i = c.offp, a[0] ^= c.key, c = M(e, i), i = c.offp, a[1] ^= c.key, a = j(a, 0, n, r), r[l] = a[0], r[l + 1] = a[1];
 }
-/**
-* Internaly crypts a string.
-* @param {Array.<number>} b Bytes to crypt
-* @param {Array.<number>} salt Salt bytes to use
-* @param {number} rounds Number of rounds
-* @param {function(Error, Array.<number>=)=} callback Callback receiving the error, if any, and the resulting bytes. If
-*  omitted, the operation will be performed synchronously.
-*  @param {function(number)=} progressCallback Callback called with the current progress
-* @returns {!Array.<number>|undefined} Resulting bytes if callback has been omitted, otherwise `undefined`
-* @inner
-*/
-function _crypt(b, salt, rounds, callback, progressCallback) {
-	var cdata = C_ORIG.slice(), clen = cdata.length, err;
-	if (rounds < 4 || rounds > 31) {
-		err = Error("Illegal number of rounds (4-31): " + rounds);
-		if (callback) {
-			nextTick(callback.bind(this, err));
-			return;
-		} else throw err;
-	}
-	if (salt.length !== BCRYPT_SALT_LEN) {
-		err = Error("Illegal salt length: " + salt.length + " != " + BCRYPT_SALT_LEN);
-		if (callback) {
-			nextTick(callback.bind(this, err));
-			return;
-		} else throw err;
-	}
-	rounds = 1 << rounds >>> 0;
-	var P, S, i = 0, j;
-	if (typeof Int32Array === "function") {
-		P = new Int32Array(P_ORIG);
-		S = new Int32Array(S_ORIG);
-	} else {
-		P = P_ORIG.slice();
-		S = S_ORIG.slice();
-	}
-	_ekskey(salt, b, P, S);
-	/**
-	* Calcualtes the next round.
-	* @returns {Array.<number>|undefined} Resulting array if callback has been omitted, otherwise `undefined`
-	* @inner
-	*/
-	function next() {
-		if (progressCallback) progressCallback(i / rounds);
-		if (i < rounds) {
-			var start = Date.now();
-			for (; i < rounds;) {
-				i = i + 1;
-				_key(b, P, S);
-				_key(salt, P, S);
-				if (Date.now() - start > MAX_EXECUTION_TIME) break;
-			}
-		} else {
-			for (i = 0; i < 64; i++) for (j = 0; j < clen >> 1; j++) _encipher(cdata, j << 1, P, S);
-			var ret = [];
-			for (i = 0; i < clen; i++) ret.push((cdata[i] >> 24 & 255) >>> 0), ret.push((cdata[i] >> 16 & 255) >>> 0), ret.push((cdata[i] >> 8 & 255) >>> 0), ret.push((cdata[i] & 255) >>> 0);
-			if (callback) {
-				callback(null, ret);
+function P(e, t, n, r, i) {
+	var a = A.slice(), o = a.length, s;
+	if (n < 4 || n > 31) if (s = Error("Illegal number of rounds (4-31): " + n), r) {
+		b(r.bind(this, s));
+		return;
+	} else throw s;
+	if (t.length !== E) if (s = Error("Illegal salt length: " + t.length + " != " + E), r) {
+		b(r.bind(this, s));
+		return;
+	} else throw s;
+	n = 1 << n >>> 0;
+	var c, l, u = 0, d;
+	typeof Int32Array == "function" ? (c = new Int32Array(O), l = new Int32Array(k)) : (c = O.slice(), l = k.slice()), ce(t, e, c, l);
+	function f() {
+		if (i && i(u / n), u < n) for (var s = Date.now(); u < n && (u += 1, N(e, c, l), N(t, c, l), !(Date.now() - s > se)););
+		else {
+			for (u = 0; u < 64; u++) for (d = 0; d < o >> 1; d++) j(a, d << 1, c, l);
+			var p = [];
+			for (u = 0; u < o; u++) p.push((a[u] >> 24 & 255) >>> 0), p.push((a[u] >> 16 & 255) >>> 0), p.push((a[u] >> 8 & 255) >>> 0), p.push((a[u] & 255) >>> 0);
+			if (r) {
+				r(null, p);
 				return;
-			} else return ret;
+			} else return p;
 		}
-		if (callback) nextTick(next);
+		r && b(f);
 	}
-	if (typeof callback !== "undefined") next();
+	if (r !== void 0) f();
+	else for (var p;;) if ((p = f()) !== void 0) return p || [];
+}
+function F(e, t, n, r) {
+	var i;
+	if (typeof e != "string" || typeof t != "string") if (i = Error("Invalid string / salt: Not a string"), n) {
+		b(n.bind(this, i));
+		return;
+	} else throw i;
+	var a, o;
+	if (t.charAt(0) !== "$" || t.charAt(1) !== "2") if (i = Error("Invalid salt version: " + t.substring(0, 2)), n) {
+		b(n.bind(this, i));
+		return;
+	} else throw i;
+	if (t.charAt(2) === "$") a = "\0", o = 3;
 	else {
-		var res;
-		while (true) if (typeof (res = next()) !== "undefined") return res || [];
-	}
-}
-/**
-* Internally hashes a password.
-* @param {string} password Password to hash
-* @param {?string} salt Salt to use, actually never null
-* @param {function(Error, string=)=} callback Callback receiving the error, if any, and the resulting hash. If omitted,
-*  hashing is performed synchronously.
-*  @param {function(number)=} progressCallback Callback called with the current progress
-* @returns {string|undefined} Resulting hash if callback has been omitted, otherwise `undefined`
-* @inner
-*/
-function _hash(password, salt, callback, progressCallback) {
-	var err;
-	if (typeof password !== "string" || typeof salt !== "string") {
-		err = Error("Invalid string / salt: Not a string");
-		if (callback) {
-			nextTick(callback.bind(this, err));
+		if (a = t.charAt(2), a !== "a" && a !== "b" && a !== "y" || t.charAt(3) !== "$") if (i = Error("Invalid salt revision: " + t.substring(2, 4)), n) {
+			b(n.bind(this, i));
 			return;
-		} else throw err;
+		} else throw i;
+		o = 4;
 	}
-	var minor, offset;
-	if (salt.charAt(0) !== "$" || salt.charAt(1) !== "2") {
-		err = Error("Invalid salt version: " + salt.substring(0, 2));
-		if (callback) {
-			nextTick(callback.bind(this, err));
-			return;
-		} else throw err;
+	if (t.charAt(o + 2) > "$") if (i = Error("Missing salt rounds"), n) {
+		b(n.bind(this, i));
+		return;
+	} else throw i;
+	var s = parseInt(t.substring(o, o + 1), 10) * 10 + parseInt(t.substring(o + 1, o + 2), 10), c = t.substring(o + 3, o + 25);
+	e += a >= "a" ? "\0" : "";
+	var l = ae(e), u = T(c, E);
+	function d(e) {
+		var t = [];
+		return t.push("$2"), a >= "a" && t.push(a), t.push("$"), s < 10 && t.push("0"), t.push(s.toString()), t.push("$"), t.push(w(u, u.length)), t.push(w(e, A.length * 4 - 1)), t.join("");
 	}
-	if (salt.charAt(2) === "$") minor = String.fromCharCode(0), offset = 3;
-	else {
-		minor = salt.charAt(2);
-		if (minor !== "a" && minor !== "b" && minor !== "y" || salt.charAt(3) !== "$") {
-			err = Error("Invalid salt revision: " + salt.substring(2, 4));
-			if (callback) {
-				nextTick(callback.bind(this, err));
-				return;
-			} else throw err;
-		}
-		offset = 4;
-	}
-	if (salt.charAt(offset + 2) > "$") {
-		err = Error("Missing salt rounds");
-		if (callback) {
-			nextTick(callback.bind(this, err));
-			return;
-		} else throw err;
-	}
-	var rounds = parseInt(salt.substring(offset, offset + 1), 10) * 10 + parseInt(salt.substring(offset + 1, offset + 2), 10), real_salt = salt.substring(offset + 3, offset + 25);
-	password += minor >= "a" ? "\0" : "";
-	var passwordb = utf8Array(password), saltb = base64_decode(real_salt, BCRYPT_SALT_LEN);
-	/**
-	* Finishes hashing.
-	* @param {Array.<number>} bytes Byte array
-	* @returns {string}
-	* @inner
-	*/
-	function finish(bytes) {
-		var res = [];
-		res.push("$2");
-		if (minor >= "a") res.push(minor);
-		res.push("$");
-		if (rounds < 10) res.push("0");
-		res.push(rounds.toString());
-		res.push("$");
-		res.push(base64_encode(saltb, saltb.length));
-		res.push(base64_encode(bytes, C_ORIG.length * 4 - 1));
-		return res.join("");
-	}
-	if (typeof callback == "undefined") return finish(_crypt(passwordb, saltb, rounds));
-	else _crypt(passwordb, saltb, rounds, function(err, bytes) {
-		if (err) callback(err, null);
-		else callback(null, finish(bytes));
-	}, progressCallback);
+	if (n === void 0) return d(P(l, u, s));
+	P(l, u, s, function(e, t) {
+		e ? n(e, null) : n(null, d(t));
+	}, r);
 }
-/**
-* Encodes a byte array to base64 with up to len bytes of input, using the custom bcrypt alphabet.
-* @function
-* @param {!Array.<number>} bytes Byte array
-* @param {number} length Maximum input length
-* @returns {string}
-*/
-function encodeBase64(bytes, length) {
-	return base64_encode(bytes, length);
+function le(e, t) {
+	return w(e, t);
 }
-/**
-* Decodes a base64 encoded string to up to len bytes of output, using the custom bcrypt alphabet.
-* @function
-* @param {string} string String to decode
-* @param {number} length Maximum output length
-* @returns {!Array.<number>}
-*/
-function decodeBase64(string, length) {
-	return base64_decode(string, length);
+function ue(e, t) {
+	return T(e, t);
 }
-var bcryptjs_default = {
-	setRandomFallback,
-	genSaltSync,
-	genSalt,
-	hashSync,
-	hash,
-	compareSync,
-	compare,
-	getRounds,
-	getSalt,
-	truncates,
-	encodeBase64,
-	decodeBase64
-};
-//#endregion
-//#region electron/database/db.ts
-var db;
-function getDatabase() {
-	if (!db) throw new Error("The database has not been initialized. Call initDatabase() first.");
-	return db;
+var I = {
+	setRandomFallback: ee,
+	genSaltSync: m,
+	genSalt: h,
+	hashSync: g,
+	hash: _,
+	compareSync: te,
+	compare: ne,
+	getRounds: re,
+	getSalt: y,
+	truncates: ie,
+	encodeBase64: le,
+	decodeBase64: ue
+}, L;
+function R() {
+	if (!L) throw Error("The database has not been initialized. Call initDatabase() first.");
+	return L;
 }
-function initDatabase() {
-	db = new Database(join(app.getPath("userData"), "psm.db"));
-	db.pragma("journal_mode = WAL");
-	db.pragma("foreign_keys = ON");
-	runMigrations();
+function de() {
+	L = new u(a(t.getPath("userData"), "psm.db")), L.pragma("journal_mode = WAL"), L.pragma("foreign_keys = ON"), fe();
 }
-function runMigrations() {
-	db.exec(`
-    CREATE TABLE IF NOT EXISTS psm_migrations (
-      id         INTEGER PRIMARY KEY AUTOINCREMENT,
-      name       TEXT    NOT NULL UNIQUE,
-      applied_at TEXT    NOT NULL DEFAULT (datetime('now'))
-    );
-  `);
-	const migrations = {
-		"001_create_parameters": () => db.exec(`
-      CREATE TABLE IF NOT EXISTS psm_parameters (
-        par_id       INTEGER PRIMARY KEY AUTOINCREMENT,
-        par_quantity TEXT    NOT NULL,
-        par_tax      TEXT    NOT NULL,
-        version      INTEGER NOT NULL DEFAULT 1
-      );
-    `),
-		"002_create_vehicles": () => db.exec(`
-      CREATE TABLE IF NOT EXISTS psm_vehicles (
-        veh_id           INTEGER PRIMARY KEY AUTOINCREMENT,
-        veh_owner        TEXT,
-        veh_reference    TEXT    NOT NULL UNIQUE,
-        veh_plate        TEXT    NOT NULL UNIQUE,
-        veh_ingress_date TEXT    NOT NULL,
-        veh_egress_date  TEXT,
-        veh_status       TEXT    NOT NULL DEFAULT 'P'
-                                 CHECK (veh_status IN ('P', 'S')),
-        veh_tax          TEXT    NOT NULL,
-        veh_version      INTEGER NOT NULL DEFAULT 1
-      );
-    `),
-		"003_create_users": () => db.exec(`
-      CREATE TABLE IF NOT EXISTS psm_users (
-        user_id        INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_name      TEXT    NOT NULL,
-        user_lastname  TEXT    NOT NULL,
-        user_username  TEXT    NOT NULL UNIQUE,
-        user_password  TEXT    NOT NULL,
-        user_email     TEXT    NOT NULL UNIQUE,
-        user_status    TEXT    NOT NULL DEFAULT 'A'
-                               CHECK (user_status IN ('A', 'I')),
-        user_version   INTEGER NOT NULL DEFAULT 1
-      );
-    `),
-		"004_create_settings": () => db.exec(`
-      CREATE TABLE IF NOT EXISTS psm_settings (
-        set_id         INTEGER PRIMARY KEY AUTOINCREMENT,
-        set_key        TEXT    NOT NULL UNIQUE,
-        set_value      TEXT    NOT NULL,
-        version        INTEGER NOT NULL DEFAULT 1
-      );
-    `),
+function fe() {
+	L.exec("\n    CREATE TABLE IF NOT EXISTS psm_migrations (\n      id         INTEGER PRIMARY KEY AUTOINCREMENT,\n      name       TEXT    NOT NULL UNIQUE,\n      applied_at TEXT    NOT NULL DEFAULT (datetime('now'))\n    );\n  ");
+	let e = {
+		"001_create_parameters": () => L.exec("\n      CREATE TABLE IF NOT EXISTS psm_parameters (\n        par_id       INTEGER PRIMARY KEY AUTOINCREMENT,\n        par_quantity TEXT    NOT NULL,\n        par_tax      TEXT    NOT NULL,\n        version      INTEGER NOT NULL DEFAULT 1\n      );\n    "),
+		"002_create_vehicles": () => L.exec("\n      CREATE TABLE IF NOT EXISTS psm_vehicles (\n        veh_id           INTEGER PRIMARY KEY AUTOINCREMENT,\n        veh_owner        TEXT,\n        veh_reference    TEXT    NOT NULL UNIQUE,\n        veh_plate        TEXT    NOT NULL UNIQUE,\n        veh_ingress_date TEXT    NOT NULL,\n        veh_egress_date  TEXT,\n        veh_status       TEXT    NOT NULL DEFAULT 'P'\n                                 CHECK (veh_status IN ('P', 'S')),\n        veh_tax          TEXT    NOT NULL,\n        veh_version      INTEGER NOT NULL DEFAULT 1\n      );\n    "),
+		"003_create_users": () => L.exec("\n      CREATE TABLE IF NOT EXISTS psm_users (\n        user_id        INTEGER PRIMARY KEY AUTOINCREMENT,\n        user_name      TEXT    NOT NULL,\n        user_lastname  TEXT    NOT NULL,\n        user_username  TEXT    NOT NULL UNIQUE,\n        user_password  TEXT    NOT NULL,\n        user_email     TEXT    NOT NULL UNIQUE,\n        user_status    TEXT    NOT NULL DEFAULT 'A'\n                               CHECK (user_status IN ('A', 'I')),\n        user_version   INTEGER NOT NULL DEFAULT 1\n      );\n    "),
+		"004_create_settings": () => L.exec("\n      CREATE TABLE IF NOT EXISTS psm_settings (\n        set_id         INTEGER PRIMARY KEY AUTOINCREMENT,\n        set_key        TEXT    NOT NULL UNIQUE,\n        set_value      TEXT    NOT NULL,\n        version        INTEGER NOT NULL DEFAULT 1\n      );\n    "),
 		"005_parameter_tariffs_default": () => {
-			db.exec(`
-        ALTER TABLE psm_parameters ADD COLUMN par_name TEXT NOT NULL DEFAULT '';
-        ALTER TABLE psm_parameters ADD COLUMN par_amount TEXT NOT NULL DEFAULT '0';
-        ALTER TABLE psm_parameters ADD COLUMN par_is_default INTEGER NOT NULL DEFAULT 0
-          CHECK (par_is_default IN (0, 1));
-      `);
-			db.exec(`
-        UPDATE psm_parameters
-        SET
-          par_name = CASE
-            WHEN par_name IS NULL OR TRIM(par_name) = '' THEN 'Tarifa general'
-            ELSE par_name
-          END,
-          par_amount = CASE
-            WHEN par_amount IS NULL OR TRIM(par_amount) = '' THEN
-              CASE
-                WHEN par_quantity IS NOT NULL AND TRIM(par_quantity) <> '' THEN par_quantity
-                WHEN par_tax IS NOT NULL AND TRIM(par_tax) <> '' THEN par_tax
-                ELSE '0'
-              END
-            ELSE par_amount
-          END;
-      `);
-			if (!db.prepare("SELECT EXISTS(SELECT 1 FROM psm_parameters) as has_rows").get().has_rows) db.prepare(`
-          INSERT INTO psm_parameters
-            (par_quantity, par_tax, par_name, par_amount, par_is_default, version)
-          VALUES
-            ('0', '0', 'Tarifa general', '0', 1, 1)
-        `).run();
-			else db.exec(`
-          UPDATE psm_parameters SET par_is_default = 0;
-          UPDATE psm_parameters
-          SET par_is_default = 1
-          WHERE par_id = (SELECT par_id FROM psm_parameters ORDER BY par_id ASC LIMIT 1);
-        `);
-			db.exec(`
-        CREATE UNIQUE INDEX IF NOT EXISTS idx_psm_parameters_single_default
-        ON psm_parameters (par_is_default)
-        WHERE par_is_default = 1;
-      `);
+			L.exec("\n        ALTER TABLE psm_parameters ADD COLUMN par_name TEXT NOT NULL DEFAULT '';\n        ALTER TABLE psm_parameters ADD COLUMN par_amount TEXT NOT NULL DEFAULT '0';\n        ALTER TABLE psm_parameters ADD COLUMN par_is_default INTEGER NOT NULL DEFAULT 0\n          CHECK (par_is_default IN (0, 1));\n      "), L.exec("\n        UPDATE psm_parameters\n        SET\n          par_name = CASE\n            WHEN par_name IS NULL OR TRIM(par_name) = '' THEN 'Tarifa general'\n            ELSE par_name\n          END,\n          par_amount = CASE\n            WHEN par_amount IS NULL OR TRIM(par_amount) = '' THEN\n              CASE\n                WHEN par_quantity IS NOT NULL AND TRIM(par_quantity) <> '' THEN par_quantity\n                WHEN par_tax IS NOT NULL AND TRIM(par_tax) <> '' THEN par_tax\n                ELSE '0'\n              END\n            ELSE par_amount\n          END;\n      "), L.prepare("SELECT EXISTS(SELECT 1 FROM psm_parameters) as has_rows").get().has_rows ? L.exec("\n          UPDATE psm_parameters SET par_is_default = 0;\n          UPDATE psm_parameters\n          SET par_is_default = 1\n          WHERE par_id = (SELECT par_id FROM psm_parameters ORDER BY par_id ASC LIMIT 1);\n        ") : L.prepare("\n          INSERT INTO psm_parameters\n            (par_quantity, par_tax, par_name, par_amount, par_is_default, version)\n          VALUES\n            ('0', '0', 'Tarifa general', '0', 1, 1)\n        ").run(), L.exec("\n        CREATE UNIQUE INDEX IF NOT EXISTS idx_psm_parameters_single_default\n        ON psm_parameters (par_is_default)\n        WHERE par_is_default = 1;\n      ");
 		},
 		"006_seed_admin_user": () => {
-			if (db.prepare("SELECT user_id FROM psm_users WHERE user_username = ?").get("admin")) return;
-			const hashedPassword = bcryptjs_default.hashSync("admin123", 10);
-			db.prepare(`
-        INSERT INTO psm_users (user_name, user_lastname, user_username, user_password, user_email, user_status, user_version)
-        VALUES ('Administrador', 'Sistema', 'admin', ?, 'admin@psm.local', 'A', 1)
-      `).run(hashedPassword);
+			if (L.prepare("SELECT user_id FROM psm_users WHERE user_username = ?").get("admin")) return;
+			let e = I.hashSync("admin123", 10);
+			L.prepare("\n        INSERT INTO psm_users (user_name, user_lastname, user_username, user_password, user_email, user_status, user_version)\n        VALUES ('Administrador', 'Sistema', 'admin', ?, 'admin@psm.local', 'A', 1)\n      ").run(e);
 		},
 		"007_add_user_role": () => {
 			try {
-				db.exec(`ALTER TABLE psm_users ADD COLUMN user_role TEXT NOT NULL DEFAULT 'user' CHECK (user_role IN ('admin', 'user'))`);
+				L.exec("ALTER TABLE psm_users ADD COLUMN user_role TEXT NOT NULL DEFAULT 'user' CHECK (user_role IN ('admin', 'user'))");
 			} catch {}
-			db.exec(`UPDATE psm_users SET user_role = 'admin' WHERE user_username = 'admin'`);
+			L.exec("UPDATE psm_users SET user_role = 'admin' WHERE user_username = 'admin'");
 		},
 		"008_remove_plate_unique": () => {
-			db.exec(`
-        CREATE TABLE IF NOT EXISTS psm_vehicles_new (
-          veh_id           INTEGER PRIMARY KEY AUTOINCREMENT,
-          veh_owner        TEXT,
-          veh_reference    TEXT    NOT NULL UNIQUE,
-          veh_plate        TEXT    NOT NULL,
-          veh_ingress_date TEXT    NOT NULL,
-          veh_egress_date  TEXT,
-          veh_status       TEXT    NOT NULL DEFAULT 'P'
-                                   CHECK (veh_status IN ('P', 'S')),
-          veh_tax          TEXT    NOT NULL,
-          veh_version      INTEGER NOT NULL DEFAULT 1
-        );
-        INSERT INTO psm_vehicles_new SELECT * FROM psm_vehicles;
-        DROP TABLE psm_vehicles;
-        ALTER TABLE psm_vehicles_new RENAME TO psm_vehicles;
-      `);
+			L.exec("\n        CREATE TABLE IF NOT EXISTS psm_vehicles_new (\n          veh_id           INTEGER PRIMARY KEY AUTOINCREMENT,\n          veh_owner        TEXT,\n          veh_reference    TEXT    NOT NULL UNIQUE,\n          veh_plate        TEXT    NOT NULL,\n          veh_ingress_date TEXT    NOT NULL,\n          veh_egress_date  TEXT,\n          veh_status       TEXT    NOT NULL DEFAULT 'P'\n                                   CHECK (veh_status IN ('P', 'S')),\n          veh_tax          TEXT    NOT NULL,\n          veh_version      INTEGER NOT NULL DEFAULT 1\n        );\n        INSERT INTO psm_vehicles_new SELECT * FROM psm_vehicles;\n        DROP TABLE psm_vehicles;\n        ALTER TABLE psm_vehicles_new RENAME TO psm_vehicles;\n      ");
 		}
-	};
-	const applied = db.prepare("SELECT name FROM psm_migrations").all();
-	const appliedNames = new Set(applied.map((r) => r.name));
-	const insertMigration = db.prepare("INSERT INTO psm_migrations (name) VALUES (?)");
-	for (const [name, migrate] of Object.entries(migrations)) if (!appliedNames.has(name)) {
-		migrate();
-		insertMigration.run(name);
-		console.log(`✓ Migration applied: ${name}`);
-	}
+	}, t = L.prepare("SELECT name FROM psm_migrations").all(), n = new Set(t.map((e) => e.name)), r = L.prepare("INSERT INTO psm_migrations (name) VALUES (?)");
+	for (let [t, i] of Object.entries(e)) n.has(t) || (i(), r.run(t), console.log(`✓ Migration applied: ${t}`));
 }
 //#endregion
 //#region electron/repositories/user.repository.ts
-function findAllUsers() {
-	return getDatabase().prepare("SELECT * FROM psm_users ORDER BY user_id ASC").all();
+function pe() {
+	return R().prepare("SELECT * FROM psm_users ORDER BY user_id ASC").all();
 }
-function findUserById(id) {
-	return getDatabase().prepare("SELECT * FROM psm_users WHERE user_id = ?").get(id);
+function z(e) {
+	return R().prepare("SELECT * FROM psm_users WHERE user_id = ?").get(e);
 }
-function findUserByUsername(username) {
-	return getDatabase().prepare("SELECT * FROM psm_users WHERE user_username = ?").get(username);
+function B(e) {
+	return R().prepare("SELECT * FROM psm_users WHERE user_username = ?").get(e);
 }
-function findUserByEmail(email) {
-	return getDatabase().prepare("SELECT * FROM psm_users WHERE user_email = ?").get(email);
+function V(e) {
+	return R().prepare("SELECT * FROM psm_users WHERE user_email = ?").get(e);
 }
-function createUser(data) {
-	return getDatabase().prepare(`
-      INSERT INTO psm_users
-        (user_name, user_lastname, user_username, user_password, user_email)
-      VALUES
-        (@user_name, @user_lastname, @user_username, @user_password, @user_email)
-    `).run(data).lastInsertRowid;
+function me(e) {
+	return R().prepare("\n      INSERT INTO psm_users\n        (user_name, user_lastname, user_username, user_password, user_email)\n      VALUES\n        (@user_name, @user_lastname, @user_username, @user_password, @user_email)\n    ").run(e).lastInsertRowid;
 }
-function updateUser(id, data) {
-	const fields = Object.keys(data).map((key) => `${key} = @${key}`).join(", ");
-	return getDatabase().prepare(`UPDATE psm_users SET ${fields} WHERE user_id = @id`).run({
-		...data,
-		id
+function he(e, t) {
+	let n = Object.keys(t).map((e) => `${e} = @${e}`).join(", ");
+	return R().prepare(`UPDATE psm_users SET ${n} WHERE user_id = @id`).run({
+		...t,
+		id: e
 	}).changes;
 }
-function updateUserPassword(id, hashedPassword) {
-	return getDatabase().prepare("UPDATE psm_users SET user_password = ? WHERE user_id = ?").run(hashedPassword, id).changes;
+function H(e, t) {
+	return R().prepare("UPDATE psm_users SET user_password = ? WHERE user_id = ?").run(t, e).changes;
 }
-function deactivateUser(id) {
-	return getDatabase().prepare(`UPDATE psm_users SET user_status = 'I' WHERE user_id = ?`).run(id).changes;
+function ge(e) {
+	return R().prepare("UPDATE psm_users SET user_status = 'I' WHERE user_id = ?").run(e).changes;
 }
-function deleteUser(id) {
-	return getDatabase().prepare("DELETE FROM psm_users WHERE user_id = ?").run(id).changes;
+function _e(e) {
+	return R().prepare("DELETE FROM psm_users WHERE user_id = ?").run(e).changes;
 }
-function countUsers() {
-	return getDatabase().prepare("SELECT COUNT(*) as count FROM psm_users").get().count;
+function ve() {
+	return R().prepare("SELECT COUNT(*) as count FROM psm_users").get().count;
 }
-function deactivateFirstUser() {
-	return getDatabase().prepare(`UPDATE psm_users SET user_status = 'I' WHERE user_id = (SELECT user_id FROM psm_users ORDER BY user_id ASC LIMIT 1)`).run().changes;
+function ye() {
+	return R().prepare("UPDATE psm_users SET user_status = 'I' WHERE user_id = (SELECT user_id FROM psm_users ORDER BY user_id ASC LIMIT 1)").run().changes;
 }
 //#endregion
 //#region electron/service/user.service.ts
-function toSafeUser(user) {
+function U(e) {
 	return {
-		user_id: user.user_id,
-		user_name: user.user_name,
-		user_lastname: user.user_lastname,
-		user_username: user.user_username,
-		user_email: user.user_email,
-		user_status: user.user_status,
-		user_role: user.user_role ?? "user",
-		user_version: user.user_version
+		user_id: e.user_id,
+		user_name: e.user_name,
+		user_lastname: e.user_lastname,
+		user_username: e.user_username,
+		user_email: e.user_email,
+		user_status: e.user_status,
+		user_role: e.user_role ?? "user",
+		user_version: e.user_version
 	};
 }
-function isBcryptHash(password) {
-	return /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(password);
+function be(e) {
+	return /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(e);
 }
-function getAllUsers() {
-	return findAllUsers().map(toSafeUser);
+function xe() {
+	return pe().map(U);
 }
-function getUserById(id) {
-	const user = findUserById(id);
-	return user ? toSafeUser(user) : void 0;
+function Se(e) {
+	let t = z(e);
+	return t ? U(t) : void 0;
 }
-function login(dto) {
-	const user = findUserByUsername(dto.user_username);
-	if (!user) return {
-		success: false,
+function Ce(e) {
+	let t = B(e.user_username);
+	if (!t) return {
+		success: !1,
 		message: "Credenciales inválidas."
 	};
-	if (user.user_status === "I") return {
-		success: false,
+	if (t.user_status === "I") return {
+		success: !1,
 		message: "El usuario está inactivo."
 	};
-	if (isBcryptHash(user.user_password)) {
-		if (!bcryptjs_default.compareSync(dto.user_password, user.user_password)) return {
-			success: false,
-			message: "Credenciales inválidas."
-		};
-		return {
-			success: true,
-			user: toSafeUser(user)
-		};
-	}
-	if (dto.user_password !== user.user_password) return {
-		success: false,
+	if (be(t.user_password)) return I.compareSync(e.user_password, t.user_password) ? {
+		success: !0,
+		user: U(t)
+	} : {
+		success: !1,
 		message: "Credenciales inválidas."
 	};
-	if (user.user_id != null) {
-		const migratedHash = bcryptjs_default.hashSync(dto.user_password, 10);
-		updateUserPassword(user.user_id, migratedHash);
+	if (e.user_password !== t.user_password) return {
+		success: !1,
+		message: "Credenciales inválidas."
+	};
+	if (t.user_id != null) {
+		let n = I.hashSync(e.user_password, 10);
+		H(t.user_id, n);
 	}
 	return {
-		success: true,
-		user: toSafeUser(user)
+		success: !0,
+		user: U(t)
 	};
 }
-function registerUser(dto) {
-	if (findUserByUsername(dto.user_username)) return {
-		success: false,
+function we(e) {
+	if (B(e.user_username)) return {
+		success: !1,
 		message: "El nombre de usuario ya está en uso."
 	};
-	if (findUserByEmail(dto.user_email)) return {
-		success: false,
+	if (V(e.user_email)) return {
+		success: !1,
 		message: "El correo electrónico ya está registrado."
 	};
-	const hashedPassword = bcryptjs_default.hashSync(dto.user_password, 10);
-	const id = createUser({
-		...dto,
-		user_password: hashedPassword
+	let t = I.hashSync(e.user_password, 10), n = me({
+		...e,
+		user_password: t
 	});
-	if (countUsers() > 1) deactivateFirstUser();
-	return {
-		success: true,
-		id
+	return ve() > 1 && ye(), {
+		success: !0,
+		id: n
 	};
 }
-function editUser(id, dto) {
-	if (!findUserById(id)) return {
-		success: false,
+function Te(e, t) {
+	if (!z(e)) return {
+		success: !1,
 		message: "Usuario no encontrado."
 	};
-	if (dto.user_username) {
-		const byUsername = findUserByUsername(dto.user_username);
-		if (byUsername && byUsername.user_id !== id) return {
-			success: false,
+	if (t.user_username) {
+		let n = B(t.user_username);
+		if (n && n.user_id !== e) return {
+			success: !1,
 			message: "El nombre de usuario ya está en uso."
 		};
 	}
-	if (dto.user_email) {
-		const byEmail = findUserByEmail(dto.user_email);
-		if (byEmail && byEmail.user_id !== id) return {
-			success: false,
+	if (t.user_email) {
+		let n = V(t.user_email);
+		if (n && n.user_id !== e) return {
+			success: !1,
 			message: "El correo electrónico ya está registrado."
 		};
 	}
-	updateUser(id, dto);
-	return { success: true };
+	return he(e, t), { success: !0 };
 }
-function changePassword(id, currentPassword, newPassword) {
-	const user = findUserById(id);
-	if (!user) return {
-		success: false,
-		message: "Usuario no encontrado."
-	};
-	if (!bcryptjs_default.compareSync(currentPassword, user.user_password)) return {
-		success: false,
+function Ee(e, t, n) {
+	let r = z(e);
+	return r ? I.compareSync(t, r.user_password) ? (H(e, I.hashSync(n, 10)), { success: !0 }) : {
+		success: !1,
 		message: "La contraseña actual es incorrecta."
-	};
-	updateUserPassword(id, bcryptjs_default.hashSync(newPassword, 10));
-	return { success: true };
-}
-function deactivateUserById(id) {
-	if (!findUserById(id)) return {
-		success: false,
+	} : {
+		success: !1,
 		message: "Usuario no encontrado."
 	};
-	deactivateUser(id);
-	return { success: true };
 }
-function removeUser(id) {
-	if (!findUserById(id)) return {
-		success: false,
+function De(e) {
+	return z(e) ? (ge(e), { success: !0 }) : {
+		success: !1,
 		message: "Usuario no encontrado."
 	};
-	deleteUser(id);
-	return { success: true };
+}
+function Oe(e) {
+	return z(e) ? (_e(e), { success: !0 }) : {
+		success: !1,
+		message: "Usuario no encontrado."
+	};
 }
 //#endregion
 //#region electron/handlers/user.handler.ts
-function registerUserHandlers() {
-	ipcMain.handle("users:getAll", () => {
-		return getAllUsers();
-	});
-	ipcMain.handle("users:getOne", (_e, id) => {
-		return getUserById(id);
-	});
-	ipcMain.handle("users:login", (_e, dto) => {
-		return login(dto);
-	});
-	ipcMain.handle("users:create", (_e, dto) => {
-		return registerUser(dto);
-	});
-	ipcMain.handle("users:update", (_e, id, dto) => {
-		return editUser(id, dto);
-	});
-	ipcMain.handle("users:changePassword", (_e, id, currentPassword, newPassword) => {
-		return changePassword(id, currentPassword, newPassword);
-	});
-	ipcMain.handle("users:deactivate", (_e, id) => {
-		return deactivateUserById(id);
-	});
-	ipcMain.handle("users:delete", (_e, id) => {
-		return removeUser(id);
-	});
+function ke() {
+	n.handle("users:getAll", () => xe()), n.handle("users:getOne", (e, t) => Se(t)), n.handle("users:login", (e, t) => Ce(t)), n.handle("users:create", (e, t) => we(t)), n.handle("users:update", (e, t, n) => Te(t, n)), n.handle("users:changePassword", (e, t, n, r) => Ee(t, n, r)), n.handle("users:deactivate", (e, t) => De(t)), n.handle("users:delete", (e, t) => Oe(t));
 }
 //#endregion
 //#region electron/repositories/vehcile.repository.ts
-var REPORT_WINDOW_DAYS = {
+var Ae = {
 	daily: 1,
 	weekly: 7,
 	monthly: 30,
 	yearly: 365
 };
-function isReportPeriod$1(value) {
-	return value === "daily" || value === "weekly" || value === "monthly" || value === "yearly";
+function je(e) {
+	return e === "daily" || e === "weekly" || e === "monthly" || e === "yearly";
 }
-function normalizeDate(value) {
-	const parsed = /* @__PURE__ */ new Date(`${value}T00:00:00Z`);
-	if (Number.isNaN(parsed.getTime())) return (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
-	return parsed.toISOString().slice(0, 10);
+function Me(e) {
+	let t = /* @__PURE__ */ new Date(`${e}T00:00:00Z`);
+	return Number.isNaN(t.getTime()) ? (/* @__PURE__ */ new Date()).toISOString().slice(0, 10) : t.toISOString().slice(0, 10);
 }
-function getReportRange(period, selectedDate) {
-	const rangeEnd = normalizeDate(selectedDate);
-	const endDate = /* @__PURE__ */ new Date(`${rangeEnd}T00:00:00Z`);
-	const windowDays = REPORT_WINDOW_DAYS[period];
-	const startDate = new Date(endDate);
-	startDate.setUTCDate(endDate.getUTCDate() - (windowDays - 1));
-	return {
-		rangeStart: startDate.toISOString().slice(0, 10),
-		rangeEnd
+function Ne(e, t) {
+	let n = Me(t), r = /* @__PURE__ */ new Date(`${n}T00:00:00Z`), i = Ae[e], a = new Date(r);
+	return a.setUTCDate(r.getUTCDate() - (i - 1)), {
+		rangeStart: a.toISOString().slice(0, 10),
+		rangeEnd: n
 	};
 }
-function findVehicleReport(period, selectedDate) {
-	const reportPeriod = isReportPeriod$1(period) ? period : "daily";
-	const { rangeStart, rangeEnd } = getReportRange(reportPeriod, selectedDate);
-	const db = getDatabase();
-	const rows = db.prepare(`
-      SELECT
-        veh_id,
-        veh_plate,
-        veh_owner,
-        veh_ingress_date,
-        veh_egress_date,
-        veh_tax
-      FROM psm_vehicles
-      WHERE veh_status = 'S'
-        AND veh_egress_date IS NOT NULL
-        AND DATE(veh_egress_date) BETWEEN @rangeStart AND @rangeEnd
-      ORDER BY veh_egress_date DESC, veh_id DESC
-    `).all({
-		rangeStart,
-		rangeEnd
-	});
-	const aggregates = db.prepare(`
-      SELECT
-        COUNT(*) AS totalVehicles,
-        COALESCE(SUM(CAST(veh_tax AS REAL)), 0) AS totalRevenue
-      FROM psm_vehicles
-      WHERE veh_status = 'S'
-        AND veh_egress_date IS NOT NULL
-        AND DATE(veh_egress_date) BETWEEN @rangeStart AND @rangeEnd
-    `).get({
-		rangeStart,
-		rangeEnd
+function Pe(e, t) {
+	let n = je(e) ? e : "daily", { rangeStart: r, rangeEnd: i } = Ne(n, t), a = R(), o = a.prepare("\n      SELECT\n        veh_id,\n        veh_plate,\n        veh_owner,\n        veh_ingress_date,\n        veh_egress_date,\n        veh_tax\n      FROM psm_vehicles\n      WHERE veh_status = 'S'\n        AND veh_egress_date IS NOT NULL\n        AND DATE(veh_egress_date) BETWEEN @rangeStart AND @rangeEnd\n      ORDER BY veh_egress_date DESC, veh_id DESC\n    ").all({
+		rangeStart: r,
+		rangeEnd: i
+	}), s = a.prepare("\n      SELECT\n        COUNT(*) AS totalVehicles,\n        COALESCE(SUM(CAST(veh_tax AS REAL)), 0) AS totalRevenue\n      FROM psm_vehicles\n      WHERE veh_status = 'S'\n        AND veh_egress_date IS NOT NULL\n        AND DATE(veh_egress_date) BETWEEN @rangeStart AND @rangeEnd\n    ").get({
+		rangeStart: r,
+		rangeEnd: i
 	});
 	return {
-		period: reportPeriod,
-		rangeStart,
-		rangeEnd,
-		totalVehicles: aggregates?.totalVehicles ?? rows.length,
-		totalRevenue: Number(aggregates?.totalRevenue ?? 0),
-		rows
+		period: n,
+		rangeStart: r,
+		rangeEnd: i,
+		totalVehicles: s?.totalVehicles ?? o.length,
+		totalRevenue: Number(s?.totalRevenue ?? 0),
+		rows: o
 	};
 }
-function findAllVehicles() {
-	return getDatabase().prepare("SELECT * FROM psm_vehicles ORDER BY veh_ingress_date DESC").all();
+function Fe() {
+	return R().prepare("SELECT * FROM psm_vehicles ORDER BY veh_ingress_date DESC").all();
 }
-function findActiveVehicles() {
-	return getDatabase().prepare(`
-      SELECT * FROM psm_vehicles
-      WHERE veh_status = 'P'
-      ORDER BY veh_ingress_date DESC
-    `).all();
+function Ie() {
+	return R().prepare("\n      SELECT * FROM psm_vehicles\n      WHERE veh_status = 'P'\n      ORDER BY veh_ingress_date DESC\n    ").all();
 }
-function findVehicleById(id) {
-	return getDatabase().prepare("SELECT * FROM psm_vehicles WHERE veh_id = ?").get(id);
+function W(e) {
+	return R().prepare("SELECT * FROM psm_vehicles WHERE veh_id = ?").get(e);
 }
-function findActiveVehicleByPlate(plate) {
-	return getDatabase().prepare("SELECT * FROM psm_vehicles WHERE veh_plate = ? AND veh_status = 'P'").get(plate);
+function G(e) {
+	return R().prepare("SELECT * FROM psm_vehicles WHERE veh_plate = ? AND veh_status = 'P'").get(e);
 }
-function findVehicleByReference(reference) {
-	return getDatabase().prepare("SELECT * FROM psm_vehicles WHERE veh_reference = ?").get(reference);
+function Le(e) {
+	return R().prepare("SELECT * FROM psm_vehicles WHERE veh_reference = ?").get(e);
 }
-function createVehicle(data) {
-	return getDatabase().prepare(`
-      INSERT INTO psm_vehicles
-        (veh_owner, veh_reference, veh_plate, veh_ingress_date, veh_tax, veh_version, veh_status)
-      VALUES
-        (@veh_owner, @veh_reference, @veh_plate, @veh_ingress_date, @veh_tax, @veh_version, 'P')
-    `).run(data).lastInsertRowid;
+function Re(e) {
+	return R().prepare("\n      INSERT INTO psm_vehicles\n        (veh_owner, veh_reference, veh_plate, veh_ingress_date, veh_tax, veh_version, veh_status)\n      VALUES\n        (@veh_owner, @veh_reference, @veh_plate, @veh_ingress_date, @veh_tax, @veh_version, 'P')\n    ").run(e).lastInsertRowid;
 }
-function checkoutVehicle(id, egress_date, total) {
-	return getDatabase().prepare(`
-      UPDATE psm_vehicles
-      SET veh_status      = 'S',
-          veh_egress_date = @egress_date,
-          veh_tax         = COALESCE(@total, veh_tax),
-          veh_version     = veh_version + 1
-      WHERE veh_id = @id AND veh_status = 'P'
-    `).run({
-		egress_date,
-		id,
-		total: total || null
+function ze(e, t, n) {
+	return R().prepare("\n      UPDATE psm_vehicles\n      SET veh_status      = 'S',\n          veh_egress_date = @egress_date,\n          veh_tax         = COALESCE(@total, veh_tax),\n          veh_version     = veh_version + 1\n      WHERE veh_id = @id AND veh_status = 'P'\n    ").run({
+		egress_date: t,
+		id: e,
+		total: n || null
 	}).changes;
 }
-function updateVehicle(id, data) {
-	const fields = Object.keys(data).map((key) => `${key} = @${key}`).join(", ");
-	return getDatabase().prepare(`UPDATE psm_vehicles SET ${fields} WHERE veh_id = @id`).run({
-		...data,
-		id
+function Be(e, t) {
+	let n = Object.keys(t).map((e) => `${e} = @${e}`).join(", ");
+	return R().prepare(`UPDATE psm_vehicles SET ${n} WHERE veh_id = @id`).run({
+		...t,
+		id: e
 	}).changes;
 }
-function deleteVehicle(id) {
-	return getDatabase().prepare("DELETE FROM psm_vehicles WHERE veh_id = ?").run(id).changes;
+function Ve(e) {
+	return R().prepare("DELETE FROM psm_vehicles WHERE veh_id = ?").run(e).changes;
 }
 //#endregion
 //#region electron/service/vehicle.service.ts
-function getAllVehicles() {
-	return findAllVehicles();
+function He() {
+	return Fe();
 }
-function getActiveVehicles() {
-	return findActiveVehicles();
+function Ue() {
+	return Ie();
 }
-function getVehicleById(id) {
-	return findVehicleById(id);
+function We(e) {
+	return W(e);
 }
-function registerVehicle(dto) {
-	if (findActiveVehicleByPlate(dto.veh_plate)) return {
-		success: false,
-		message: `La placa ${dto.veh_plate} ya tiene un ingreso activo.`
-	};
-	if (findVehicleByReference(dto.veh_reference)) return {
-		success: false,
-		message: `La referencia ${dto.veh_reference} ya existe.`
-	};
-	return {
-		success: true,
-		id: createVehicle(dto)
+function Ge(e) {
+	return G(e.veh_plate) ? {
+		success: !1,
+		message: `La placa ${e.veh_plate} ya tiene un ingreso activo.`
+	} : Le(e.veh_reference) ? {
+		success: !1,
+		message: `La referencia ${e.veh_reference} ya existe.`
+	} : {
+		success: !0,
+		id: Re(e)
 	};
 }
-function vehicleCheckout(id, total) {
-	const vehicle = findVehicleById(id);
-	if (!vehicle) return {
-		success: false,
-		message: "Vehículo no encontrado."
-	};
-	if (vehicle.veh_status === "S") return {
-		success: false,
+function Ke(e, t) {
+	let n = W(e);
+	return n ? n.veh_status === "S" ? {
+		success: !1,
 		message: "El vehículo ya registró su salida."
-	};
-	if (checkoutVehicle(id, (/* @__PURE__ */ new Date()).toISOString(), total) === 0) return {
-		success: false,
+	} : ze(e, (/* @__PURE__ */ new Date()).toISOString(), t) === 0 ? {
+		success: !1,
 		message: "No se pudo registrar la salida."
-	};
-	return { success: true };
-}
-function editVehicle(id, dto) {
-	if (!findVehicleById(id)) return {
-		success: false,
+	} : { success: !0 } : {
+		success: !1,
 		message: "Vehículo no encontrado."
 	};
-	if (dto.veh_plate) {
-		const byPlate = findActiveVehicleByPlate(dto.veh_plate);
-		if (byPlate && byPlate.veh_id !== id) return {
-			success: false,
-			message: `La placa ${dto.veh_plate} ya tiene un ingreso activo.`
+}
+function qe(e, t) {
+	if (!W(e)) return {
+		success: !1,
+		message: "Vehículo no encontrado."
+	};
+	if (t.veh_plate) {
+		let n = G(t.veh_plate);
+		if (n && n.veh_id !== e) return {
+			success: !1,
+			message: `La placa ${t.veh_plate} ya tiene un ingreso activo.`
 		};
 	}
-	updateVehicle(id, dto);
-	return { success: true };
+	return Be(e, t), { success: !0 };
 }
-function removeVehicle(id) {
-	if (!findVehicleById(id)) return {
-		success: false,
+function Je(e) {
+	return W(e) ? (Ve(e), { success: !0 }) : {
+		success: !1,
 		message: "Vehículo no encontrado."
 	};
-	deleteVehicle(id);
-	return { success: true };
 }
-function getReport(period, selectedDate) {
-	return findVehicleReport(period, selectedDate);
+function Ye(e, t) {
+	return Pe(e, t);
 }
 //#endregion
 //#region electron/handlers/vehicle.handler.ts
-function normalizeReportDate(selectedDate) {
-	if (!selectedDate) return (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
-	const parsed = /* @__PURE__ */ new Date(`${selectedDate}T00:00:00Z`);
-	if (Number.isNaN(parsed.getTime())) return (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
-	return parsed.toISOString().slice(0, 10);
+function Xe(e) {
+	if (!e) return (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
+	let t = /* @__PURE__ */ new Date(`${e}T00:00:00Z`);
+	return Number.isNaN(t.getTime()) ? (/* @__PURE__ */ new Date()).toISOString().slice(0, 10) : t.toISOString().slice(0, 10);
 }
-function isReportPeriod(value) {
-	return value === "daily" || value === "weekly" || value === "monthly" || value === "yearly";
+function Ze(e) {
+	return e === "daily" || e === "weekly" || e === "monthly" || e === "yearly";
 }
-function registerVehicleHandlers() {
-	ipcMain.handle("vehicles:getAll", () => {
-		return getAllVehicles();
-	});
-	ipcMain.handle("vehicles:getActive", () => {
-		return getActiveVehicles();
-	});
-	ipcMain.handle("vehicles:getOne", (_e, id) => {
-		return getVehicleById(id);
-	});
-	ipcMain.handle("vehicles:create", (_e, dto) => {
-		return registerVehicle(dto);
-	});
-	ipcMain.handle("vehicles:checkout", (_e, id, total) => {
-		return vehicleCheckout(id, total);
-	});
-	ipcMain.handle("vehicles:update", (_e, id, dto) => {
-		return editVehicle(id, dto);
-	});
-	ipcMain.handle("vehicles:delete", (_e, id) => {
-		return removeVehicle(id);
-	});
-	ipcMain.handle("vehicles:getStats", () => {
-		const db = getDatabase();
-		const parkedCount = db.prepare("SELECT COUNT(*) as count FROM psm_vehicles WHERE veh_status = 'P'").get().count;
-		const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
-		let todayRevenue = 0;
+function Qe() {
+	n.handle("vehicles:getAll", () => He()), n.handle("vehicles:getActive", () => Ue()), n.handle("vehicles:getOne", (e, t) => We(t)), n.handle("vehicles:create", (e, t) => Ge(t)), n.handle("vehicles:checkout", (e, t, n) => Ke(t, n)), n.handle("vehicles:update", (e, t, n) => qe(t, n)), n.handle("vehicles:delete", (e, t) => Je(t)), n.handle("vehicles:getStats", () => {
+		let e = R(), t = e.prepare("SELECT COUNT(*) as count FROM psm_vehicles WHERE veh_status = 'P'").get().count, n = (/* @__PURE__ */ new Date()).toISOString().split("T")[0], r = 0;
 		try {
-			todayRevenue = db.prepare(`
-        SELECT COALESCE(SUM(CAST(veh_tax AS REAL)), 0) as total 
-        FROM psm_vehicles 
-        WHERE veh_status = 'S' 
-        AND DATE(veh_egress_date) = ?
-      `).get(today)?.total || 0;
+			r = e.prepare("\n        SELECT COALESCE(SUM(CAST(veh_tax AS REAL)), 0) as total \n        FROM psm_vehicles \n        WHERE veh_status = 'S' \n        AND DATE(veh_egress_date) = ?\n      ").get(n)?.total || 0;
 		} catch {
-			todayRevenue = 0;
+			r = 0;
 		}
-		let todayVehicles = 0;
+		let i = 0;
 		try {
-			todayVehicles = db.prepare(`
-        SELECT COUNT(*) as count 
-        FROM psm_vehicles 
-        WHERE veh_status = 'S' 
-        AND DATE(veh_egress_date) = ?
-      `).get(today).count;
+			i = e.prepare("\n        SELECT COUNT(*) as count \n        FROM psm_vehicles \n        WHERE veh_status = 'S' \n        AND DATE(veh_egress_date) = ?\n      ").get(n).count;
 		} catch {
-			todayVehicles = 0;
+			i = 0;
 		}
 		return {
-			parkedCount,
-			todayRevenue,
-			todayVehicles
+			parkedCount: t,
+			todayRevenue: r,
+			todayVehicles: i
 		};
-	});
-	ipcMain.handle("vehicles:getParkedCount", () => {
-		return getDatabase().prepare("SELECT COUNT(*) as count FROM psm_vehicles WHERE veh_status = 'P'").get().count;
-	});
-	ipcMain.handle("vehicles:getTodayRevenue", () => {
-		const db = getDatabase();
-		const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+	}), n.handle("vehicles:getParkedCount", () => R().prepare("SELECT COUNT(*) as count FROM psm_vehicles WHERE veh_status = 'P'").get().count), n.handle("vehicles:getTodayRevenue", () => {
+		let e = R(), t = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
 		try {
-			return db.prepare(`
-        SELECT COALESCE(SUM(CAST(veh_tax AS REAL)), 0) as total 
-        FROM psm_vehicles 
-        WHERE veh_status = 'S' 
-        AND DATE(veh_egress_date) = ?
-      `).get(today)?.total || 0;
+			return e.prepare("\n        SELECT COALESCE(SUM(CAST(veh_tax AS REAL)), 0) as total \n        FROM psm_vehicles \n        WHERE veh_status = 'S' \n        AND DATE(veh_egress_date) = ?\n      ").get(t)?.total || 0;
 		} catch {
 			return 0;
 		}
-	});
-	ipcMain.handle("vehicles:getTodayVehicles", () => {
-		const db = getDatabase();
-		const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+	}), n.handle("vehicles:getTodayVehicles", () => {
+		let e = R(), t = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
 		try {
-			return db.prepare(`
-        SELECT COUNT(*) as count 
-        FROM psm_vehicles 
-        WHERE veh_status = 'S' 
-        AND DATE(veh_egress_date) = ?
-      `).get(today)?.count || 0;
+			return e.prepare("\n        SELECT COUNT(*) as count \n        FROM psm_vehicles \n        WHERE veh_status = 'S' \n        AND DATE(veh_egress_date) = ?\n      ").get(t)?.count || 0;
 		} catch {
 			return 0;
 		}
-	});
-	ipcMain.handle("vehicles:getReport", (_e, period, selectedDate) => {
-		return getReport(isReportPeriod(period) ? period : "daily", normalizeReportDate(selectedDate));
-	});
+	}), n.handle("vehicles:getReport", (e, t, n) => Ye(Ze(t) ? t : "daily", Xe(n)));
 }
 //#endregion
 //#region electron/repositories/parameter.repository.ts
-function findAllParameters() {
-	return getDatabase().prepare("SELECT * FROM psm_parameters ORDER BY par_id ASC").all();
+function $e() {
+	return R().prepare("SELECT * FROM psm_parameters ORDER BY par_id ASC").all();
 }
-function findParameterById(id) {
-	return getDatabase().prepare("SELECT * FROM psm_parameters WHERE par_id = ?").get(id);
+function K(e) {
+	return R().prepare("SELECT * FROM psm_parameters WHERE par_id = ?").get(e);
 }
-function createParameter(data) {
-	return getDatabase().prepare(`
-      INSERT INTO psm_parameters (par_name, par_amount, par_is_default, version, par_quantity, par_tax)
-      VALUES (@par_name, @par_amount, @par_is_default, @version, @par_amount, @par_amount)
-    `).run(data).lastInsertRowid;
+function et(e) {
+	return R().prepare("\n      INSERT INTO psm_parameters (par_name, par_amount, par_is_default, version, par_quantity, par_tax)\n      VALUES (@par_name, @par_amount, @par_is_default, @version, @par_amount, @par_amount)\n    ").run(e).lastInsertRowid;
 }
-function updateParameter(id, data) {
-	const fields = Object.keys(data).map((key) => `${key} = @${key}`).join(", ");
-	return getDatabase().prepare(`UPDATE psm_parameters SET ${fields} WHERE par_id = @id`).run({
-		...data,
-		id
+function tt(e, t) {
+	let n = Object.keys(t).map((e) => `${e} = @${e}`).join(", ");
+	return R().prepare(`UPDATE psm_parameters SET ${n} WHERE par_id = @id`).run({
+		...t,
+		id: e
 	}).changes;
 }
-function findDefaultParameter() {
-	return getDatabase().prepare("SELECT * FROM psm_parameters WHERE par_is_default = 1 LIMIT 1").get();
+function q() {
+	return R().prepare("SELECT * FROM psm_parameters WHERE par_is_default = 1 LIMIT 1").get();
 }
-function setDefaultParameter(id) {
-	const db = getDatabase();
-	const clearDefault = db.prepare("UPDATE psm_parameters SET par_is_default = 0 WHERE par_is_default = 1");
-	const markDefault = db.prepare("UPDATE psm_parameters SET par_is_default = 1 WHERE par_id = ?");
-	return db.transaction((targetId) => {
-		clearDefault.run();
-		return markDefault.run(targetId).changes;
-	})(id);
+function J(e) {
+	let t = R(), n = t.prepare("UPDATE psm_parameters SET par_is_default = 0 WHERE par_is_default = 1"), r = t.prepare("UPDATE psm_parameters SET par_is_default = 1 WHERE par_id = ?");
+	return t.transaction((e) => (n.run(), r.run(e).changes))(e);
 }
 //#endregion
 //#region electron/service/parameter.service.ts
-function getAllParameters() {
-	return findAllParameters();
+function nt() {
+	return $e();
 }
-function getParameterById(id) {
-	return findParameterById(id);
+function rt(e) {
+	return K(e);
 }
-function registerParameter(dto) {
-	const normalizedName = dto.par_name.trim();
-	if (!normalizedName) return {
-		success: false,
+function it(e) {
+	let t = e.par_name.trim();
+	if (!t) return {
+		success: !1,
 		message: "El nombre de la tarifa es obligatorio."
 	};
-	const parsedAmount = Number(dto.par_amount);
-	if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) return {
-		success: false,
+	let n = Number(e.par_amount);
+	if (!Number.isFinite(n) || n <= 0) return {
+		success: !1,
 		message: "El monto de la tarifa debe ser un numero positivo."
 	};
-	const id = createParameter({
-		...dto,
-		par_name: normalizedName,
-		par_amount: parsedAmount.toString(),
+	let r = et({
+		...e,
+		par_name: t,
+		par_amount: n.toString(),
 		par_is_default: 0
 	});
-	if (dto.par_is_default) {
-		if (setDefaultParameter(id) === 0) return {
-			success: false,
+	if (e.par_is_default) {
+		if (J(r) === 0) return {
+			success: !1,
 			message: "No se pudo establecer la tarifa general."
 		};
-	} else if (!findDefaultParameter()) {
-		if (setDefaultParameter(id) === 0) return {
-			success: false,
-			message: "No se pudo crear una tarifa general valida."
-		};
-	}
+	} else if (!q() && J(r) === 0) return {
+		success: !1,
+		message: "No se pudo crear una tarifa general valida."
+	};
 	return {
-		success: true,
-		id
+		success: !0,
+		id: r
 	};
 }
-function editParameter(id, dto) {
-	const existing = findParameterById(id);
-	if (!existing) return {
-		success: false,
+function at(e, t) {
+	let n = K(e);
+	if (!n) return {
+		success: !1,
 		message: "Parámetro no encontrado."
 	};
-	const shouldSetDefault = dto.par_is_default === 1;
-	const shouldUnsetDefault = dto.par_is_default === 0;
-	if (shouldSetDefault) delete dto.par_is_default;
-	if (shouldUnsetDefault && existing.par_is_default === 1) return {
-		success: false,
+	let r = t.par_is_default === 1, i = t.par_is_default === 0;
+	if (r && delete t.par_is_default, i && n.par_is_default === 1) return {
+		success: !1,
 		message: "Debe existir una tarifa general valida."
 	};
-	if (dto.par_name !== void 0) {
-		const normalizedName = dto.par_name.trim();
-		if (!normalizedName) return {
-			success: false,
+	if (t.par_name !== void 0) {
+		let e = t.par_name.trim();
+		if (!e) return {
+			success: !1,
 			message: "El nombre de la tarifa es obligatorio."
 		};
-		dto.par_name = normalizedName;
+		t.par_name = e;
 	}
-	if (dto.par_amount !== void 0) {
-		const parsedAmount = Number(dto.par_amount);
-		if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) return {
-			success: false,
+	if (t.par_amount !== void 0) {
+		let e = Number(t.par_amount);
+		if (!Number.isFinite(e) || e <= 0) return {
+			success: !1,
 			message: "El monto de la tarifa debe ser un numero positivo."
 		};
-		dto.par_amount = parsedAmount.toString();
+		t.par_amount = e.toString();
 	}
-	if (Object.keys(dto).length > 0) updateParameter(id, dto);
-	if (shouldSetDefault) {
-		if (setDefaultParameter(id) === 0) return {
-			success: false,
-			message: "No se pudo actualizar la tarifa general."
-		};
-	}
-	if (!findDefaultParameter()) return {
-		success: false,
+	return Object.keys(t).length > 0 && tt(e, t), r && J(e) === 0 ? {
+		success: !1,
+		message: "No se pudo actualizar la tarifa general."
+	} : q() ? { success: !0 } : {
+		success: !1,
 		message: "Debe existir una tarifa general valida."
 	};
-	return { success: true };
 }
-function getDefaultParameter() {
-	return findDefaultParameter();
+function Y() {
+	return q();
 }
-function markParameterAsDefault(id) {
-	if (!findParameterById(id)) return {
-		success: false,
+function ot(e) {
+	return K(e) ? J(e) === 0 ? {
+		success: !1,
+		message: "No se pudo actualizar la tarifa general."
+	} : { success: !0 } : {
+		success: !1,
 		message: "Parámetro no encontrado."
 	};
-	if (setDefaultParameter(id) === 0) return {
-		success: false,
-		message: "No se pudo actualizar la tarifa general."
-	};
-	return { success: true };
 }
 //#endregion
 //#region electron/handlers/parameter.handler.ts
-function registerParameterHandlers() {
-	ipcMain.handle("parameters:getAll", () => {
-		return getAllParameters();
-	});
-	ipcMain.handle("parameters:getOne", (_e, id) => {
-		return getParameterById(id);
-	});
-	ipcMain.handle("parameters:create", (_e, dto) => {
-		return registerParameter(dto);
-	});
-	ipcMain.handle("parameters:update", (_e, id, dto) => {
-		return editParameter(id, dto);
-	});
-	ipcMain.handle("parameters:getDefault", () => {
-		return getDefaultParameter();
-	});
-	ipcMain.handle("parameters:setDefault", (_e, id) => {
-		return markParameterAsDefault(id);
-	});
+function st() {
+	n.handle("parameters:getAll", () => nt()), n.handle("parameters:getOne", (e, t) => rt(t)), n.handle("parameters:create", (e, t) => it(t)), n.handle("parameters:update", (e, t, n) => at(t, n)), n.handle("parameters:getDefault", () => Y()), n.handle("parameters:setDefault", (e, t) => ot(t));
 }
 //#endregion
 //#region electron/handlers/session.handler.ts
-function ensureSessionTable() {
-	getDatabase().exec(`
-    CREATE TABLE IF NOT EXISTS psm_sessions (
-      id          INTEGER PRIMARY KEY,
-      user_id     INTEGER NOT NULL,
-      user_name   TEXT    NOT NULL,
-      user_lastname TEXT  NOT NULL,
-      user_username TEXT  NOT NULL,
-      user_email   TEXT   NOT NULL,
-      user_status  TEXT   NOT NULL,
-      user_role    TEXT   NOT NULL DEFAULT 'user',
-      user_version INTEGER NOT NULL,
-      saved_at     TEXT   NOT NULL DEFAULT (datetime('now'))
-    );
-  `);
+function ct() {
+	R().exec("\n    CREATE TABLE IF NOT EXISTS psm_sessions (\n      id          INTEGER PRIMARY KEY,\n      user_id     INTEGER NOT NULL,\n      user_name   TEXT    NOT NULL,\n      user_lastname TEXT  NOT NULL,\n      user_username TEXT  NOT NULL,\n      user_email   TEXT   NOT NULL,\n      user_status  TEXT   NOT NULL,\n      user_role    TEXT   NOT NULL DEFAULT 'user',\n      user_version INTEGER NOT NULL,\n      saved_at     TEXT   NOT NULL DEFAULT (datetime('now'))\n    );\n  ");
 }
-function registerSessionHandlers() {
-	ensureSessionTable();
-	ipcMain.handle("session:save", (_e, user) => {
-		const db = getDatabase();
-		db.prepare("DELETE FROM psm_sessions").run();
-		db.prepare(`
-      INSERT INTO psm_sessions
-        (user_id, user_name, user_lastname, user_username, user_email, user_status, user_role, user_version, saved_at)
-      VALUES
-        (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
-    `).run(user.user_id, user.user_name, user.user_lastname, user.user_username, user.user_email, user.user_status, user.user_role, user.user_version);
-		return { success: true };
-	});
-	ipcMain.handle("session:restore", () => {
-		const session = getDatabase().prepare(`
-      SELECT user_id, user_name, user_lastname, user_username, user_email, user_status, user_role, user_version
-      FROM psm_sessions
-      LIMIT 1
-    `).get();
-		if (!session) return null;
-		return {
-			user_id: session.user_id,
-			user_name: session.user_name,
-			user_lastname: session.user_lastname,
-			user_username: session.user_username,
-			user_email: session.user_email,
-			user_status: session.user_status,
-			user_role: session.user_role,
-			user_version: session.user_version
-		};
-	});
-	ipcMain.handle("session:clear", () => {
-		getDatabase().prepare("DELETE FROM psm_sessions").run();
-		return { success: true };
-	});
+function lt() {
+	ct(), n.handle("session:save", (e, t) => {
+		let n = R();
+		return n.prepare("DELETE FROM psm_sessions").run(), n.prepare("\n      INSERT INTO psm_sessions\n        (user_id, user_name, user_lastname, user_username, user_email, user_status, user_role, user_version, saved_at)\n      VALUES\n        (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))\n    ").run(t.user_id, t.user_name, t.user_lastname, t.user_username, t.user_email, t.user_status, t.user_role, t.user_version), { success: !0 };
+	}), n.handle("session:restore", () => {
+		let e = R().prepare("\n      SELECT user_id, user_name, user_lastname, user_username, user_email, user_status, user_role, user_version\n      FROM psm_sessions\n      LIMIT 1\n    ").get();
+		return e ? {
+			user_id: e.user_id,
+			user_name: e.user_name,
+			user_lastname: e.user_lastname,
+			user_username: e.user_username,
+			user_email: e.user_email,
+			user_status: e.user_status,
+			user_role: e.user_role,
+			user_version: e.user_version
+		} : null;
+	}), n.handle("session:clear", () => (R().prepare("DELETE FROM psm_sessions").run(), { success: !0 }));
 }
 //#endregion
 //#region electron/repositories/setting.repository.ts
-function getAllSettings() {
-	return getDatabase().prepare("SELECT * FROM psm_settings").all();
+function ut() {
+	return R().prepare("SELECT * FROM psm_settings").all();
 }
-function getSettingByKey(key) {
-	return getDatabase().prepare("SELECT * FROM psm_settings WHERE set_key = ?").get(key);
+function X(e) {
+	return R().prepare("SELECT * FROM psm_settings WHERE set_key = ?").get(e);
 }
-function upsertSetting(key, value) {
-	if (getSettingByKey(key)) return getDatabase().prepare("UPDATE psm_settings SET set_value = ?, version = version + 1 WHERE set_key = ?").run(value, key).changes;
-	else return getDatabase().prepare("INSERT INTO psm_settings (set_key, set_value) VALUES (?, ?)").run(key, value).changes;
+function dt(e, t) {
+	return X(e) ? R().prepare("UPDATE psm_settings SET set_value = ?, version = version + 1 WHERE set_key = ?").run(t, e).changes : R().prepare("INSERT INTO psm_settings (set_key, set_value) VALUES (?, ?)").run(e, t).changes;
 }
 //#endregion
 //#region electron/service/setting.service.ts
-function getAllAppSettings() {
-	return getAllSettings();
+function ft() {
+	return ut();
 }
-function getAppSetting(key) {
-	return getSettingByKey(key)?.set_value;
+function pt(e) {
+	return X(e)?.set_value;
 }
-function saveAppSetting(key, value) {
+function mt(e, t) {
 	try {
-		upsertSetting(key, value);
-		return { success: true };
-	} catch (error) {
-		console.error("Error saving setting:", error);
-		return { success: false };
+		return dt(e, t), { success: !0 };
+	} catch (e) {
+		return console.error("Error saving setting:", e), { success: !1 };
 	}
 }
 //#endregion
 //#region electron/handlers/setting.handler.ts
-function registerSettingHandlers() {
-	ipcMain.handle("settings:getAll", () => {
-		return getAllAppSettings();
-	});
-	ipcMain.handle("settings:get", (_e, key) => {
-		return getAppSetting(key);
-	});
-	ipcMain.handle("settings:save", (_e, key, value) => {
-		return saveAppSetting(key, value);
-	});
+function ht() {
+	n.handle("settings:getAll", () => ft()), n.handle("settings:get", (e, t) => pt(t)), n.handle("settings:save", (e, t, n) => mt(t, n));
 }
 //#endregion
 //#region electron/main.ts
-var __dirname = dirname(fileURLToPath(import.meta.url));
-function writeRuntimeLog(message) {
+var Z = i(o(import.meta.url));
+function Q(e) {
 	try {
-		const logDir = app.getPath("userData");
-		mkdirSync(logDir, { recursive: true });
-		appendFileSync(join(logDir, "runtime.log"), `[${(/* @__PURE__ */ new Date()).toISOString()}] ${message}\n`, "utf8");
+		let n = t.getPath("userData");
+		l(n, { recursive: !0 }), s(a(n, "runtime.log"), `[${(/* @__PURE__ */ new Date()).toISOString()}] ${e}\n`, "utf8");
 	} catch {}
 }
-function createWindow() {
-	const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-	const win = new BrowserWindow({
-		width,
-		height,
+function $() {
+	let { width: t, height: n } = r.getPrimaryDisplay().workAreaSize, i = new e({
+		width: t,
+		height: n,
 		minWidth: 800,
 		minHeight: 600,
-		resizable: true,
-		maximizable: true,
+		resizable: !0,
+		maximizable: !0,
 		webPreferences: {
-			preload: join(__dirname, "preload.js"),
-			contextIsolation: true,
-			nodeIntegration: false,
-			sandbox: false
+			preload: a(Z, "preload.js"),
+			contextIsolation: !0,
+			nodeIntegration: !1,
+			sandbox: !1
 		},
 		titleBarStyle: "default",
-		show: false
+		show: !1
 	});
-	win.webContents.on("did-finish-load", () => {
-		win.webContents.setZoomFactor(1);
-		writeRuntimeLog("Renderer finished load successfully.");
-	});
-	win.webContents.on("did-fail-load", (_event, errorCode, errorDescription, validatedURL) => {
-		writeRuntimeLog(`did-fail-load: code=${errorCode} description=${errorDescription} url=${validatedURL}`);
-	});
-	win.webContents.on("render-process-gone", (_event, details) => {
-		writeRuntimeLog(`render-process-gone: reason=${details.reason} exitCode=${details.exitCode}`);
-	});
-	win.webContents.on("console-message", (_event, level, message, line, sourceId) => {
-		if (level >= 2) writeRuntimeLog(`renderer-console(level=${level}): ${message} (${sourceId}:${line})`);
-	});
-	win.once("ready-to-show", () => win.show());
-	const devServerUrl = process.env.VITE_DEV_SERVER_URL;
-	if (devServerUrl) {
-		win.loadURL(devServerUrl);
-		win.webContents.openDevTools();
-	} else {
-		const resourceIndexPath = join(process.env.PORTABLE_EXECUTABLE_DIR || process.cwd(), "resources", "dist", "index.html");
-		const bundledIndexPath = join(__dirname, "../dist/index.html");
-		const indexPath = existsSync(resourceIndexPath) ? resourceIndexPath : bundledIndexPath;
-		writeRuntimeLog(`Loading production renderer from: ${indexPath} (resourceExists=${existsSync(resourceIndexPath)}, bundledExists=${existsSync(bundledIndexPath)})`);
-		win.loadFile(indexPath).catch((error) => {
-			writeRuntimeLog(`loadFile failed: ${error instanceof Error ? error.message : String(error)}`);
+	i.webContents.on("did-finish-load", () => {
+		i.webContents.setZoomFactor(1), Q("Renderer finished load successfully.");
+	}), i.webContents.on("did-fail-load", (e, t, n, r) => {
+		Q(`did-fail-load: code=${t} description=${n} url=${r}`);
+	}), i.webContents.on("render-process-gone", (e, t) => {
+		Q(`render-process-gone: reason=${t.reason} exitCode=${t.exitCode}`);
+	}), i.webContents.on("console-message", (e, t, n, r, i) => {
+		t >= 2 && Q(`renderer-console(level=${t}): ${n} (${i}:${r})`);
+	}), i.once("ready-to-show", () => i.show());
+	let o = process.env.VITE_DEV_SERVER_URL;
+	if (o) i.loadURL(o), i.webContents.openDevTools();
+	else {
+		let e = a(process.env.PORTABLE_EXECUTABLE_DIR || process.cwd(), "resources", "dist", "index.html"), t = a(Z, "../dist/index.html"), n = c(e) ? e : t;
+		Q(`Loading production renderer from: ${n} (resourceExists=${c(e)}, bundledExists=${c(t)})`), i.loadFile(n).catch((e) => {
+			Q(`loadFile failed: ${e instanceof Error ? e.message : String(e)}`);
 		});
 	}
 }
-app.whenReady().then(() => {
-	writeRuntimeLog(`App ready. version=${app.getVersion()} packaged=${app.isPackaged}`);
-	initDatabase();
-	registerUserHandlers();
-	registerVehicleHandlers();
-	registerParameterHandlers();
-	registerSessionHandlers();
-	registerSettingHandlers();
-	createWindow();
-	app.on("activate", () => {
-		if (BrowserWindow.getAllWindows().length === 0) createWindow();
+t.whenReady().then(() => {
+	Q(`App ready. version=${t.getVersion()} packaged=${t.isPackaged}`), de(), ke(), Qe(), st(), lt(), ht(), $(), t.on("activate", () => {
+		e.getAllWindows().length === 0 && $();
 	});
-}).catch((err) => {
-	writeRuntimeLog(`Startup failure: ${err instanceof Error ? err.stack || err.message : String(err)}`);
-	console.error("Failed to start Electron app:", err);
-	app.quit();
-});
-app.on("window-all-closed", () => {
-	if (process.platform !== "darwin") app.quit();
+}).catch((e) => {
+	Q(`Startup failure: ${e instanceof Error ? e.stack || e.message : String(e)}`), console.error("Failed to start Electron app:", e), t.quit();
+}), t.on("window-all-closed", () => {
+	process.platform !== "darwin" && t.quit();
 });
 //#endregion
 
