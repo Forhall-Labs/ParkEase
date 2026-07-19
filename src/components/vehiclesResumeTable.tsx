@@ -478,7 +478,7 @@ export function VehiclesTable({
         </div>
 
         <Paper
-          className={`overflow-hidden border! shadow-none! ${isLight ? 'bg-white! border-stone-200!' : 'bg-slate-900/50! border-white/10!'}`}
+          className={`max-h-[55vh] overflow-y-auto overflow-x-hidden border! shadow-none! ${isLight ? 'bg-white! border-stone-200!' : 'bg-slate-900/50! border-white/10!'}`}
         >
           <div className="divide-y divide-inherit">
             {loading ? (

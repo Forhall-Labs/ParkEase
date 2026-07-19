@@ -89,5 +89,9 @@
     "vite-plugin-electron": "^0.29.1",
     "vite-plugin-electron-renderer": "^0.14.6",
     "vitest": "^4.1.9"
+  },
+  "allowScripts": {
+    "better-sqlite3@12.8.0": true,
+    "electron@41.2.0": true
   }
 }
