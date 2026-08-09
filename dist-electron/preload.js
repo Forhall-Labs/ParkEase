@@ -1,47 +1,47 @@
-import { contextBridge, ipcRenderer } from "electron";
+import { contextBridge as e, ipcRenderer as t } from "electron";
 //#region electron/preload.ts
-contextBridge.exposeInMainWorld("electronAPI", {
+e.exposeInMainWorld("electronAPI", {
 	users: {
-		getAll: () => ipcRenderer.invoke("users:getAll"),
-		getOne: (id) => ipcRenderer.invoke("users:getOne", id),
-		login: (dto) => ipcRenderer.invoke("users:login", dto),
-		create: (dto) => ipcRenderer.invoke("users:create", dto),
-		update: (id, dto) => ipcRenderer.invoke("users:update", id, dto),
-		changePassword: (id, currentPassword, newPassword) => ipcRenderer.invoke("users:changePassword", id, currentPassword, newPassword),
-		deactivate: (id) => ipcRenderer.invoke("users:deactivate", id),
-		delete: (id) => ipcRenderer.invoke("users:delete", id)
+		getAll: () => t.invoke("users:getAll"),
+		getOne: (e) => t.invoke("users:getOne", e),
+		login: (e) => t.invoke("users:login", e),
+		create: (e) => t.invoke("users:create", e),
+		update: (e, n) => t.invoke("users:update", e, n),
+		changePassword: (e, n, r) => t.invoke("users:changePassword", e, n, r),
+		deactivate: (e) => t.invoke("users:deactivate", e),
+		delete: (e) => t.invoke("users:delete", e)
 	},
 	vehicles: {
-		getAll: () => ipcRenderer.invoke("vehicles:getAll"),
-		getActive: () => ipcRenderer.invoke("vehicles:getActive"),
-		getOne: (id) => ipcRenderer.invoke("vehicles:getOne", id),
-		create: (dto) => ipcRenderer.invoke("vehicles:create", dto),
-		checkout: (id, total) => ipcRenderer.invoke("vehicles:checkout", id, total),
-		update: (id, dto) => ipcRenderer.invoke("vehicles:update", id, dto),
-		delete: (id) => ipcRenderer.invoke("vehicles:delete", id),
-		getStats: () => ipcRenderer.invoke("vehicles:getStats"),
-		getParkedCount: () => ipcRenderer.invoke("vehicles:getParkedCount"),
-		getTodayRevenue: () => ipcRenderer.invoke("vehicles:getTodayRevenue"),
-		getTodayVehicles: () => ipcRenderer.invoke("vehicles:getTodayVehicles"),
-		getReport: (period, selectedDate) => ipcRenderer.invoke("vehicles:getReport", period, selectedDate)
+		getAll: () => t.invoke("vehicles:getAll"),
+		getActive: () => t.invoke("vehicles:getActive"),
+		getOne: (e) => t.invoke("vehicles:getOne", e),
+		create: (e) => t.invoke("vehicles:create", e),
+		checkout: (e, n) => t.invoke("vehicles:checkout", e, n),
+		update: (e, n) => t.invoke("vehicles:update", e, n),
+		delete: (e) => t.invoke("vehicles:delete", e),
+		getStats: () => t.invoke("vehicles:getStats"),
+		getParkedCount: () => t.invoke("vehicles:getParkedCount"),
+		getTodayRevenue: () => t.invoke("vehicles:getTodayRevenue"),
+		getTodayVehicles: () => t.invoke("vehicles:getTodayVehicles"),
+		getReport: (e, n) => t.invoke("vehicles:getReport", e, n)
 	},
 	parameters: {
-		getAll: () => ipcRenderer.invoke("parameters:getAll"),
-		getOne: (id) => ipcRenderer.invoke("parameters:getOne", id),
-		getDefault: () => ipcRenderer.invoke("parameters:getDefault"),
-		create: (dto) => ipcRenderer.invoke("parameters:create", dto),
-		update: (id, dto) => ipcRenderer.invoke("parameters:update", id, dto),
-		setDefault: (id) => ipcRenderer.invoke("parameters:setDefault", id)
+		getAll: () => t.invoke("parameters:getAll"),
+		getOne: (e) => t.invoke("parameters:getOne", e),
+		getDefault: () => t.invoke("parameters:getDefault"),
+		create: (e) => t.invoke("parameters:create", e),
+		update: (e, n) => t.invoke("parameters:update", e, n),
+		setDefault: (e) => t.invoke("parameters:setDefault", e)
 	},
 	session: {
-		save: (user) => ipcRenderer.invoke("session:save", user),
-		restore: () => ipcRenderer.invoke("session:restore"),
-		clear: () => ipcRenderer.invoke("session:clear")
+		save: (e) => t.invoke("session:save", e),
+		restore: () => t.invoke("session:restore"),
+		clear: () => t.invoke("session:clear")
 	},
 	settings: {
-		getAll: () => ipcRenderer.invoke("settings:getAll"),
-		get: (key) => ipcRenderer.invoke("settings:get", key),
-		save: (key, value) => ipcRenderer.invoke("settings:save", key, value)
+		getAll: () => t.invoke("settings:getAll"),
+		get: (e) => t.invoke("settings:get", e),
+		save: (e, n) => t.invoke("settings:save", e, n)
 	}
 });
 //#endregion
