@@ -5,6 +5,26 @@
   - Consume these variables from primitives/components to avoid ad-hoc per-screen values.
 */
 
+/*
+  App-wide font size bump.
+  Overrides Tailwind's default text-* scale (see node_modules/tailwindcss/theme.css)
+  so every text-xs/sm/base/... utility renders larger across the whole app.
+  Line-height tokens are left untouched: Tailwind defines them as unitless
+  ratios (calc(lineHeight / fontSize)), so they scale correctly with the new sizes.
+*/
+@theme {
+  --text-xs: 0.8125rem;
+  --text-sm: 0.9375rem;
+  --text-base: 1.125rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.625rem;
+  --text-3xl: 2rem;
+  --text-4xl: 2.5rem;
+  --text-5xl: 3.25rem;
+  --text-6xl: 4rem;
+}
+
 :root {
   /* Color roles - dark baseline */
   --color-surface-app: #020617;

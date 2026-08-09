@@ -25,7 +25,7 @@ export function ModalShell({
       onClick={onClose}
     >
       <div
-        className={`w-full ${maxWidthClassName} rounded-2xl border shadow-2xl ${className}`}
+        className={`max-h-[90vh] w-full overflow-y-auto ${maxWidthClassName} rounded-2xl border shadow-2xl ${className}`}
         onClick={(event) => event.stopPropagation()}
       >
         {children}

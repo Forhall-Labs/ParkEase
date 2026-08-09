@@ -5,6 +5,7 @@ import { t } from '../i18n';
 import { ConfirmModal, ModalShell } from './UI/Modal';
 import { Button, Card, Input, SectionHeader } from './primitives';
 import { autoFormatPlate, validatePlate, type PlateValidationResult } from '../utils/plate-utils';
+import { calculateFeeBreakdown, type FeeBreakdown } from '../utils/fee-utils';
 
 interface VehiclesTableProps {
   theme?: 'dark' | 'light';
@@ -44,24 +45,21 @@ export function VehiclesTable({
   const [selectedTariffId, setSelectedTariffId] = useState('');
   const [defaultTariffId, setDefaultTariffId] = useState<number | null>(null);
   const [defaultRate, setDefaultRate] = useState('');
+  const [parametersLoaded, setParametersLoaded] = useState(false);
   const [checkoutModal, setCheckoutModal] = useState<{
     open: boolean;
     vehicle: Vehicle | null;
     customTotal?: string;
-    breakdown?: {
-      entryTime: Date;
-      exitTime: Date;
-      durationMinutes: number;
-      firstHourCost: number;
-      additionalMinutes: number;
-      additionalCost: number;
-      subtotal: number;
-      roundedTotal: number;
-    };
+    breakdown?: FeeBreakdown;
   }>({
     open: false,
     vehicle: null,
   });
+  const [exitReceipt, setExitReceipt] = useState<{
+    vehicle: Vehicle;
+    total: string;
+    egressDate: string;
+  } | null>(null);
   const [plateValidation, setPlateValidation] = useState<PlateValidationResult | null>(null);
   const [parkingInfo, setParkingInfo] = useState({
     name: 'ParkEase',
@@ -116,6 +114,8 @@ export function VehiclesTable({
       }
     } catch (err) {
       console.error('Error loading parameters:', err);
+    } finally {
+      setParametersLoaded(true);
     }
   }
 
@@ -226,17 +226,27 @@ export function VehiclesTable({
       <head>
         <title>${labels.title}</title>
         <style>
+          @page { size: 58mm auto; margin: 0; }
           * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: 'Courier New', monospace; padding: 4px; width: 58mm; margin: 0 auto; color: #000; }
-          .header { text-align: center; margin-bottom: 16px; }
-          .logo { font-size: 14px; font-weight: bold; color: #000; }
-          .title { font-size: 12px; font-weight: bold; margin-top: 6px; color: #000; }
-          .divider { border-bottom: 2px dashed #000; margin: 8px 0; }
-          .row { display: flex; justify-content: space-between; margin: 4px 0; font-size: 11px; color: #000; }
-          .label { font-weight: bold; color: #000; }
-          .value { font-weight: bold; color: #000; }
-          .footer { text-align: center; margin-top: 10px; padding-top: 8px; border-top: 2px dashed #000; font-size: 10px; color: #000; white-space: pre-line; line-height: 1.5; font-weight: bold; }
-          .footer-thanks { font-size: 11px; font-weight: bold; color: #000; margin-bottom: 4px; }
+          html, body { width: 48mm; }
+          body {
+            font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif;
+            font-weight: 700;
+            font-size: 12px;
+            line-height: 1.4;
+            padding: 2mm 1mm;
+            margin: 0 auto;
+            color: #000;
+          }
+          .header { text-align: center; margin-bottom: 2mm; }
+          .logo { font-size: 18px; font-weight: 800; color: #000; }
+          .title { font-size: 14px; font-weight: 700; margin-top: 1.5mm; color: #000; }
+          .divider { border-bottom: 1px dashed #000; margin: 2.5mm 0; }
+          .row { display: flex; justify-content: space-between; align-items: baseline; gap: 2mm; margin: 1.6mm 0; font-size: 13px; color: #000; }
+          .label { font-weight: 700; color: #000; white-space: nowrap; }
+          .value { font-weight: 700; color: #000; text-align: right; word-break: break-word; }
+          .footer { text-align: center; margin-top: 2.5mm; padding-top: 2.5mm; border-top: 1px dashed #000; font-size: 11px; color: #000; white-space: pre-line; line-height: 1.5; font-weight: 700; }
+          .footer-thanks { font-size: 13px; font-weight: 800; color: #000; margin-bottom: 1mm; }
         </style>
       </head>
       <body>
@@ -307,6 +317,121 @@ export function VehiclesTable({
     });
   }
 
+  function printExitReceipt(data: { vehicle: Vehicle; total: string; egressDate: string }) {
+    const lang = localStorage.getItem('app-language') || 'es';
+    const isEnglish = lang === 'en';
+    const { vehicle, total, egressDate } = data;
+
+    const labels = {
+      title: isEnglish ? 'Exit Receipt' : 'Recibo de Salida',
+      plate: isEnglish ? 'Plate' : 'Placa',
+      owner: isEnglish ? 'Owner' : 'Propietario',
+      entryTime: isEnglish ? 'Entry Time' : 'Hora Ingreso',
+      exitTime: isEnglish ? 'Exit Time' : 'Hora de Salida',
+      reference: isEnglish ? 'Reference' : 'Referencia',
+      amountPaid: isEnglish ? 'Amount Paid' : 'Monto Pagado',
+      thankYou: isEnglish ? 'Thank you for your visit!' : '¡Gracias por su visita!',
+      keepReceipt: isEnglish ? 'Keep this receipt' : 'Conserve este recibo',
+    };
+
+    const parkingName = parkingInfo.name || 'ParkEase';
+    const footerLines = [
+      parkingName,
+      parkingInfo.address,
+      parkingInfo.phone ? `Tel: ${parkingInfo.phone}` : '',
+      parkingInfo.email,
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    const amount = parseFloat(total);
+    const formattedAmount = Number.isFinite(amount)
+      ? amount.toLocaleString('es-CR', { style: 'currency', currency: 'CRC' })
+      : total;
+
+    const content = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>${labels.title}</title>
+        <style>
+          @page { size: 58mm auto; margin: 0; }
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          html, body { width: 48mm; }
+          body {
+            font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif;
+            font-weight: 700;
+            font-size: 12px;
+            line-height: 1.4;
+            padding: 2mm 1mm;
+            margin: 0 auto;
+            color: #000;
+          }
+          .header { text-align: center; margin-bottom: 2mm; }
+          .logo { font-size: 18px; font-weight: 800; color: #000; }
+          .title { font-size: 14px; font-weight: 700; margin-top: 1.5mm; color: #000; }
+          .divider { border-bottom: 1px dashed #000; margin: 2.5mm 0; }
+          .row { display: flex; justify-content: space-between; align-items: baseline; gap: 2mm; margin: 1.6mm 0; font-size: 13px; color: #000; }
+          .label { font-weight: 700; color: #000; white-space: nowrap; }
+          .value { font-weight: 700; color: #000; text-align: right; word-break: break-word; }
+          .total-row { font-size: 16px; }
+          .footer { text-align: center; margin-top: 2.5mm; padding-top: 2.5mm; border-top: 1px dashed #000; font-size: 11px; color: #000; white-space: pre-line; line-height: 1.5; font-weight: 700; }
+          .footer-thanks { font-size: 13px; font-weight: 800; color: #000; margin-bottom: 1mm; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="logo">${parkingName}</div>
+          <div class="title">${labels.title}</div>
+        </div>
+        <div class="divider"></div>
+        <div class="row">
+          <span class="label">${labels.plate}:</span>
+          <span class="value">${vehicle.veh_plate}</span>
+        </div>
+        <div class="row">
+          <span class="label">${labels.owner}:</span>
+          <span class="value">${vehicle.veh_owner || 'N/A'}</span>
+        </div>
+        <div class="row">
+          <span class="label">${labels.reference}:</span>
+          <span class="value">${vehicle.veh_reference}</span>
+        </div>
+        <div class="row">
+          <span class="label">${labels.entryTime}:</span>
+          <span class="value">${new Date(vehicle.veh_ingress_date).toLocaleString('es-CR')}</span>
+        </div>
+        <div class="row">
+          <span class="label">${labels.exitTime}:</span>
+          <span class="value">${new Date(egressDate).toLocaleString('es-CR')}</span>
+        </div>
+        <div class="divider"></div>
+        <div class="row total-row">
+          <span class="label">${labels.amountPaid}:</span>
+          <span class="value">${formattedAmount}</span>
+        </div>
+        <div class="footer">
+          <div class="footer-thanks">${labels.thankYou}</div>
+          <div>${labels.keepReceipt}</div>
+          ${footerLines ? `<div style="margin-top:8px">${footerLines.replace(/\n/g, '<br/>')}</div>` : ''}
+        </div>
+        <script>
+          window.onload = function() {
+            window.print();
+          }
+        </script>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob([content], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const printWindow = window.open(url, '_blank', 'width=220,height=600');
+    if (printWindow) {
+      printWindow.addEventListener('beforeunload', () => URL.revokeObjectURL(url));
+    }
+  }
+
   async function handleCheckout(id: number) {
     const vehicle = vehicles.find((v) => v.veh_id === id);
     if (vehicle) {
@@ -341,51 +466,24 @@ export function VehiclesTable({
   async function confirmCheckout() {
     if (!checkoutModal.vehicle?.veh_id) return;
     try {
-      await window.electronAPI?.vehicles?.checkout(
-        checkoutModal.vehicle.veh_id,
-        checkoutModal.customTotal
-      );
-      setCheckoutModal({ open: false, vehicle: null });
+      const vehicle = checkoutModal.vehicle;
+      const total =
+        checkoutModal.customTotal || checkoutModal.breakdown?.roundedTotal.toString() || '0';
+      const egressDate = new Date().toISOString();
+
+      const result = await window.electronAPI?.vehicles?.checkout(vehicle.veh_id!, total);
+
+      if (!result?.success) {
+        setError(result?.message ?? 'Error al dar salida');
+        return;
+      }
+
+      setCheckoutModal({ open: false, vehicle: null, breakdown: undefined });
       loadVehicles();
+      setExitReceipt({ vehicle, total, egressDate });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al dar salida');
     }
-  }
-
-  function calculateFeeBreakdown(
-    ingressDate: string,
-    hourlyRate: number
-  ): {
-    entryTime: Date;
-    exitTime: Date;
-    durationMinutes: number;
-    firstHourCost: number;
-    additionalMinutes: number;
-    additionalCost: number;
-    subtotal: number;
-    roundedTotal: number;
-  } {
-    const entryTime = new Date(ingressDate);
-    const exitTime = new Date();
-    const totalMinutes = Math.ceil((exitTime.getTime() - entryTime.getTime()) / (1000 * 60));
-    const durationMinutes = Math.max(1, totalMinutes);
-
-    const firstHourCost = hourlyRate;
-    const additionalMinutes = Math.max(0, durationMinutes - 60);
-    const additionalCost = additionalMinutes * 10;
-    const subtotal = firstHourCost + additionalCost;
-    const roundedTotal = Math.ceil(subtotal / 50) * 50;
-
-    return {
-      entryTime,
-      exitTime,
-      durationMinutes,
-      firstHourCost,
-      additionalMinutes,
-      additionalCost,
-      subtotal,
-      roundedTotal,
-    };
   }
 
   function formatDateTime(dateStr: string): string {
@@ -478,7 +576,7 @@ export function VehiclesTable({
         </div>
 
         <Paper
-          className={`overflow-hidden border! shadow-none! ${isLight ? 'bg-white! border-stone-200!' : 'bg-slate-900/50! border-white/10!'}`}
+          className={`max-h-[55vh] overflow-y-auto overflow-x-hidden border! shadow-none! ${isLight ? 'bg-white! border-stone-200!' : 'bg-slate-900/50! border-white/10!'}`}
         >
           <div className="divide-y divide-inherit">
             {loading ? (
@@ -628,6 +726,11 @@ export function VehiclesTable({
                 </option>
               ))}
             </select>
+            {!parametersLoaded && (
+              <p className={`mt-1 text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                {t('vehicles.loadingTariffs')}
+              </p>
+            )}
           </div>
           <div className="flex justify-end gap-3 pt-4">
             <Button
@@ -642,7 +745,9 @@ export function VehiclesTable({
             </Button>
             <Button
               type="submit"
-              disabled={saving || (plateValidation ? !plateValidation.isValid : false)}
+              disabled={
+                saving || !parametersLoaded || (plateValidation ? !plateValidation.isValid : false)
+              }
               variant="filled"
             >
               {saving ? t('vehicles.registering') : t('vehicles.register')}
@@ -804,6 +909,19 @@ export function VehiclesTable({
         confirmText={t('common.delete')}
         cancelText={t('common.cancel')}
         variant="danger"
+      />
+
+      <ConfirmModal
+        open={exitReceipt !== null}
+        onClose={() => setExitReceipt(null)}
+        onConfirm={() => {
+          if (exitReceipt) printExitReceipt(exitReceipt);
+        }}
+        title={t('vehicles.printReceiptTitle')}
+        message={t('vehicles.printReceiptQuestion')}
+        confirmText={t('vehicles.printReceiptYes')}
+        cancelText={t('vehicles.printReceiptNo')}
+        variant="default"
       />
     </>
   );

@@ -54,7 +54,7 @@ export const DashboardCard: React.FC<CardProps> = ({
           </p>
           <div className="mt-2 flex items-end justify-between gap-3">
             <h3
-              className={`text-3xl font-semibold tracking-tight sm:text-4xl ${isLight ? 'text-[color:var(--color-text-primary)]' : 'text-white'}`}
+              className={`text-3xl font-semibold tracking-tight ${isLight ? 'text-[color:var(--color-text-primary)]' : 'text-white'}`}
             >
               {info}
             </h3>

@@ -1,7 +1,7 @@
 {
   "name": "parkease",
   "private": true,
-  "version": "1.2.1",
+  "version": "1.2.3",
   "type": "module",
   "main": "dist-electron/main.js",
   "build": {
@@ -89,5 +89,9 @@
     "vite-plugin-electron": "^0.29.1",
     "vite-plugin-electron-renderer": "^0.14.6",
     "vitest": "^4.1.9"
+  },
+  "allowScripts": {
+    "better-sqlite3@12.8.0": true,
+    "electron@41.2.0": true
   }
 }
