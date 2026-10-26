@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { getLanguage, t } from '../../i18n';
-import type { ReportPeriod, VehicleReportResult } from '../../types/electron-api';
+import type { ReportPeriod, VehicleReportResult, VehicleReportRow } from '../../types/electron-api';
 import { Button, Card, Input, SectionHeader, StatusBadge } from '../primitives';
 import { Dropdown } from '../../components/primitives/Dropdown';
 import { ConfirmModal } from './Modal';
+import { printExitReceipt } from '../../utils/receipt-utils';
 
 interface ReportsProps {
   theme?: 'dark' | 'light';
@@ -134,6 +135,18 @@ function createEmptyReport(period: ReportPeriod, selectedDate: string): VehicleR
     totalRevenue: 0,
     rows: [],
   };
+}
+
+/** Reimpresión del tiquete de salida de una transacción ya registrada. */
+function printExitTicket(row: VehicleReportRow): void {
+  void printExitReceipt({
+    plate: row.veh_plate,
+    owner: row.veh_owner,
+    reference: row.veh_reference,
+    ingressDate: row.veh_ingress_date,
+    egressDate: row.veh_egress_date,
+    total: row.veh_tax,
+  });
 }
 
 export function Reports({ theme = 'dark' }: ReportsProps) {
@@ -498,13 +511,18 @@ export function Reports({ theme = 'dark' }: ReportsProps) {
                     >
                       {t('reports.table.tax')}
                     </th>
+                    <th
+                      className={`px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.2em] ${isLight ? 'text-slate-600' : 'text-slate-300'}`}
+                    >
+                      {t('reports.table.actions')}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {!hasRows ? (
                     <tr>
                       <td
-                        colSpan={6}
+                        colSpan={7}
                         className={`px-4 py-10 text-center ${isLight ? 'text-slate-500' : 'text-slate-400'}`}
                       >
                         <div className="mx-auto max-w-md space-y-2">
@@ -555,6 +573,16 @@ export function Reports({ theme = 'dark' }: ReportsProps) {
                           className={`px-4 py-3 text-right text-sm font-semibold ${isLight ? 'text-slate-900' : 'text-amber-100'}`}
                         >
                           {formatCurrency(Number(row.veh_tax || 0))}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <Button
+                            type="button"
+                            variant="outlined"
+                            size="sm"
+                            onClick={() => printExitTicket(row)}
+                          >
+                            {t('reports.printExit')}
+                          </Button>
                         </td>
                       </tr>
                     ))

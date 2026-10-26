@@ -6,6 +6,7 @@ import { VehiclesTable } from '../vehiclesResumeTable';
 // Mock i18n to return the key itself so tests are language-agnostic
 vi.mock('../../i18n', () => ({
   t: (key: string) => key,
+  getLanguage: () => 'es',
   setLanguage: vi.fn(),
 }));
 

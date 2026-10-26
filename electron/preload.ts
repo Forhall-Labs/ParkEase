@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { ReportPeriod, VehicleReportResult } from './service/vehicle.service.js';
+import type { PrintResult } from './handlers/receipt.handler.js';
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -100,7 +101,7 @@ export interface MutationResult {
   id?: number;
 }
 
-export type { ReportPeriod, VehicleReportResult };
+export type { ReportPeriod, VehicleReportResult, PrintResult };
 
 // ─── API expuesta a React ─────────────────────────────────────────────────────
 
@@ -161,6 +162,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
     getReport: (period: ReportPeriod, selectedDate: string): Promise<VehicleReportResult> =>
       ipcRenderer.invoke('vehicles:getReport', period, selectedDate),
+  },
+
+  // ── Tiquetes ─────────────────────────────────────────────────────────────────
+  receipts: {
+    print: (html: string): Promise<PrintResult> => ipcRenderer.invoke('receipts:print', html),
   },
 
   // ── Parámetros ───────────────────────────────────────────────────────────────

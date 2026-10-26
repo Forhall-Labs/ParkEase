@@ -1,16 +1,7 @@
 import { ipcMain } from 'electron';
 import { getDatabase } from '../database/db.js';
 import { getAllVehicles, getActiveVehicles, getVehicleById, registerVehicle, vehicleCheckout, editVehicle, removeVehicle, getReport, } from '../service/vehicle.service.js';
-function normalizeReportDate(selectedDate) {
-    if (!selectedDate) {
-        return new Date().toISOString().slice(0, 10);
-    }
-    const parsed = new Date(`${selectedDate}T00:00:00Z`);
-    if (Number.isNaN(parsed.getTime())) {
-        return new Date().toISOString().slice(0, 10);
-    }
-    return parsed.toISOString().slice(0, 10);
-}
+import { localDayRange, normalizeDateKey, toDateKey } from '../utils/day-range.js';
 function isReportPeriod(value) {
     return value === 'daily' || value === 'weekly' || value === 'monthly' || value === 'yearly';
 }
@@ -44,8 +35,8 @@ export function registerVehicleHandlers() {
             .prepare("SELECT COUNT(*) as count FROM psm_vehicles WHERE veh_status = 'P'")
             .get();
         const parkedCount = parkedResult.count;
-        // Get today's revenue (sum of transaction_amount for today)
-        const today = new Date().toISOString().split('T')[0];
+        // Totales del día operativo: medianoche local a medianoche local
+        const { start, end } = localDayRange(toDateKey());
         // Check if transactions table exists, if not return 0
         let todayRevenue = 0;
         try {
@@ -55,9 +46,10 @@ export function registerVehicleHandlers() {
         SELECT COALESCE(SUM(CAST(veh_tax AS REAL)), 0) as total 
         FROM psm_vehicles 
         WHERE veh_status = 'S' 
-        AND DATE(veh_egress_date) = ?
+        AND veh_egress_date >= ?
+        AND veh_egress_date < ?
       `)
-                .get(today);
+                .get(start, end);
             todayRevenue = transResult?.total || 0;
         }
         catch {
@@ -72,9 +64,10 @@ export function registerVehicleHandlers() {
         SELECT COUNT(*) as count 
         FROM psm_vehicles 
         WHERE veh_status = 'S' 
-        AND DATE(veh_egress_date) = ?
+        AND veh_egress_date >= ?
+        AND veh_egress_date < ?
       `)
-                .get(today);
+                .get(start, end);
             todayVehicles = servedResult.count;
         }
         catch {
@@ -91,16 +84,17 @@ export function registerVehicleHandlers() {
     });
     ipcMain.handle('vehicles:getTodayRevenue', () => {
         const db = getDatabase();
-        const today = new Date().toISOString().split('T')[0];
+        const { start, end } = localDayRange(toDateKey());
         try {
             const result = db
                 .prepare(`
         SELECT COALESCE(SUM(CAST(veh_tax AS REAL)), 0) as total 
         FROM psm_vehicles 
         WHERE veh_status = 'S' 
-        AND DATE(veh_egress_date) = ?
+        AND veh_egress_date >= ?
+        AND veh_egress_date < ?
       `)
-                .get(today);
+                .get(start, end);
             return result?.total || 0;
         }
         catch {
@@ -109,16 +103,17 @@ export function registerVehicleHandlers() {
     });
     ipcMain.handle('vehicles:getTodayVehicles', () => {
         const db = getDatabase();
-        const today = new Date().toISOString().split('T')[0];
+        const { start, end } = localDayRange(toDateKey());
         try {
             const result = db
                 .prepare(`
         SELECT COUNT(*) as count 
         FROM psm_vehicles 
         WHERE veh_status = 'S' 
-        AND DATE(veh_egress_date) = ?
+        AND veh_egress_date >= ?
+        AND veh_egress_date < ?
       `)
-                .get(today);
+                .get(start, end);
             return result?.count || 0;
         }
         catch {
@@ -127,7 +122,7 @@ export function registerVehicleHandlers() {
     });
     ipcMain.handle('vehicles:getReport', (_e, period, selectedDate) => {
         const safePeriod = isReportPeriod(period) ? period : 'daily';
-        const safeDate = normalizeReportDate(selectedDate);
+        const safeDate = normalizeDateKey(selectedDate);
         return getReport(safePeriod, safeDate);
     });
 }

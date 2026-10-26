@@ -13,25 +13,12 @@ import {
   type VehicleReportResult,
 } from '../service/vehicle.service.js';
 import { CreateVehicleDto, UpdateVehicleDto } from '../models/vehicle.model.js';
+import { localDayRange, normalizeDateKey, toDateKey } from '../utils/day-range.js';
 
 export interface DashboardStats {
   parkedCount: number;
   todayRevenue: number;
   todayVehicles: number;
-}
-
-function normalizeReportDate(selectedDate?: string): string {
-  if (!selectedDate) {
-    return new Date().toISOString().slice(0, 10);
-  }
-
-  const parsed = new Date(`${selectedDate}T00:00:00Z`);
-
-  if (Number.isNaN(parsed.getTime())) {
-    return new Date().toISOString().slice(0, 10);
-  }
-
-  return parsed.toISOString().slice(0, 10);
 }
 
 function isReportPeriod(value: unknown): value is ReportPeriod {
@@ -77,8 +64,8 @@ export function registerVehicleHandlers(): void {
       .get() as { count: number };
     const parkedCount = parkedResult.count;
 
-    // Get today's revenue (sum of transaction_amount for today)
-    const today = new Date().toISOString().split('T')[0];
+    // Totales del día operativo: medianoche local a medianoche local
+    const { start, end } = localDayRange(toDateKey());
 
     // Check if transactions table exists, if not return 0
     let todayRevenue = 0;
@@ -90,10 +77,11 @@ export function registerVehicleHandlers(): void {
         SELECT COALESCE(SUM(CAST(veh_tax AS REAL)), 0) as total 
         FROM psm_vehicles 
         WHERE veh_status = 'S' 
-        AND DATE(veh_egress_date) = ?
+        AND veh_egress_date >= ?
+        AND veh_egress_date < ?
       `
         )
-        .get(today) as { total: number };
+        .get(start, end) as { total: number };
       todayRevenue = transResult?.total || 0;
     } catch {
       // Table doesn't exist yet
@@ -109,10 +97,11 @@ export function registerVehicleHandlers(): void {
         SELECT COUNT(*) as count 
         FROM psm_vehicles 
         WHERE veh_status = 'S' 
-        AND DATE(veh_egress_date) = ?
+        AND veh_egress_date >= ?
+        AND veh_egress_date < ?
       `
         )
-        .get(today) as { count: number };
+        .get(start, end) as { count: number };
       todayVehicles = servedResult.count;
     } catch {
       todayVehicles = 0;
@@ -131,7 +120,7 @@ export function registerVehicleHandlers(): void {
 
   ipcMain.handle('vehicles:getTodayRevenue', (): number => {
     const db = getDatabase();
-    const today = new Date().toISOString().split('T')[0];
+    const { start, end } = localDayRange(toDateKey());
 
     try {
       const result = db
@@ -140,10 +129,11 @@ export function registerVehicleHandlers(): void {
         SELECT COALESCE(SUM(CAST(veh_tax AS REAL)), 0) as total 
         FROM psm_vehicles 
         WHERE veh_status = 'S' 
-        AND DATE(veh_egress_date) = ?
+        AND veh_egress_date >= ?
+        AND veh_egress_date < ?
       `
         )
-        .get(today) as { total: number };
+        .get(start, end) as { total: number };
       return result?.total || 0;
     } catch {
       return 0;
@@ -152,7 +142,7 @@ export function registerVehicleHandlers(): void {
 
   ipcMain.handle('vehicles:getTodayVehicles', (): number => {
     const db = getDatabase();
-    const today = new Date().toISOString().split('T')[0];
+    const { start, end } = localDayRange(toDateKey());
 
     try {
       const result = db
@@ -161,10 +151,11 @@ export function registerVehicleHandlers(): void {
         SELECT COUNT(*) as count 
         FROM psm_vehicles 
         WHERE veh_status = 'S' 
-        AND DATE(veh_egress_date) = ?
+        AND veh_egress_date >= ?
+        AND veh_egress_date < ?
       `
         )
-        .get(today) as { count: number };
+        .get(start, end) as { count: number };
       return result?.count || 0;
     } catch {
       return 0;
@@ -173,7 +164,7 @@ export function registerVehicleHandlers(): void {
 
   ipcMain.handle('vehicles:getReport', (_e, period: unknown, selectedDate?: string): VehicleReportResult => {
     const safePeriod: ReportPeriod = isReportPeriod(period) ? period : 'daily';
-    const safeDate = normalizeReportDate(selectedDate);
+    const safeDate = normalizeDateKey(selectedDate);
 
     return getReport(safePeriod, safeDate);
   });

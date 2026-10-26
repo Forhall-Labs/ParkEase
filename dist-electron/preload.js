@@ -25,6 +25,7 @@ e.exposeInMainWorld("electronAPI", {
 		getTodayVehicles: () => t.invoke("vehicles:getTodayVehicles"),
 		getReport: (e, n) => t.invoke("vehicles:getReport", e, n)
 	},
+	receipts: { print: (e) => t.invoke("receipts:print", e) },
 	parameters: {
 		getAll: () => t.invoke("parameters:getAll"),
 		getOne: (e) => t.invoke("parameters:getOne", e),
