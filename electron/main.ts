@@ -8,6 +8,7 @@ import { registerVehicleHandlers } from './handlers/vehicle.handler.js';
 import { registerParameterHandlers } from './handlers/parameter.handler.js';
 import { registerSessionHandlers } from './handlers/session.handler.js';
 import { registerSettingHandlers } from './handlers/setting.handler.js';
+import { registerReceiptHandlers } from './handlers/receipt.handler.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -115,6 +116,7 @@ app
     registerParameterHandlers();
     registerSessionHandlers();
     registerSettingHandlers();
+    registerReceiptHandlers();
 
     createWindow();
 

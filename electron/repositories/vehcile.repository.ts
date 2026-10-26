@@ -1,11 +1,13 @@
 import { getDatabase } from '../database/db.js';
 import { Vehicle, CreateVehicleDto, UpdateVehicleDto } from '../models/vehicle.model.js';
+import { localDayRange, normalizeDateKey, shiftDateKey } from '../utils/day-range.js';
 
 export type ReportPeriod = 'daily' | 'weekly' | 'monthly' | 'yearly';
 
 export interface VehicleReportRow {
   veh_id: number;
   veh_plate: string;
+  veh_reference: string;
   veh_owner: string | null;
   veh_ingress_date: string;
   veh_egress_date: string;
@@ -32,26 +34,12 @@ function isReportPeriod(value: string): value is ReportPeriod {
   return value === 'daily' || value === 'weekly' || value === 'monthly' || value === 'yearly';
 }
 
-function normalizeDate(value: string): string {
-  const parsed = new Date(`${value}T00:00:00Z`);
-
-  if (Number.isNaN(parsed.getTime())) {
-    return new Date().toISOString().slice(0, 10);
-  }
-
-  return parsed.toISOString().slice(0, 10);
-}
-
 function getReportRange(period: ReportPeriod, selectedDate: string): { rangeStart: string; rangeEnd: string } {
-  const rangeEnd = normalizeDate(selectedDate);
-  const endDate = new Date(`${rangeEnd}T00:00:00Z`);
+  const rangeEnd = normalizeDateKey(selectedDate);
   const windowDays = REPORT_WINDOW_DAYS[period];
-  const startDate = new Date(endDate);
-
-  startDate.setUTCDate(endDate.getUTCDate() - (windowDays - 1));
 
   return {
-    rangeStart: startDate.toISOString().slice(0, 10),
+    rangeStart: shiftDateKey(rangeEnd, -(windowDays - 1)),
     rangeEnd,
   };
 }
@@ -59,6 +47,8 @@ function getReportRange(period: ReportPeriod, selectedDate: string): { rangeStar
 export function findVehicleReport(period: string, selectedDate: string): VehicleReportResult {
   const reportPeriod: ReportPeriod = isReportPeriod(period) ? period : 'daily';
   const { rangeStart, rangeEnd } = getReportRange(reportPeriod, selectedDate);
+  // El rango se expresa en instantes UTC para que el día cierre a la medianoche local.
+  const { start, end } = localDayRange(rangeStart, rangeEnd);
   const db = getDatabase();
 
   const rows = db
@@ -67,6 +57,7 @@ export function findVehicleReport(period: string, selectedDate: string): Vehicle
       SELECT
         veh_id,
         veh_plate,
+        veh_reference,
         veh_owner,
         veh_ingress_date,
         veh_egress_date,
@@ -74,11 +65,12 @@ export function findVehicleReport(period: string, selectedDate: string): Vehicle
       FROM psm_vehicles
       WHERE veh_status = 'S'
         AND veh_egress_date IS NOT NULL
-        AND DATE(veh_egress_date) BETWEEN @rangeStart AND @rangeEnd
+        AND veh_egress_date >= @start
+        AND veh_egress_date < @end
       ORDER BY veh_egress_date DESC, veh_id DESC
     `
     )
-    .all({ rangeStart, rangeEnd }) as VehicleReportRow[];
+    .all({ start, end }) as VehicleReportRow[];
 
   const aggregates = db
     .prepare(
@@ -89,10 +81,11 @@ export function findVehicleReport(period: string, selectedDate: string): Vehicle
       FROM psm_vehicles
       WHERE veh_status = 'S'
         AND veh_egress_date IS NOT NULL
-        AND DATE(veh_egress_date) BETWEEN @rangeStart AND @rangeEnd
+        AND veh_egress_date >= @start
+        AND veh_egress_date < @end
     `
     )
-    .get({ rangeStart, rangeEnd }) as { totalVehicles: number; totalRevenue: number } | undefined;
+    .get({ start, end }) as { totalVehicles: number; totalRevenue: number } | undefined;
 
   return {
     period: reportPeriod,

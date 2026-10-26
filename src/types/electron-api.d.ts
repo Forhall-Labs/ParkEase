@@ -102,11 +102,17 @@ export interface DashboardStats {
   todayVehicles: number;
 }
 
+export interface PrintResult {
+  success: boolean;
+  message?: string;
+}
+
 export type ReportPeriod = 'daily' | 'weekly' | 'monthly' | 'yearly';
 
 export interface VehicleReportRow {
   veh_id: number;
   veh_plate: string;
+  veh_reference: string;
   veh_owner: string | null;
   veh_ingress_date: string;
   veh_egress_date: string;
@@ -152,6 +158,9 @@ declare global {
         getTodayRevenue: () => Promise<number>;
         getTodayVehicles: () => Promise<number>;
         getReport: (period: ReportPeriod, selectedDate: string) => Promise<VehicleReportResult>;
+      };
+      receipts: {
+        print: (html: string) => Promise<PrintResult>;
       };
       parameters: {
         getAll: () => Promise<Parameter[]>;

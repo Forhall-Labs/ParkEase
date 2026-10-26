@@ -6,6 +6,7 @@ import { ConfirmModal, ModalShell } from './UI/Modal';
 import { Button, Card, Input, SectionHeader } from './primitives';
 import { autoFormatPlate, validatePlate, type PlateValidationResult } from '../utils/plate-utils';
 import { calculateFeeBreakdown, type FeeBreakdown } from '../utils/fee-utils';
+import { printEntryReceipt, printExitReceipt } from '../utils/receipt-utils';
 
 interface VehiclesTableProps {
   theme?: 'dark' | 'light';
@@ -61,39 +62,13 @@ export function VehiclesTable({
     egressDate: string;
   } | null>(null);
   const [plateValidation, setPlateValidation] = useState<PlateValidationResult | null>(null);
-  const [parkingInfo, setParkingInfo] = useState({
-    name: 'ParkEase',
-    address: '',
-    phone: '',
-    email: '',
-  });
 
   const isLight = theme === 'light';
 
   useEffect(() => {
     loadVehicles();
     loadParameters();
-    loadParkingInfo();
   }, []);
-
-  async function loadParkingInfo() {
-    try {
-      const [name, address, phone, email] = await Promise.all([
-        window.electronAPI?.settings?.get('parking_name'),
-        window.electronAPI?.settings?.get('parking_address'),
-        window.electronAPI?.settings?.get('parking_phone'),
-        window.electronAPI?.settings?.get('parking_email'),
-      ]);
-      setParkingInfo({
-        name: name ?? 'ParkEase',
-        address: address ?? '',
-        phone: phone ?? '',
-        email: email ?? '',
-      });
-    } catch {
-      // keep defaults
-    }
-  }
 
   async function loadParameters() {
     try {
@@ -179,7 +154,7 @@ export function VehiclesTable({
         resetForm();
         setSelectedTariffId('');
         loadVehicles();
-        printReceipt(payload);
+        printVehicleReceipt(payload);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al registrar vehículo');
@@ -188,248 +163,30 @@ export function VehiclesTable({
     }
   }
 
-  function printReceipt(data: CreateVehicleDto) {
-    const lang = localStorage.getItem('app-language') || 'es';
-    const isEnglish = lang === 'en';
-
-    const labels = {
-      title: isEnglish ? 'Parking Receipt' : 'Recibo de Parqueo',
-      plate: isEnglish ? 'Plate' : 'Placa',
-      owner: isEnglish ? 'Owner' : 'Propietario',
-      entryDate: isEnglish ? 'Entry Date' : 'Fecha Ingreso',
-      entryTime: isEnglish ? 'Entry Time' : 'Hora Ingreso',
-      rate: isEnglish ? 'Rate' : 'Tarifa',
-      reference: isEnglish ? 'Reference' : 'Referencia',
-      exitTime: isEnglish ? 'Exit Time' : 'Hora de Salida',
-      exitTimeValue: isEnglish ? 'To be defined' : 'Por definir',
-      thankYou: isEnglish ? 'Thank you for your visit!' : '¡Gracias por su visita!',
-      keepReceipt: isEnglish ? 'Keep this receipt' : 'Conserve este recibo',
-    };
-
-    const parkingName = parkingInfo.name || 'ParkEase';
-    const footerLines = [
-      parkingName,
-      parkingInfo.address,
-      parkingInfo.phone
-        ? isEnglish
-          ? `Tel: ${parkingInfo.phone}`
-          : `Tel: ${parkingInfo.phone}`
-        : '',
-      parkingInfo.email,
-    ]
-      .filter(Boolean)
-      .join('\n');
-
-    const content = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>${labels.title}</title>
-        <style>
-          @page { size: 58mm auto; margin: 0; }
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          html, body { width: 48mm; }
-          body {
-            font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif;
-            font-weight: 700;
-            font-size: 12px;
-            line-height: 1.4;
-            padding: 2mm 1mm;
-            margin: 0 auto;
-            color: #000;
-          }
-          .header { text-align: center; margin-bottom: 2mm; }
-          .logo { font-size: 18px; font-weight: 800; color: #000; }
-          .title { font-size: 14px; font-weight: 700; margin-top: 1.5mm; color: #000; }
-          .divider { border-bottom: 1px dashed #000; margin: 2.5mm 0; }
-          .row { display: flex; justify-content: space-between; align-items: baseline; gap: 2mm; margin: 1.6mm 0; font-size: 13px; color: #000; }
-          .label { font-weight: 700; color: #000; white-space: nowrap; }
-          .value { font-weight: 700; color: #000; text-align: right; word-break: break-word; }
-          .footer { text-align: center; margin-top: 2.5mm; padding-top: 2.5mm; border-top: 1px dashed #000; font-size: 11px; color: #000; white-space: pre-line; line-height: 1.5; font-weight: 700; }
-          .footer-thanks { font-size: 13px; font-weight: 800; color: #000; margin-bottom: 1mm; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <div class="logo">${parkingName}</div>
-          <div class="title">${labels.title}</div>
-        </div>
-        <div class="divider"></div>
-        <div class="row">
-          <span class="label">${labels.plate}:</span>
-          <span class="value">${data.veh_plate}</span>
-        </div>
-        <div class="row">
-          <span class="label">${labels.owner}:</span>
-          <span class="value">${data.veh_owner || 'N/A'}</span>
-        </div>
-        <div class="row">
-          <span class="label">${labels.entryDate}:</span>
-          <span class="value">${new Date(data.veh_ingress_date).toLocaleDateString('es-CR')}</span>
-        </div>
-        <div class="row">
-          <span class="label">${labels.entryTime}:</span>
-          <span class="value">${new Date(data.veh_ingress_date).toLocaleTimeString('es-CR')}</span>
-        </div>
-        <div class="row">
-          <span class="label">${labels.rate}:</span>
-          <span class="value">${data.veh_tax ? parseFloat(data.veh_tax).toLocaleString('es-CR', { style: 'currency', currency: 'CRC' }) : 'N/A'}</span>
-        </div>
-        <div class="row">
-          <span class="label">${labels.reference}:</span>
-          <span class="value">${data.veh_reference}</span>
-        </div>
-        <div class="divider"></div>
-        <div class="row">
-          <span class="label">${labels.exitTime}:</span>
-          <span class="value">${labels.exitTimeValue}</span>
-        </div>
-        <div class="footer">
-          <div class="footer-thanks">${labels.thankYou}</div>
-          <div>${labels.keepReceipt}</div>
-          ${footerLines ? `<div style="margin-top:8px">${footerLines.replace(/\n/g, '<br/>')}</div>` : ''}
-        </div>
-        <script>
-          window.onload = function() {
-            window.print();
-          }
-        </script>
-      </body>
-      </html>
-    `;
-
-    const blob = new Blob([content], { type: 'text/html;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const printWindow = window.open(url, '_blank', 'width=220,height=600');
-    if (printWindow) {
-      printWindow.addEventListener('beforeunload', () => URL.revokeObjectURL(url));
-    }
-  }
-
-  function printVehicleReceipt(vehicle: Vehicle) {
-    printReceipt({
-      veh_plate: vehicle.veh_plate,
-      veh_reference: vehicle.veh_reference,
-      veh_owner: vehicle.veh_owner || '',
-      veh_ingress_date: vehicle.veh_ingress_date,
-      veh_tax: vehicle.veh_tax,
-      veh_version: vehicle.veh_version,
+  function printVehicleReceipt(
+    vehicle: Pick<
+      Vehicle,
+      'veh_plate' | 'veh_reference' | 'veh_owner' | 'veh_ingress_date' | 'veh_tax'
+    >
+  ) {
+    void printEntryReceipt({
+      plate: vehicle.veh_plate,
+      owner: vehicle.veh_owner,
+      reference: vehicle.veh_reference,
+      ingressDate: vehicle.veh_ingress_date,
+      tax: vehicle.veh_tax,
     });
   }
 
-  function printExitReceipt(data: { vehicle: Vehicle; total: string; egressDate: string }) {
-    const lang = localStorage.getItem('app-language') || 'es';
-    const isEnglish = lang === 'en';
-    const { vehicle, total, egressDate } = data;
-
-    const labels = {
-      title: isEnglish ? 'Exit Receipt' : 'Recibo de Salida',
-      plate: isEnglish ? 'Plate' : 'Placa',
-      owner: isEnglish ? 'Owner' : 'Propietario',
-      entryTime: isEnglish ? 'Entry Time' : 'Hora Ingreso',
-      exitTime: isEnglish ? 'Exit Time' : 'Hora de Salida',
-      reference: isEnglish ? 'Reference' : 'Referencia',
-      amountPaid: isEnglish ? 'Amount Paid' : 'Monto Pagado',
-      thankYou: isEnglish ? 'Thank you for your visit!' : '¡Gracias por su visita!',
-      keepReceipt: isEnglish ? 'Keep this receipt' : 'Conserve este recibo',
-    };
-
-    const parkingName = parkingInfo.name || 'ParkEase';
-    const footerLines = [
-      parkingName,
-      parkingInfo.address,
-      parkingInfo.phone ? `Tel: ${parkingInfo.phone}` : '',
-      parkingInfo.email,
-    ]
-      .filter(Boolean)
-      .join('\n');
-
-    const amount = parseFloat(total);
-    const formattedAmount = Number.isFinite(amount)
-      ? amount.toLocaleString('es-CR', { style: 'currency', currency: 'CRC' })
-      : total;
-
-    const content = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>${labels.title}</title>
-        <style>
-          @page { size: 58mm auto; margin: 0; }
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          html, body { width: 48mm; }
-          body {
-            font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif;
-            font-weight: 700;
-            font-size: 12px;
-            line-height: 1.4;
-            padding: 2mm 1mm;
-            margin: 0 auto;
-            color: #000;
-          }
-          .header { text-align: center; margin-bottom: 2mm; }
-          .logo { font-size: 18px; font-weight: 800; color: #000; }
-          .title { font-size: 14px; font-weight: 700; margin-top: 1.5mm; color: #000; }
-          .divider { border-bottom: 1px dashed #000; margin: 2.5mm 0; }
-          .row { display: flex; justify-content: space-between; align-items: baseline; gap: 2mm; margin: 1.6mm 0; font-size: 13px; color: #000; }
-          .label { font-weight: 700; color: #000; white-space: nowrap; }
-          .value { font-weight: 700; color: #000; text-align: right; word-break: break-word; }
-          .total-row { font-size: 16px; }
-          .footer { text-align: center; margin-top: 2.5mm; padding-top: 2.5mm; border-top: 1px dashed #000; font-size: 11px; color: #000; white-space: pre-line; line-height: 1.5; font-weight: 700; }
-          .footer-thanks { font-size: 13px; font-weight: 800; color: #000; margin-bottom: 1mm; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <div class="logo">${parkingName}</div>
-          <div class="title">${labels.title}</div>
-        </div>
-        <div class="divider"></div>
-        <div class="row">
-          <span class="label">${labels.plate}:</span>
-          <span class="value">${vehicle.veh_plate}</span>
-        </div>
-        <div class="row">
-          <span class="label">${labels.owner}:</span>
-          <span class="value">${vehicle.veh_owner || 'N/A'}</span>
-        </div>
-        <div class="row">
-          <span class="label">${labels.reference}:</span>
-          <span class="value">${vehicle.veh_reference}</span>
-        </div>
-        <div class="row">
-          <span class="label">${labels.entryTime}:</span>
-          <span class="value">${new Date(vehicle.veh_ingress_date).toLocaleString('es-CR')}</span>
-        </div>
-        <div class="row">
-          <span class="label">${labels.exitTime}:</span>
-          <span class="value">${new Date(egressDate).toLocaleString('es-CR')}</span>
-        </div>
-        <div class="divider"></div>
-        <div class="row total-row">
-          <span class="label">${labels.amountPaid}:</span>
-          <span class="value">${formattedAmount}</span>
-        </div>
-        <div class="footer">
-          <div class="footer-thanks">${labels.thankYou}</div>
-          <div>${labels.keepReceipt}</div>
-          ${footerLines ? `<div style="margin-top:8px">${footerLines.replace(/\n/g, '<br/>')}</div>` : ''}
-        </div>
-        <script>
-          window.onload = function() {
-            window.print();
-          }
-        </script>
-      </body>
-      </html>
-    `;
-
-    const blob = new Blob([content], { type: 'text/html;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const printWindow = window.open(url, '_blank', 'width=220,height=600');
-    if (printWindow) {
-      printWindow.addEventListener('beforeunload', () => URL.revokeObjectURL(url));
-    }
+  function printExitTicket(data: { vehicle: Vehicle; total: string; egressDate: string }) {
+    void printExitReceipt({
+      plate: data.vehicle.veh_plate,
+      owner: data.vehicle.veh_owner,
+      reference: data.vehicle.veh_reference,
+      ingressDate: data.vehicle.veh_ingress_date,
+      egressDate: data.egressDate,
+      total: data.total,
+    });
   }
 
   async function handleCheckout(id: number) {
@@ -915,7 +672,7 @@ export function VehiclesTable({
         open={exitReceipt !== null}
         onClose={() => setExitReceipt(null)}
         onConfirm={() => {
-          if (exitReceipt) printExitReceipt(exitReceipt);
+          if (exitReceipt) printExitTicket(exitReceipt);
         }}
         title={t('vehicles.printReceiptTitle')}
         message={t('vehicles.printReceiptQuestion')}
