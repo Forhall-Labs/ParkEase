@@ -97,6 +97,7 @@ export const translations = {
       phone: 'Tel:',
       thankYou: '¡Gracias por su visita!',
       keepReceipt: 'Conserve este recibo',
+      printFailed: 'No se pudo imprimir el tiquete',
     },
     validation: {
       plateRequired: 'La placa es requerida',
@@ -371,6 +372,7 @@ export const translations = {
       phone: 'Tel:',
       thankYou: 'Thank you for your visit!',
       keepReceipt: 'Keep this receipt',
+      printFailed: 'Could not print the receipt',
     },
     validation: {
       plateRequired: 'Plate is required',
