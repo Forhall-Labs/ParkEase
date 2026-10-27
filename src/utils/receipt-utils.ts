@@ -7,6 +7,11 @@ export interface ReceiptLine {
   emphasis?: boolean;
 }
 
+export interface PrintOutcome {
+  success: boolean;
+  message?: string;
+}
+
 export interface ReceiptContent {
   parkingName: string;
   title: string;
@@ -84,23 +89,30 @@ ${autoPrint ? '  <script>window.onload = function () { window.print(); };</scrip
 
 /**
  * Imprime por el proceso principal (tamaño real, sin diálogo, como el Java).
- * Si eso falla —por ejemplo sin impresora predeterminada— abre la ventana con
- * el diálogo del sistema para no dejar al usuario sin tiquete.
+ * Si eso falla —por ejemplo sin impresoras instaladas— abre la ventana con el
+ * diálogo del sistema y devuelve el motivo, que la vista muestra al usuario:
+ * una impresión que falla en silencio parece que el botón no hace nada.
  */
-export async function printReceipt(content: ReceiptContent): Promise<void> {
+export async function printReceipt(content: ReceiptContent): Promise<PrintOutcome> {
+  let reason = 'La impresión directa no está disponible.';
+
   try {
     const result = await window.electronAPI?.receipts?.print(buildReceiptHtml(content));
 
     if (result?.success) {
-      return;
+      return { success: true, message: result.message };
     }
 
-    console.error('Impresión directa fallida:', result?.message);
+    if (result?.message) {
+      reason = result.message;
+    }
   } catch (error) {
-    console.error('Impresión directa fallida:', error);
+    reason = error instanceof Error ? error.message : String(error);
   }
 
   openPrintWindow(buildReceiptHtml(content, true));
+
+  return { success: false, message: `${t('receipt.printFailed')}: ${reason}` };
 }
 
 function openPrintWindow(html: string): void {
@@ -201,11 +213,11 @@ export function buildExitReceipt(data: ExitReceiptData, parking: ParkingInfo): R
   };
 }
 
-export function printEntryReceipt(data: EntryReceiptData): Promise<void> {
+export function printEntryReceipt(data: EntryReceiptData): Promise<PrintOutcome> {
   return getParkingInfo().then((parking) => printReceipt(buildEntryReceipt(data, parking)));
 }
 
-export function printExitReceipt(data: ExitReceiptData): Promise<void> {
+export function printExitReceipt(data: ExitReceiptData): Promise<PrintOutcome> {
   return getParkingInfo().then((parking) => printReceipt(buildExitReceipt(data, parking)));
 }
 

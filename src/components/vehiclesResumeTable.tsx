@@ -6,7 +6,7 @@ import { ConfirmModal, ModalShell } from './UI/Modal';
 import { Button, Card, Input, SectionHeader } from './primitives';
 import { autoFormatPlate, validatePlate, type PlateValidationResult } from '../utils/plate-utils';
 import { calculateFeeBreakdown, type FeeBreakdown } from '../utils/fee-utils';
-import { printEntryReceipt, printExitReceipt } from '../utils/receipt-utils';
+import { printEntryReceipt, printExitReceipt, type PrintOutcome } from '../utils/receipt-utils';
 
 interface VehiclesTableProps {
   theme?: 'dark' | 'light';
@@ -175,7 +175,7 @@ export function VehiclesTable({
       reference: vehicle.veh_reference,
       ingressDate: vehicle.veh_ingress_date,
       tax: vehicle.veh_tax,
-    });
+    }).then(reportPrintOutcome);
   }
 
   function printExitTicket(data: { vehicle: Vehicle; total: string; egressDate: string }) {
@@ -186,7 +186,13 @@ export function VehiclesTable({
       ingressDate: data.vehicle.veh_ingress_date,
       egressDate: data.egressDate,
       total: data.total,
-    });
+    }).then(reportPrintOutcome);
+  }
+
+  function reportPrintOutcome(outcome: PrintOutcome) {
+    if (!outcome.success && outcome.message) {
+      setError(outcome.message);
+    }
   }
 
   async function handleCheckout(id: number) {

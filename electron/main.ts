@@ -1,7 +1,7 @@
 import { app, BrowserWindow, screen } from 'electron';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
-import { appendFileSync, existsSync, mkdirSync } from 'fs';
+import { existsSync } from 'fs';
 import { initDatabase } from './database/db.js';
 import { registerUserHandlers } from './handlers/user.handler.js';
 import { registerVehicleHandlers } from './handlers/vehicle.handler.js';
@@ -9,20 +9,10 @@ import { registerParameterHandlers } from './handlers/parameter.handler.js';
 import { registerSessionHandlers } from './handlers/session.handler.js';
 import { registerSettingHandlers } from './handlers/setting.handler.js';
 import { registerReceiptHandlers } from './handlers/receipt.handler.js';
+import { writeRuntimeLog } from './utils/runtime-log.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-
-function writeRuntimeLog(message: string): void {
-  try {
-    const logDir = app.getPath('userData');
-    mkdirSync(logDir, { recursive: true });
-    const logPath = join(logDir, 'runtime.log');
-    appendFileSync(logPath, `[${new Date().toISOString()}] ${message}\n`, 'utf8');
-  } catch {
-    // Do not crash the app if logging fails
-  }
-}
 
 // ─── Ventana principal ────────────────────────────────────────────────────────
 

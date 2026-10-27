@@ -1,37 +1,38 @@
 import { BrowserWindow as e, app as t, ipcMain as n, screen as r } from "electron";
 import { dirname as i, join as a } from "path";
 import { fileURLToPath as o } from "url";
-import { appendFileSync as s, existsSync as c, mkdirSync as l } from "fs";
-import u from "better-sqlite3";
-import d from "crypto";
+import { appendFileSync as s, existsSync as c, mkdirSync as l, mkdtempSync as u, rmSync as d, writeFileSync as f } from "fs";
+import p from "better-sqlite3";
+import ee from "crypto";
+import { tmpdir as te } from "os";
 //#region node_modules/bcryptjs/index.js
-var f = null;
-function p(e) {
+var m = null;
+function ne(e) {
 	try {
 		return crypto.getRandomValues(new Uint8Array(e));
 	} catch {}
 	try {
-		return d.randomBytes(e);
+		return ee.randomBytes(e);
 	} catch {}
-	if (!f) throw Error("Neither WebCryptoAPI nor a crypto module is available. Use bcrypt.setRandomFallback to set an alternative");
-	return f(e);
+	if (!m) throw Error("Neither WebCryptoAPI nor a crypto module is available. Use bcrypt.setRandomFallback to set an alternative");
+	return m(e);
 }
-function ee(e) {
-	f = e;
+function re(e) {
+	m = e;
 }
-function m(e, t) {
-	if (e ||= E, typeof e != "number") throw Error("Illegal arguments: " + typeof e + ", " + typeof t);
+function h(e, t) {
+	if (e ||= D, typeof e != "number") throw Error("Illegal arguments: " + typeof e + ", " + typeof t);
 	e < 4 ? e = 4 : e > 31 && (e = 31);
 	var n = [];
-	return n.push("$2b$"), e < 10 && n.push("0"), n.push(e.toString()), n.push("$"), n.push(C(p(T), T)), n.join("");
+	return n.push("$2b$"), e < 10 && n.push("0"), n.push(e.toString()), n.push("$"), n.push(w(ne(E), E)), n.join("");
 }
-function h(e, t, n) {
-	if (typeof t == "function" && (n = t, t = void 0), typeof e == "function" && (n = e, e = void 0), e === void 0) e = E;
+function g(e, t, n) {
+	if (typeof t == "function" && (n = t, t = void 0), typeof e == "function" && (n = e, e = void 0), e === void 0) e = D;
 	else if (typeof e != "number") throw Error("illegal arguments: " + typeof e);
 	function r(t) {
-		y(function() {
+		b(function() {
 			try {
-				t(null, m(e));
+				t(null, h(e));
 			} catch (e) {
 				t(e);
 			}
@@ -50,15 +51,15 @@ function h(e, t, n) {
 		});
 	});
 }
-function g(e, t) {
-	if (t === void 0 && (t = E), typeof t == "number" && (t = m(t)), typeof e != "string" || typeof t != "string") throw Error("Illegal arguments: " + typeof e + ", " + typeof t);
-	return M(e, t);
+function _(e, t) {
+	if (t === void 0 && (t = D), typeof t == "number" && (t = h(t)), typeof e != "string" || typeof t != "string") throw Error("Illegal arguments: " + typeof e + ", " + typeof t);
+	return N(e, t);
 }
-function _(e, t, n, r) {
+function v(e, t, n, r) {
 	function i(n) {
-		typeof e == "string" && typeof t == "number" ? h(t, function(t, i) {
-			M(e, i, n, r);
-		}) : typeof e == "string" && typeof t == "string" ? M(e, t, n, r) : y(n.bind(this, Error("Illegal arguments: " + typeof e + ", " + typeof t)));
+		typeof e == "string" && typeof t == "number" ? g(t, function(t, i) {
+			N(e, i, n, r);
+		}) : typeof e == "string" && typeof t == "string" ? N(e, t, n, r) : b(n.bind(this, Error("Illegal arguments: " + typeof e + ", " + typeof t)));
 	}
 	if (n) {
 		if (typeof n != "function") throw Error("Illegal callback: " + typeof n);
@@ -73,26 +74,26 @@ function _(e, t, n, r) {
 		});
 	});
 }
-function v(e, t) {
+function y(e, t) {
 	for (var n = e.length ^ t.length, r = 0; r < e.length; ++r) n |= e.charCodeAt(r) ^ t.charCodeAt(r);
 	return n === 0;
 }
-function te(e, t) {
+function ie(e, t) {
 	if (typeof e != "string" || typeof t != "string") throw Error("Illegal arguments: " + typeof e + ", " + typeof t);
-	return t.length === 60 ? v(g(e, t.substring(0, t.length - 31)), t) : !1;
+	return t.length === 60 ? y(_(e, t.substring(0, t.length - 31)), t) : !1;
 }
-function ne(e, t, n, r) {
+function ae(e, t, n, r) {
 	function i(n) {
 		if (typeof e != "string" || typeof t != "string") {
-			y(n.bind(this, Error("Illegal arguments: " + typeof e + ", " + typeof t)));
+			b(n.bind(this, Error("Illegal arguments: " + typeof e + ", " + typeof t)));
 			return;
 		}
 		if (t.length !== 60) {
-			y(n.bind(this, null, !1));
+			b(n.bind(this, null, !1));
 			return;
 		}
-		_(e, t.substring(0, 29), function(e, r) {
-			e ? n(e) : n(null, v(r, t));
+		v(e, t.substring(0, 29), function(e, r) {
+			e ? n(e) : n(null, y(r, t));
 		}, r);
 	}
 	if (n) {
@@ -108,29 +109,29 @@ function ne(e, t, n, r) {
 		});
 	});
 }
-function re(e) {
+function oe(e) {
 	if (typeof e != "string") throw Error("Illegal arguments: " + typeof e);
 	return parseInt(e.split("$")[2], 10);
 }
-function ie(e) {
+function se(e) {
 	if (typeof e != "string") throw Error("Illegal arguments: " + typeof e);
 	if (e.length !== 60) throw Error("Illegal hash length: " + e.length + " != 60");
 	return e.substring(0, 29);
 }
-function ae(e) {
+function ce(e) {
 	if (typeof e != "string") throw Error("Illegal arguments: " + typeof e);
-	return b(e) > 72;
+	return x(e) > 72;
 }
-var y = typeof setImmediate == "function" ? setImmediate : typeof scheduler == "object" && typeof scheduler.postTask == "function" ? scheduler.postTask.bind(scheduler) : setTimeout;
-function b(e) {
+var b = typeof setImmediate == "function" ? setImmediate : typeof scheduler == "object" && typeof scheduler.postTask == "function" ? scheduler.postTask.bind(scheduler) : setTimeout;
+function x(e) {
 	for (var t = 0, n = 0, r = 0; r < e.length; ++r) n = e.charCodeAt(r), n < 128 ? t += 1 : n < 2048 ? t += 2 : (n & 64512) == 55296 && (e.charCodeAt(r + 1) & 64512) == 56320 ? (++r, t += 4) : t += 3;
 	return t;
 }
-function oe(e) {
-	for (var t = 0, n, r, i = Array(b(e)), a = 0, o = e.length; a < o; ++a) n = e.charCodeAt(a), n < 128 ? i[t++] = n : n < 2048 ? (i[t++] = n >> 6 | 192, i[t++] = n & 63 | 128) : (n & 64512) == 55296 && ((r = e.charCodeAt(a + 1)) & 64512) == 56320 ? (n = 65536 + ((n & 1023) << 10) + (r & 1023), ++a, i[t++] = n >> 18 | 240, i[t++] = n >> 12 & 63 | 128, i[t++] = n >> 6 & 63 | 128, i[t++] = n & 63 | 128) : (i[t++] = n >> 12 | 224, i[t++] = n >> 6 & 63 | 128, i[t++] = n & 63 | 128);
+function le(e) {
+	for (var t = 0, n, r, i = Array(x(e)), a = 0, o = e.length; a < o; ++a) n = e.charCodeAt(a), n < 128 ? i[t++] = n : n < 2048 ? (i[t++] = n >> 6 | 192, i[t++] = n & 63 | 128) : (n & 64512) == 55296 && ((r = e.charCodeAt(a + 1)) & 64512) == 56320 ? (n = 65536 + ((n & 1023) << 10) + (r & 1023), ++a, i[t++] = n >> 18 | 240, i[t++] = n >> 12 & 63 | 128, i[t++] = n >> 6 & 63 | 128, i[t++] = n & 63 | 128) : (i[t++] = n >> 12 | 224, i[t++] = n >> 6 & 63 | 128, i[t++] = n & 63 | 128);
 	return i;
 }
-var x = "./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".split(""), S = [
+var S = "./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".split(""), C = [
 	-1,
 	-1,
 	-1,
@@ -260,31 +261,31 @@ var x = "./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".split
 	-1,
 	-1
 ];
-function C(e, t) {
+function w(e, t) {
 	var n = 0, r = [], i, a;
 	if (t <= 0 || t > e.length) throw Error("Illegal len: " + t);
 	for (; n < t;) {
-		if (i = e[n++] & 255, r.push(x[i >> 2 & 63]), i = (i & 3) << 4, n >= t) {
-			r.push(x[i & 63]);
+		if (i = e[n++] & 255, r.push(S[i >> 2 & 63]), i = (i & 3) << 4, n >= t) {
+			r.push(S[i & 63]);
 			break;
 		}
-		if (a = e[n++] & 255, i |= a >> 4 & 15, r.push(x[i & 63]), i = (a & 15) << 2, n >= t) {
-			r.push(x[i & 63]);
+		if (a = e[n++] & 255, i |= a >> 4 & 15, r.push(S[i & 63]), i = (a & 15) << 2, n >= t) {
+			r.push(S[i & 63]);
 			break;
 		}
-		a = e[n++] & 255, i |= a >> 6 & 3, r.push(x[i & 63]), r.push(x[a & 63]);
+		a = e[n++] & 255, i |= a >> 6 & 3, r.push(S[i & 63]), r.push(S[a & 63]);
 	}
 	return r.join("");
 }
-function w(e, t) {
+function T(e, t) {
 	var n = 0, r = e.length, i = 0, a = [], o, s, c, l, u, d;
 	if (t <= 0) throw Error("Illegal len: " + t);
-	for (; n < r - 1 && i < t && (d = e.charCodeAt(n++), o = d < S.length ? S[d] : -1, d = e.charCodeAt(n++), s = d < S.length ? S[d] : -1, !(o == -1 || s == -1 || (u = o << 2 >>> 0, u |= (s & 48) >> 4, a.push(String.fromCharCode(u)), ++i >= t || n >= r) || (d = e.charCodeAt(n++), c = d < S.length ? S[d] : -1, c == -1) || (u = (s & 15) << 4 >>> 0, u |= (c & 60) >> 2, a.push(String.fromCharCode(u)), ++i >= t || n >= r)));) d = e.charCodeAt(n++), l = d < S.length ? S[d] : -1, u = (c & 3) << 6 >>> 0, u |= l, a.push(String.fromCharCode(u)), ++i;
+	for (; n < r - 1 && i < t && (d = e.charCodeAt(n++), o = d < C.length ? C[d] : -1, d = e.charCodeAt(n++), s = d < C.length ? C[d] : -1, !(o == -1 || s == -1 || (u = o << 2 >>> 0, u |= (s & 48) >> 4, a.push(String.fromCharCode(u)), ++i >= t || n >= r) || (d = e.charCodeAt(n++), c = d < C.length ? C[d] : -1, c == -1) || (u = (s & 15) << 4 >>> 0, u |= (c & 60) >> 2, a.push(String.fromCharCode(u)), ++i >= t || n >= r)));) d = e.charCodeAt(n++), l = d < C.length ? C[d] : -1, u = (c & 3) << 6 >>> 0, u |= l, a.push(String.fromCharCode(u)), ++i;
 	var f = [];
 	for (n = 0; n < i; n++) f.push(a[n].charCodeAt(0));
 	return f;
 }
-var T = 16, E = 10, se = 16, ce = 100, D = [
+var E = 16, D = 10, ue = 16, de = 100, fe = [
 	608135816,
 	2242054355,
 	320440878,
@@ -303,7 +304,7 @@ var T = 16, E = 10, se = 16, ce = 100, D = [
 	3041331479,
 	2450970073,
 	2306472731
-], le = [
+], pe = [
 	3509652390,
 	2564797868,
 	805139163,
@@ -1328,7 +1329,7 @@ var T = 16, E = 10, se = 16, ce = 100, D = [
 	3463963227,
 	1469046755,
 	985887462
-], ue = [
+], O = [
 	1332899944,
 	1700884034,
 	1701343084,
@@ -1336,44 +1337,44 @@ var T = 16, E = 10, se = 16, ce = 100, D = [
 	1668446532,
 	1869963892
 ];
-function O(e, t, n, r) {
+function k(e, t, n, r) {
 	var i, a = e[t], o = e[t + 1];
-	return a ^= n[0], i = r[a >>> 24], i += r[256 | a >> 16 & 255], i ^= r[512 | a >> 8 & 255], i += r[768 | a & 255], o ^= i ^ n[1], i = r[o >>> 24], i += r[256 | o >> 16 & 255], i ^= r[512 | o >> 8 & 255], i += r[768 | o & 255], a ^= i ^ n[2], i = r[a >>> 24], i += r[256 | a >> 16 & 255], i ^= r[512 | a >> 8 & 255], i += r[768 | a & 255], o ^= i ^ n[3], i = r[o >>> 24], i += r[256 | o >> 16 & 255], i ^= r[512 | o >> 8 & 255], i += r[768 | o & 255], a ^= i ^ n[4], i = r[a >>> 24], i += r[256 | a >> 16 & 255], i ^= r[512 | a >> 8 & 255], i += r[768 | a & 255], o ^= i ^ n[5], i = r[o >>> 24], i += r[256 | o >> 16 & 255], i ^= r[512 | o >> 8 & 255], i += r[768 | o & 255], a ^= i ^ n[6], i = r[a >>> 24], i += r[256 | a >> 16 & 255], i ^= r[512 | a >> 8 & 255], i += r[768 | a & 255], o ^= i ^ n[7], i = r[o >>> 24], i += r[256 | o >> 16 & 255], i ^= r[512 | o >> 8 & 255], i += r[768 | o & 255], a ^= i ^ n[8], i = r[a >>> 24], i += r[256 | a >> 16 & 255], i ^= r[512 | a >> 8 & 255], i += r[768 | a & 255], o ^= i ^ n[9], i = r[o >>> 24], i += r[256 | o >> 16 & 255], i ^= r[512 | o >> 8 & 255], i += r[768 | o & 255], a ^= i ^ n[10], i = r[a >>> 24], i += r[256 | a >> 16 & 255], i ^= r[512 | a >> 8 & 255], i += r[768 | a & 255], o ^= i ^ n[11], i = r[o >>> 24], i += r[256 | o >> 16 & 255], i ^= r[512 | o >> 8 & 255], i += r[768 | o & 255], a ^= i ^ n[12], i = r[a >>> 24], i += r[256 | a >> 16 & 255], i ^= r[512 | a >> 8 & 255], i += r[768 | a & 255], o ^= i ^ n[13], i = r[o >>> 24], i += r[256 | o >> 16 & 255], i ^= r[512 | o >> 8 & 255], i += r[768 | o & 255], a ^= i ^ n[14], i = r[a >>> 24], i += r[256 | a >> 16 & 255], i ^= r[512 | a >> 8 & 255], i += r[768 | a & 255], o ^= i ^ n[15], i = r[o >>> 24], i += r[256 | o >> 16 & 255], i ^= r[512 | o >> 8 & 255], i += r[768 | o & 255], a ^= i ^ n[16], e[t] = o ^ n[se + 1], e[t + 1] = a, e;
+	return a ^= n[0], i = r[a >>> 24], i += r[256 | a >> 16 & 255], i ^= r[512 | a >> 8 & 255], i += r[768 | a & 255], o ^= i ^ n[1], i = r[o >>> 24], i += r[256 | o >> 16 & 255], i ^= r[512 | o >> 8 & 255], i += r[768 | o & 255], a ^= i ^ n[2], i = r[a >>> 24], i += r[256 | a >> 16 & 255], i ^= r[512 | a >> 8 & 255], i += r[768 | a & 255], o ^= i ^ n[3], i = r[o >>> 24], i += r[256 | o >> 16 & 255], i ^= r[512 | o >> 8 & 255], i += r[768 | o & 255], a ^= i ^ n[4], i = r[a >>> 24], i += r[256 | a >> 16 & 255], i ^= r[512 | a >> 8 & 255], i += r[768 | a & 255], o ^= i ^ n[5], i = r[o >>> 24], i += r[256 | o >> 16 & 255], i ^= r[512 | o >> 8 & 255], i += r[768 | o & 255], a ^= i ^ n[6], i = r[a >>> 24], i += r[256 | a >> 16 & 255], i ^= r[512 | a >> 8 & 255], i += r[768 | a & 255], o ^= i ^ n[7], i = r[o >>> 24], i += r[256 | o >> 16 & 255], i ^= r[512 | o >> 8 & 255], i += r[768 | o & 255], a ^= i ^ n[8], i = r[a >>> 24], i += r[256 | a >> 16 & 255], i ^= r[512 | a >> 8 & 255], i += r[768 | a & 255], o ^= i ^ n[9], i = r[o >>> 24], i += r[256 | o >> 16 & 255], i ^= r[512 | o >> 8 & 255], i += r[768 | o & 255], a ^= i ^ n[10], i = r[a >>> 24], i += r[256 | a >> 16 & 255], i ^= r[512 | a >> 8 & 255], i += r[768 | a & 255], o ^= i ^ n[11], i = r[o >>> 24], i += r[256 | o >> 16 & 255], i ^= r[512 | o >> 8 & 255], i += r[768 | o & 255], a ^= i ^ n[12], i = r[a >>> 24], i += r[256 | a >> 16 & 255], i ^= r[512 | a >> 8 & 255], i += r[768 | a & 255], o ^= i ^ n[13], i = r[o >>> 24], i += r[256 | o >> 16 & 255], i ^= r[512 | o >> 8 & 255], i += r[768 | o & 255], a ^= i ^ n[14], i = r[a >>> 24], i += r[256 | a >> 16 & 255], i ^= r[512 | a >> 8 & 255], i += r[768 | a & 255], o ^= i ^ n[15], i = r[o >>> 24], i += r[256 | o >> 16 & 255], i ^= r[512 | o >> 8 & 255], i += r[768 | o & 255], a ^= i ^ n[16], e[t] = o ^ n[ue + 1], e[t + 1] = a, e;
 }
-function k(e, t) {
+function A(e, t) {
 	for (var n = 0, r = 0; n < 4; ++n) r = r << 8 | e[t] & 255, t = (t + 1) % e.length;
 	return {
 		key: r,
 		offp: t
 	};
 }
-function A(e, t, n) {
-	for (var r = 0, i = [0, 0], a = t.length, o = n.length, s, c = 0; c < a; c++) s = k(e, r), r = s.offp, t[c] = t[c] ^ s.key;
-	for (c = 0; c < a; c += 2) i = O(i, 0, t, n), t[c] = i[0], t[c + 1] = i[1];
-	for (c = 0; c < o; c += 2) i = O(i, 0, t, n), n[c] = i[0], n[c + 1] = i[1];
+function j(e, t, n) {
+	for (var r = 0, i = [0, 0], a = t.length, o = n.length, s, c = 0; c < a; c++) s = A(e, r), r = s.offp, t[c] = t[c] ^ s.key;
+	for (c = 0; c < a; c += 2) i = k(i, 0, t, n), t[c] = i[0], t[c + 1] = i[1];
+	for (c = 0; c < o; c += 2) i = k(i, 0, t, n), n[c] = i[0], n[c + 1] = i[1];
 }
-function de(e, t, n, r) {
-	for (var i = 0, a = [0, 0], o = n.length, s = r.length, c, l = 0; l < o; l++) c = k(t, i), i = c.offp, n[l] = n[l] ^ c.key;
-	for (i = 0, l = 0; l < o; l += 2) c = k(e, i), i = c.offp, a[0] ^= c.key, c = k(e, i), i = c.offp, a[1] ^= c.key, a = O(a, 0, n, r), n[l] = a[0], n[l + 1] = a[1];
-	for (l = 0; l < s; l += 2) c = k(e, i), i = c.offp, a[0] ^= c.key, c = k(e, i), i = c.offp, a[1] ^= c.key, a = O(a, 0, n, r), r[l] = a[0], r[l + 1] = a[1];
+function me(e, t, n, r) {
+	for (var i = 0, a = [0, 0], o = n.length, s = r.length, c, l = 0; l < o; l++) c = A(t, i), i = c.offp, n[l] = n[l] ^ c.key;
+	for (i = 0, l = 0; l < o; l += 2) c = A(e, i), i = c.offp, a[0] ^= c.key, c = A(e, i), i = c.offp, a[1] ^= c.key, a = k(a, 0, n, r), n[l] = a[0], n[l + 1] = a[1];
+	for (l = 0; l < s; l += 2) c = A(e, i), i = c.offp, a[0] ^= c.key, c = A(e, i), i = c.offp, a[1] ^= c.key, a = k(a, 0, n, r), r[l] = a[0], r[l + 1] = a[1];
 }
-function j(e, t, n, r, i) {
-	var a = ue.slice(), o = a.length, s;
+function M(e, t, n, r, i) {
+	var a = O.slice(), o = a.length, s;
 	if (n < 4 || n > 31) if (s = Error("Illegal number of rounds (4-31): " + n), r) {
-		y(r.bind(this, s));
+		b(r.bind(this, s));
 		return;
 	} else throw s;
-	if (t.length !== T) if (s = Error("Illegal salt length: " + t.length + " != " + T), r) {
-		y(r.bind(this, s));
+	if (t.length !== E) if (s = Error("Illegal salt length: " + t.length + " != " + E), r) {
+		b(r.bind(this, s));
 		return;
 	} else throw s;
 	n = 1 << n >>> 0;
 	var c, l, u = 0, d;
-	typeof Int32Array == "function" ? (c = new Int32Array(D), l = new Int32Array(le)) : (c = D.slice(), l = le.slice()), de(t, e, c, l);
+	typeof Int32Array == "function" ? (c = new Int32Array(fe), l = new Int32Array(pe)) : (c = fe.slice(), l = pe.slice()), me(t, e, c, l);
 	function f() {
-		if (i && i(u / n), u < n) for (var s = Date.now(); u < n && (u += 1, A(e, c, l), A(t, c, l), !(Date.now() - s > ce)););
+		if (i && i(u / n), u < n) for (var s = Date.now(); u < n && (u += 1, j(e, c, l), j(t, c, l), !(Date.now() - s > de)););
 		else {
-			for (u = 0; u < 64; u++) for (d = 0; d < o >> 1; d++) O(a, d << 1, c, l);
+			for (u = 0; u < 64; u++) for (d = 0; d < o >> 1; d++) k(a, d << 1, c, l);
 			var p = [];
 			for (u = 0; u < o; u++) p.push((a[u] >> 24 & 255) >>> 0), p.push((a[u] >> 16 & 255) >>> 0), p.push((a[u] >> 8 & 255) >>> 0), p.push((a[u] & 255) >>> 0);
 			if (r) {
@@ -1381,138 +1382,138 @@ function j(e, t, n, r, i) {
 				return;
 			} else return p;
 		}
-		r && y(f);
+		r && b(f);
 	}
 	if (r !== void 0) f();
 	else for (var p;;) if ((p = f()) !== void 0) return p || [];
 }
-function M(e, t, n, r) {
+function N(e, t, n, r) {
 	var i;
 	if (typeof e != "string" || typeof t != "string") if (i = Error("Invalid string / salt: Not a string"), n) {
-		y(n.bind(this, i));
+		b(n.bind(this, i));
 		return;
 	} else throw i;
 	var a, o;
 	if (t.charAt(0) !== "$" || t.charAt(1) !== "2") if (i = Error("Invalid salt version: " + t.substring(0, 2)), n) {
-		y(n.bind(this, i));
+		b(n.bind(this, i));
 		return;
 	} else throw i;
 	if (t.charAt(2) === "$") a = "\0", o = 3;
 	else {
 		if (a = t.charAt(2), a !== "a" && a !== "b" && a !== "y" || t.charAt(3) !== "$") if (i = Error("Invalid salt revision: " + t.substring(2, 4)), n) {
-			y(n.bind(this, i));
+			b(n.bind(this, i));
 			return;
 		} else throw i;
 		o = 4;
 	}
 	if (t.charAt(o + 2) > "$") if (i = Error("Missing salt rounds"), n) {
-		y(n.bind(this, i));
+		b(n.bind(this, i));
 		return;
 	} else throw i;
 	var s = parseInt(t.substring(o, o + 1), 10) * 10 + parseInt(t.substring(o + 1, o + 2), 10), c = t.substring(o + 3, o + 25);
 	e += a >= "a" ? "\0" : "";
-	var l = oe(e), u = w(c, T);
+	var l = le(e), u = T(c, E);
 	function d(e) {
 		var t = [];
-		return t.push("$2"), a >= "a" && t.push(a), t.push("$"), s < 10 && t.push("0"), t.push(s.toString()), t.push("$"), t.push(C(u, u.length)), t.push(C(e, ue.length * 4 - 1)), t.join("");
+		return t.push("$2"), a >= "a" && t.push(a), t.push("$"), s < 10 && t.push("0"), t.push(s.toString()), t.push("$"), t.push(w(u, u.length)), t.push(w(e, O.length * 4 - 1)), t.join("");
 	}
-	if (n === void 0) return d(j(l, u, s));
-	j(l, u, s, function(e, t) {
+	if (n === void 0) return d(M(l, u, s));
+	M(l, u, s, function(e, t) {
 		e ? n(e, null) : n(null, d(t));
 	}, r);
 }
-function fe(e, t) {
-	return C(e, t);
-}
-function pe(e, t) {
+function he(e, t) {
 	return w(e, t);
 }
-var N = {
-	setRandomFallback: ee,
-	genSaltSync: m,
-	genSalt: h,
-	hashSync: g,
-	hash: _,
-	compareSync: te,
-	compare: ne,
-	getRounds: re,
-	getSalt: ie,
-	truncates: ae,
-	encodeBase64: fe,
-	decodeBase64: pe
-}, P;
-function F() {
-	if (!P) throw Error("The database has not been initialized. Call initDatabase() first.");
-	return P;
+function ge(e, t) {
+	return T(e, t);
 }
-function me() {
-	P = new u(a(t.getPath("userData"), "psm.db")), P.pragma("journal_mode = WAL"), P.pragma("foreign_keys = ON"), he();
+var P = {
+	setRandomFallback: re,
+	genSaltSync: h,
+	genSalt: g,
+	hashSync: _,
+	hash: v,
+	compareSync: ie,
+	compare: ae,
+	getRounds: oe,
+	getSalt: se,
+	truncates: ce,
+	encodeBase64: he,
+	decodeBase64: ge
+}, F;
+function I() {
+	if (!F) throw Error("The database has not been initialized. Call initDatabase() first.");
+	return F;
 }
-function he() {
-	P.exec("\n    CREATE TABLE IF NOT EXISTS psm_migrations (\n      id         INTEGER PRIMARY KEY AUTOINCREMENT,\n      name       TEXT    NOT NULL UNIQUE,\n      applied_at TEXT    NOT NULL DEFAULT (datetime('now'))\n    );\n  ");
+function _e() {
+	F = new p(a(t.getPath("userData"), "psm.db")), F.pragma("journal_mode = WAL"), F.pragma("foreign_keys = ON"), ve();
+}
+function ve() {
+	F.exec("\n    CREATE TABLE IF NOT EXISTS psm_migrations (\n      id         INTEGER PRIMARY KEY AUTOINCREMENT,\n      name       TEXT    NOT NULL UNIQUE,\n      applied_at TEXT    NOT NULL DEFAULT (datetime('now'))\n    );\n  ");
 	let e = {
-		"001_create_parameters": () => P.exec("\n      CREATE TABLE IF NOT EXISTS psm_parameters (\n        par_id       INTEGER PRIMARY KEY AUTOINCREMENT,\n        par_quantity TEXT    NOT NULL,\n        par_tax      TEXT    NOT NULL,\n        version      INTEGER NOT NULL DEFAULT 1\n      );\n    "),
-		"002_create_vehicles": () => P.exec("\n      CREATE TABLE IF NOT EXISTS psm_vehicles (\n        veh_id           INTEGER PRIMARY KEY AUTOINCREMENT,\n        veh_owner        TEXT,\n        veh_reference    TEXT    NOT NULL UNIQUE,\n        veh_plate        TEXT    NOT NULL UNIQUE,\n        veh_ingress_date TEXT    NOT NULL,\n        veh_egress_date  TEXT,\n        veh_status       TEXT    NOT NULL DEFAULT 'P'\n                                 CHECK (veh_status IN ('P', 'S')),\n        veh_tax          TEXT    NOT NULL,\n        veh_version      INTEGER NOT NULL DEFAULT 1\n      );\n    "),
-		"003_create_users": () => P.exec("\n      CREATE TABLE IF NOT EXISTS psm_users (\n        user_id        INTEGER PRIMARY KEY AUTOINCREMENT,\n        user_name      TEXT    NOT NULL,\n        user_lastname  TEXT    NOT NULL,\n        user_username  TEXT    NOT NULL UNIQUE,\n        user_password  TEXT    NOT NULL,\n        user_email     TEXT    NOT NULL UNIQUE,\n        user_status    TEXT    NOT NULL DEFAULT 'A'\n                               CHECK (user_status IN ('A', 'I')),\n        user_version   INTEGER NOT NULL DEFAULT 1\n      );\n    "),
-		"004_create_settings": () => P.exec("\n      CREATE TABLE IF NOT EXISTS psm_settings (\n        set_id         INTEGER PRIMARY KEY AUTOINCREMENT,\n        set_key        TEXT    NOT NULL UNIQUE,\n        set_value      TEXT    NOT NULL,\n        version        INTEGER NOT NULL DEFAULT 1\n      );\n    "),
+		"001_create_parameters": () => F.exec("\n      CREATE TABLE IF NOT EXISTS psm_parameters (\n        par_id       INTEGER PRIMARY KEY AUTOINCREMENT,\n        par_quantity TEXT    NOT NULL,\n        par_tax      TEXT    NOT NULL,\n        version      INTEGER NOT NULL DEFAULT 1\n      );\n    "),
+		"002_create_vehicles": () => F.exec("\n      CREATE TABLE IF NOT EXISTS psm_vehicles (\n        veh_id           INTEGER PRIMARY KEY AUTOINCREMENT,\n        veh_owner        TEXT,\n        veh_reference    TEXT    NOT NULL UNIQUE,\n        veh_plate        TEXT    NOT NULL UNIQUE,\n        veh_ingress_date TEXT    NOT NULL,\n        veh_egress_date  TEXT,\n        veh_status       TEXT    NOT NULL DEFAULT 'P'\n                                 CHECK (veh_status IN ('P', 'S')),\n        veh_tax          TEXT    NOT NULL,\n        veh_version      INTEGER NOT NULL DEFAULT 1\n      );\n    "),
+		"003_create_users": () => F.exec("\n      CREATE TABLE IF NOT EXISTS psm_users (\n        user_id        INTEGER PRIMARY KEY AUTOINCREMENT,\n        user_name      TEXT    NOT NULL,\n        user_lastname  TEXT    NOT NULL,\n        user_username  TEXT    NOT NULL UNIQUE,\n        user_password  TEXT    NOT NULL,\n        user_email     TEXT    NOT NULL UNIQUE,\n        user_status    TEXT    NOT NULL DEFAULT 'A'\n                               CHECK (user_status IN ('A', 'I')),\n        user_version   INTEGER NOT NULL DEFAULT 1\n      );\n    "),
+		"004_create_settings": () => F.exec("\n      CREATE TABLE IF NOT EXISTS psm_settings (\n        set_id         INTEGER PRIMARY KEY AUTOINCREMENT,\n        set_key        TEXT    NOT NULL UNIQUE,\n        set_value      TEXT    NOT NULL,\n        version        INTEGER NOT NULL DEFAULT 1\n      );\n    "),
 		"005_parameter_tariffs_default": () => {
-			P.exec("\n        ALTER TABLE psm_parameters ADD COLUMN par_name TEXT NOT NULL DEFAULT '';\n        ALTER TABLE psm_parameters ADD COLUMN par_amount TEXT NOT NULL DEFAULT '0';\n        ALTER TABLE psm_parameters ADD COLUMN par_is_default INTEGER NOT NULL DEFAULT 0\n          CHECK (par_is_default IN (0, 1));\n      "), P.exec("\n        UPDATE psm_parameters\n        SET\n          par_name = CASE\n            WHEN par_name IS NULL OR TRIM(par_name) = '' THEN 'Tarifa general'\n            ELSE par_name\n          END,\n          par_amount = CASE\n            WHEN par_amount IS NULL OR TRIM(par_amount) = '' THEN\n              CASE\n                WHEN par_quantity IS NOT NULL AND TRIM(par_quantity) <> '' THEN par_quantity\n                WHEN par_tax IS NOT NULL AND TRIM(par_tax) <> '' THEN par_tax\n                ELSE '0'\n              END\n            ELSE par_amount\n          END;\n      "), P.prepare("SELECT EXISTS(SELECT 1 FROM psm_parameters) as has_rows").get().has_rows ? P.exec("\n          UPDATE psm_parameters SET par_is_default = 0;\n          UPDATE psm_parameters\n          SET par_is_default = 1\n          WHERE par_id = (SELECT par_id FROM psm_parameters ORDER BY par_id ASC LIMIT 1);\n        ") : P.prepare("\n          INSERT INTO psm_parameters\n            (par_quantity, par_tax, par_name, par_amount, par_is_default, version)\n          VALUES\n            ('0', '0', 'Tarifa general', '0', 1, 1)\n        ").run(), P.exec("\n        CREATE UNIQUE INDEX IF NOT EXISTS idx_psm_parameters_single_default\n        ON psm_parameters (par_is_default)\n        WHERE par_is_default = 1;\n      ");
+			F.exec("\n        ALTER TABLE psm_parameters ADD COLUMN par_name TEXT NOT NULL DEFAULT '';\n        ALTER TABLE psm_parameters ADD COLUMN par_amount TEXT NOT NULL DEFAULT '0';\n        ALTER TABLE psm_parameters ADD COLUMN par_is_default INTEGER NOT NULL DEFAULT 0\n          CHECK (par_is_default IN (0, 1));\n      "), F.exec("\n        UPDATE psm_parameters\n        SET\n          par_name = CASE\n            WHEN par_name IS NULL OR TRIM(par_name) = '' THEN 'Tarifa general'\n            ELSE par_name\n          END,\n          par_amount = CASE\n            WHEN par_amount IS NULL OR TRIM(par_amount) = '' THEN\n              CASE\n                WHEN par_quantity IS NOT NULL AND TRIM(par_quantity) <> '' THEN par_quantity\n                WHEN par_tax IS NOT NULL AND TRIM(par_tax) <> '' THEN par_tax\n                ELSE '0'\n              END\n            ELSE par_amount\n          END;\n      "), F.prepare("SELECT EXISTS(SELECT 1 FROM psm_parameters) as has_rows").get().has_rows ? F.exec("\n          UPDATE psm_parameters SET par_is_default = 0;\n          UPDATE psm_parameters\n          SET par_is_default = 1\n          WHERE par_id = (SELECT par_id FROM psm_parameters ORDER BY par_id ASC LIMIT 1);\n        ") : F.prepare("\n          INSERT INTO psm_parameters\n            (par_quantity, par_tax, par_name, par_amount, par_is_default, version)\n          VALUES\n            ('0', '0', 'Tarifa general', '0', 1, 1)\n        ").run(), F.exec("\n        CREATE UNIQUE INDEX IF NOT EXISTS idx_psm_parameters_single_default\n        ON psm_parameters (par_is_default)\n        WHERE par_is_default = 1;\n      ");
 		},
 		"006_seed_admin_user": () => {
-			if (P.prepare("SELECT user_id FROM psm_users WHERE user_username = ?").get("admin")) return;
-			let e = N.hashSync("admin123", 10);
-			P.prepare("\n        INSERT INTO psm_users (user_name, user_lastname, user_username, user_password, user_email, user_status, user_version)\n        VALUES ('Administrador', 'Sistema', 'admin', ?, 'admin@psm.local', 'A', 1)\n      ").run(e);
+			if (F.prepare("SELECT user_id FROM psm_users WHERE user_username = ?").get("admin")) return;
+			let e = P.hashSync("admin123", 10);
+			F.prepare("\n        INSERT INTO psm_users (user_name, user_lastname, user_username, user_password, user_email, user_status, user_version)\n        VALUES ('Administrador', 'Sistema', 'admin', ?, 'admin@psm.local', 'A', 1)\n      ").run(e);
 		},
 		"007_add_user_role": () => {
 			try {
-				P.exec("ALTER TABLE psm_users ADD COLUMN user_role TEXT NOT NULL DEFAULT 'user' CHECK (user_role IN ('admin', 'user'))");
+				F.exec("ALTER TABLE psm_users ADD COLUMN user_role TEXT NOT NULL DEFAULT 'user' CHECK (user_role IN ('admin', 'user'))");
 			} catch {}
-			P.exec("UPDATE psm_users SET user_role = 'admin' WHERE user_username = 'admin'");
+			F.exec("UPDATE psm_users SET user_role = 'admin' WHERE user_username = 'admin'");
 		},
 		"008_remove_plate_unique": () => {
-			P.exec("\n        CREATE TABLE IF NOT EXISTS psm_vehicles_new (\n          veh_id           INTEGER PRIMARY KEY AUTOINCREMENT,\n          veh_owner        TEXT,\n          veh_reference    TEXT    NOT NULL UNIQUE,\n          veh_plate        TEXT    NOT NULL,\n          veh_ingress_date TEXT    NOT NULL,\n          veh_egress_date  TEXT,\n          veh_status       TEXT    NOT NULL DEFAULT 'P'\n                                   CHECK (veh_status IN ('P', 'S')),\n          veh_tax          TEXT    NOT NULL,\n          veh_version      INTEGER NOT NULL DEFAULT 1\n        );\n        INSERT INTO psm_vehicles_new SELECT * FROM psm_vehicles;\n        DROP TABLE psm_vehicles;\n        ALTER TABLE psm_vehicles_new RENAME TO psm_vehicles;\n      ");
+			F.exec("\n        CREATE TABLE IF NOT EXISTS psm_vehicles_new (\n          veh_id           INTEGER PRIMARY KEY AUTOINCREMENT,\n          veh_owner        TEXT,\n          veh_reference    TEXT    NOT NULL UNIQUE,\n          veh_plate        TEXT    NOT NULL,\n          veh_ingress_date TEXT    NOT NULL,\n          veh_egress_date  TEXT,\n          veh_status       TEXT    NOT NULL DEFAULT 'P'\n                                   CHECK (veh_status IN ('P', 'S')),\n          veh_tax          TEXT    NOT NULL,\n          veh_version      INTEGER NOT NULL DEFAULT 1\n        );\n        INSERT INTO psm_vehicles_new SELECT * FROM psm_vehicles;\n        DROP TABLE psm_vehicles;\n        ALTER TABLE psm_vehicles_new RENAME TO psm_vehicles;\n      ");
 		}
-	}, t = P.prepare("SELECT name FROM psm_migrations").all(), n = new Set(t.map((e) => e.name)), r = P.prepare("INSERT INTO psm_migrations (name) VALUES (?)");
+	}, t = F.prepare("SELECT name FROM psm_migrations").all(), n = new Set(t.map((e) => e.name)), r = F.prepare("INSERT INTO psm_migrations (name) VALUES (?)");
 	for (let [t, i] of Object.entries(e)) n.has(t) || (i(), r.run(t), console.log(`✓ Migration applied: ${t}`));
 }
 //#endregion
 //#region electron/repositories/user.repository.ts
-function ge() {
-	return F().prepare("SELECT * FROM psm_users ORDER BY user_id ASC").all();
-}
-function I(e) {
-	return F().prepare("SELECT * FROM psm_users WHERE user_id = ?").get(e);
+function ye() {
+	return I().prepare("SELECT * FROM psm_users ORDER BY user_id ASC").all();
 }
 function L(e) {
-	return F().prepare("SELECT * FROM psm_users WHERE user_username = ?").get(e);
+	return I().prepare("SELECT * FROM psm_users WHERE user_id = ?").get(e);
 }
 function R(e) {
-	return F().prepare("SELECT * FROM psm_users WHERE user_email = ?").get(e);
+	return I().prepare("SELECT * FROM psm_users WHERE user_username = ?").get(e);
 }
-function _e(e) {
-	return F().prepare("\n      INSERT INTO psm_users\n        (user_name, user_lastname, user_username, user_password, user_email)\n      VALUES\n        (@user_name, @user_lastname, @user_username, @user_password, @user_email)\n    ").run(e).lastInsertRowid;
+function be(e) {
+	return I().prepare("SELECT * FROM psm_users WHERE user_email = ?").get(e);
 }
-function ve(e, t) {
+function xe(e) {
+	return I().prepare("\n      INSERT INTO psm_users\n        (user_name, user_lastname, user_username, user_password, user_email)\n      VALUES\n        (@user_name, @user_lastname, @user_username, @user_password, @user_email)\n    ").run(e).lastInsertRowid;
+}
+function Se(e, t) {
 	let n = Object.keys(t).map((e) => `${e} = @${e}`).join(", ");
-	return F().prepare(`UPDATE psm_users SET ${n} WHERE user_id = @id`).run({
+	return I().prepare(`UPDATE psm_users SET ${n} WHERE user_id = @id`).run({
 		...t,
 		id: e
 	}).changes;
 }
 function z(e, t) {
-	return F().prepare("UPDATE psm_users SET user_password = ? WHERE user_id = ?").run(t, e).changes;
+	return I().prepare("UPDATE psm_users SET user_password = ? WHERE user_id = ?").run(t, e).changes;
 }
-function ye(e) {
-	return F().prepare("UPDATE psm_users SET user_status = 'I' WHERE user_id = ?").run(e).changes;
+function Ce(e) {
+	return I().prepare("UPDATE psm_users SET user_status = 'I' WHERE user_id = ?").run(e).changes;
 }
-function be(e) {
-	return F().prepare("DELETE FROM psm_users WHERE user_id = ?").run(e).changes;
+function we(e) {
+	return I().prepare("DELETE FROM psm_users WHERE user_id = ?").run(e).changes;
 }
-function xe() {
-	return F().prepare("SELECT COUNT(*) as count FROM psm_users").get().count;
+function Te() {
+	return I().prepare("SELECT COUNT(*) as count FROM psm_users").get().count;
 }
-function Se() {
-	return F().prepare("UPDATE psm_users SET user_status = 'I' WHERE user_id = (SELECT user_id FROM psm_users ORDER BY user_id ASC LIMIT 1)").run().changes;
+function Ee() {
+	return I().prepare("UPDATE psm_users SET user_status = 'I' WHERE user_id = (SELECT user_id FROM psm_users ORDER BY user_id ASC LIMIT 1)").run().changes;
 }
 //#endregion
 //#region electron/service/user.service.ts
@@ -1528,18 +1529,18 @@ function B(e) {
 		user_version: e.user_version
 	};
 }
-function Ce(e) {
+function De(e) {
 	return /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(e);
 }
-function we() {
-	return ge().map(B);
+function Oe() {
+	return ye().map(B);
 }
-function Te(e) {
-	let t = I(e);
+function ke(e) {
+	let t = L(e);
 	return t ? B(t) : void 0;
 }
-function Ee(e) {
-	let t = L(e.user_username);
+function Ae(e) {
+	let t = R(e.user_username);
 	if (!t) return {
 		success: !1,
 		message: "Credenciales inválidas."
@@ -1548,7 +1549,7 @@ function Ee(e) {
 		success: !1,
 		message: "El usuario está inactivo."
 	};
-	if (Ce(t.user_password)) return N.compareSync(e.user_password, t.user_password) ? {
+	if (De(t.user_password)) return P.compareSync(e.user_password, t.user_password) ? {
 		success: !0,
 		user: B(t)
 	} : {
@@ -1560,7 +1561,7 @@ function Ee(e) {
 		message: "Credenciales inválidas."
 	};
 	if (t.user_id != null) {
-		let n = N.hashSync(e.user_password, 10);
+		let n = P.hashSync(e.user_password, 10);
 		z(t.user_id, n);
 	}
 	return {
@@ -1568,48 +1569,48 @@ function Ee(e) {
 		user: B(t)
 	};
 }
-function De(e) {
-	if (L(e.user_username)) return {
+function je(e) {
+	if (R(e.user_username)) return {
 		success: !1,
 		message: "El nombre de usuario ya está en uso."
 	};
-	if (R(e.user_email)) return {
+	if (be(e.user_email)) return {
 		success: !1,
 		message: "El correo electrónico ya está registrado."
 	};
-	let t = N.hashSync(e.user_password, 10), n = _e({
+	let t = P.hashSync(e.user_password, 10), n = xe({
 		...e,
 		user_password: t
 	});
-	return xe() > 1 && Se(), {
+	return Te() > 1 && Ee(), {
 		success: !0,
 		id: n
 	};
 }
-function Oe(e, t) {
-	if (!I(e)) return {
+function Me(e, t) {
+	if (!L(e)) return {
 		success: !1,
 		message: "Usuario no encontrado."
 	};
 	if (t.user_username) {
-		let n = L(t.user_username);
+		let n = R(t.user_username);
 		if (n && n.user_id !== e) return {
 			success: !1,
 			message: "El nombre de usuario ya está en uso."
 		};
 	}
 	if (t.user_email) {
-		let n = R(t.user_email);
+		let n = be(t.user_email);
 		if (n && n.user_id !== e) return {
 			success: !1,
 			message: "El correo electrónico ya está registrado."
 		};
 	}
-	return ve(e, t), { success: !0 };
+	return Se(e, t), { success: !0 };
 }
-function ke(e, t, n) {
-	let r = I(e);
-	return r ? N.compareSync(t, r.user_password) ? (z(e, N.hashSync(n, 10)), { success: !0 }) : {
+function Ne(e, t, n) {
+	let r = L(e);
+	return r ? P.compareSync(t, r.user_password) ? (z(e, P.hashSync(n, 10)), { success: !0 }) : {
 		success: !1,
 		message: "La contraseña actual es incorrecta."
 	} : {
@@ -1617,26 +1618,26 @@ function ke(e, t, n) {
 		message: "Usuario no encontrado."
 	};
 }
-function Ae(e) {
-	return I(e) ? (ye(e), { success: !0 }) : {
+function Pe(e) {
+	return L(e) ? (Ce(e), { success: !0 }) : {
 		success: !1,
 		message: "Usuario no encontrado."
 	};
 }
-function je(e) {
-	return I(e) ? (be(e), { success: !0 }) : {
+function Fe(e) {
+	return L(e) ? (we(e), { success: !0 }) : {
 		success: !1,
 		message: "Usuario no encontrado."
 	};
 }
 //#endregion
 //#region electron/handlers/user.handler.ts
-function Me() {
-	n.handle("users:getAll", () => we()), n.handle("users:getOne", (e, t) => Te(t)), n.handle("users:login", (e, t) => Ee(t)), n.handle("users:create", (e, t) => De(t)), n.handle("users:update", (e, t, n) => Oe(t, n)), n.handle("users:changePassword", (e, t, n, r) => ke(t, n, r)), n.handle("users:deactivate", (e, t) => Ae(t)), n.handle("users:delete", (e, t) => je(t));
+function Ie() {
+	n.handle("users:getAll", () => Oe()), n.handle("users:getOne", (e, t) => ke(t)), n.handle("users:login", (e, t) => Ae(t)), n.handle("users:create", (e, t) => je(t)), n.handle("users:update", (e, t, n) => Me(t, n)), n.handle("users:changePassword", (e, t, n, r) => Ne(t, n, r)), n.handle("users:deactivate", (e, t) => Pe(t)), n.handle("users:delete", (e, t) => Fe(t));
 }
 //#endregion
 //#region electron/utils/day-range.ts
-var Ne = /^(\d{4})-(\d{2})-(\d{2})$/;
+var Le = /^(\d{4})-(\d{2})-(\d{2})$/;
 function V(e = /* @__PURE__ */ new Date()) {
 	return `${e.getFullYear()}-${String(e.getMonth() + 1).padStart(2, "0")}-${String(e.getDate()).padStart(2, "0")}`;
 }
@@ -1644,7 +1645,7 @@ function H(e) {
 	let t = W(e);
 	return t ? V(t) : V();
 }
-function Pe(e, t) {
+function Re(e, t) {
 	let n = W(e) ?? /* @__PURE__ */ new Date();
 	return n.setDate(n.getDate() + t), V(n);
 }
@@ -1656,7 +1657,7 @@ function U(e, t = e) {
 	};
 }
 function W(e) {
-	let t = e ? Ne.exec(e) : null;
+	let t = e ? Le.exec(e) : null;
 	if (!t) return null;
 	let [, n, r, i] = t, a = new Date(Number(n), Number(r) - 1, Number(i), 0, 0, 0, 0);
 	return Number.isNaN(a.getTime()) || a.getMonth() !== Number(r) - 1 ? null : a;
@@ -1666,24 +1667,24 @@ function G(e) {
 }
 //#endregion
 //#region electron/repositories/vehcile.repository.ts
-var Fe = {
+var ze = {
 	daily: 1,
 	weekly: 7,
 	monthly: 30,
 	yearly: 365
 };
-function Ie(e) {
+function Be(e) {
 	return e === "daily" || e === "weekly" || e === "monthly" || e === "yearly";
 }
-function Le(e, t) {
-	let n = H(t), r = Fe[e];
+function Ve(e, t) {
+	let n = H(t), r = ze[e];
 	return {
-		rangeStart: Pe(n, -(r - 1)),
+		rangeStart: Re(n, -(r - 1)),
 		rangeEnd: n
 	};
 }
-function Re(e, t) {
-	let n = Ie(e) ? e : "daily", { rangeStart: r, rangeEnd: i } = Le(n, t), { start: a, end: o } = U(r, i), s = F(), c = s.prepare("\n      SELECT\n        veh_id,\n        veh_plate,\n        veh_reference,\n        veh_owner,\n        veh_ingress_date,\n        veh_egress_date,\n        veh_tax\n      FROM psm_vehicles\n      WHERE veh_status = 'S'\n        AND veh_egress_date IS NOT NULL\n        AND veh_egress_date >= @start\n        AND veh_egress_date < @end\n      ORDER BY veh_egress_date DESC, veh_id DESC\n    ").all({
+function He(e, t) {
+	let n = Be(e) ? e : "daily", { rangeStart: r, rangeEnd: i } = Ve(n, t), { start: a, end: o } = U(r, i), s = I(), c = s.prepare("\n      SELECT\n        veh_id,\n        veh_plate,\n        veh_reference,\n        veh_owner,\n        veh_ingress_date,\n        veh_egress_date,\n        veh_tax\n      FROM psm_vehicles\n      WHERE veh_status = 'S'\n        AND veh_egress_date IS NOT NULL\n        AND veh_egress_date >= @start\n        AND veh_egress_date < @end\n      ORDER BY veh_egress_date DESC, veh_id DESC\n    ").all({
 		start: a,
 		end: o
 	}), l = s.prepare("\n      SELECT\n        COUNT(*) AS totalVehicles,\n        COALESCE(SUM(CAST(veh_tax AS REAL)), 0) AS totalRevenue\n      FROM psm_vehicles\n      WHERE veh_status = 'S'\n        AND veh_egress_date IS NOT NULL\n        AND veh_egress_date >= @start\n        AND veh_egress_date < @end\n    ").get({
@@ -1699,70 +1700,70 @@ function Re(e, t) {
 		rows: c
 	};
 }
-function ze() {
-	return F().prepare("SELECT * FROM psm_vehicles ORDER BY veh_ingress_date DESC").all();
+function Ue() {
+	return I().prepare("SELECT * FROM psm_vehicles ORDER BY veh_ingress_date DESC").all();
 }
-function Be() {
-	return F().prepare("\n      SELECT * FROM psm_vehicles\n      WHERE veh_status = 'P'\n      ORDER BY veh_ingress_date DESC\n    ").all();
+function We() {
+	return I().prepare("\n      SELECT * FROM psm_vehicles\n      WHERE veh_status = 'P'\n      ORDER BY veh_ingress_date DESC\n    ").all();
 }
 function K(e) {
-	return F().prepare("SELECT * FROM psm_vehicles WHERE veh_id = ?").get(e);
+	return I().prepare("SELECT * FROM psm_vehicles WHERE veh_id = ?").get(e);
 }
 function q(e) {
-	return F().prepare("SELECT * FROM psm_vehicles WHERE veh_plate = ? AND veh_status = 'P'").get(e);
+	return I().prepare("SELECT * FROM psm_vehicles WHERE veh_plate = ? AND veh_status = 'P'").get(e);
 }
-function Ve(e) {
-	return F().prepare("SELECT * FROM psm_vehicles WHERE veh_reference = ?").get(e);
+function Ge(e) {
+	return I().prepare("SELECT * FROM psm_vehicles WHERE veh_reference = ?").get(e);
 }
-function He(e) {
-	return F().prepare("\n      INSERT INTO psm_vehicles\n        (veh_owner, veh_reference, veh_plate, veh_ingress_date, veh_tax, veh_version, veh_status)\n      VALUES\n        (@veh_owner, @veh_reference, @veh_plate, @veh_ingress_date, @veh_tax, @veh_version, 'P')\n    ").run(e).lastInsertRowid;
+function Ke(e) {
+	return I().prepare("\n      INSERT INTO psm_vehicles\n        (veh_owner, veh_reference, veh_plate, veh_ingress_date, veh_tax, veh_version, veh_status)\n      VALUES\n        (@veh_owner, @veh_reference, @veh_plate, @veh_ingress_date, @veh_tax, @veh_version, 'P')\n    ").run(e).lastInsertRowid;
 }
-function Ue(e, t, n) {
-	return F().prepare("\n      UPDATE psm_vehicles\n      SET veh_status      = 'S',\n          veh_egress_date = @egress_date,\n          veh_tax         = COALESCE(@total, veh_tax),\n          veh_version     = veh_version + 1\n      WHERE veh_id = @id AND veh_status = 'P'\n    ").run({
+function qe(e, t, n) {
+	return I().prepare("\n      UPDATE psm_vehicles\n      SET veh_status      = 'S',\n          veh_egress_date = @egress_date,\n          veh_tax         = COALESCE(@total, veh_tax),\n          veh_version     = veh_version + 1\n      WHERE veh_id = @id AND veh_status = 'P'\n    ").run({
 		egress_date: t,
 		id: e,
 		total: n || null
 	}).changes;
 }
-function We(e, t) {
+function Je(e, t) {
 	let n = Object.keys(t).map((e) => `${e} = @${e}`).join(", ");
-	return F().prepare(`UPDATE psm_vehicles SET ${n} WHERE veh_id = @id`).run({
+	return I().prepare(`UPDATE psm_vehicles SET ${n} WHERE veh_id = @id`).run({
 		...t,
 		id: e
 	}).changes;
 }
-function Ge(e) {
-	return F().prepare("DELETE FROM psm_vehicles WHERE veh_id = ?").run(e).changes;
+function Ye(e) {
+	return I().prepare("DELETE FROM psm_vehicles WHERE veh_id = ?").run(e).changes;
 }
 //#endregion
 //#region electron/service/vehicle.service.ts
-function Ke() {
-	return ze();
+function Xe() {
+	return Ue();
 }
-function qe() {
-	return Be();
+function Ze() {
+	return We();
 }
-function Je(e) {
+function Qe(e) {
 	return K(e);
 }
-function Ye(e) {
+function $e(e) {
 	return q(e.veh_plate) ? {
 		success: !1,
 		message: `La placa ${e.veh_plate} ya tiene un ingreso activo.`
-	} : Ve(e.veh_reference) ? {
+	} : Ge(e.veh_reference) ? {
 		success: !1,
 		message: `La referencia ${e.veh_reference} ya existe.`
 	} : {
 		success: !0,
-		id: He(e)
+		id: Ke(e)
 	};
 }
-function Xe(e, t) {
+function et(e, t) {
 	let n = K(e);
 	return n ? n.veh_status === "S" ? {
 		success: !1,
 		message: "El vehículo ya registró su salida."
-	} : Ue(e, (/* @__PURE__ */ new Date()).toISOString(), t) === 0 ? {
+	} : qe(e, (/* @__PURE__ */ new Date()).toISOString(), t) === 0 ? {
 		success: !1,
 		message: "No se pudo registrar la salida."
 	} : { success: !0 } : {
@@ -1770,7 +1771,7 @@ function Xe(e, t) {
 		message: "Vehículo no encontrado."
 	};
 }
-function Ze(e, t) {
+function tt(e, t) {
 	if (!K(e)) return {
 		success: !1,
 		message: "Vehículo no encontrado."
@@ -1782,25 +1783,25 @@ function Ze(e, t) {
 			message: `La placa ${t.veh_plate} ya tiene un ingreso activo.`
 		};
 	}
-	return We(e, t), { success: !0 };
+	return Je(e, t), { success: !0 };
 }
-function Qe(e) {
-	return K(e) ? (Ge(e), { success: !0 }) : {
+function nt(e) {
+	return K(e) ? (Ye(e), { success: !0 }) : {
 		success: !1,
 		message: "Vehículo no encontrado."
 	};
 }
-function $e(e, t) {
-	return Re(e, t);
+function rt(e, t) {
+	return He(e, t);
 }
 //#endregion
 //#region electron/handlers/vehicle.handler.ts
-function et(e) {
+function it(e) {
 	return e === "daily" || e === "weekly" || e === "monthly" || e === "yearly";
 }
-function tt() {
-	n.handle("vehicles:getAll", () => Ke()), n.handle("vehicles:getActive", () => qe()), n.handle("vehicles:getOne", (e, t) => Je(t)), n.handle("vehicles:create", (e, t) => Ye(t)), n.handle("vehicles:checkout", (e, t, n) => Xe(t, n)), n.handle("vehicles:update", (e, t, n) => Ze(t, n)), n.handle("vehicles:delete", (e, t) => Qe(t)), n.handle("vehicles:getStats", () => {
-		let e = F(), t = e.prepare("SELECT COUNT(*) as count FROM psm_vehicles WHERE veh_status = 'P'").get().count, { start: n, end: r } = U(V()), i = 0;
+function at() {
+	n.handle("vehicles:getAll", () => Xe()), n.handle("vehicles:getActive", () => Ze()), n.handle("vehicles:getOne", (e, t) => Qe(t)), n.handle("vehicles:create", (e, t) => $e(t)), n.handle("vehicles:checkout", (e, t, n) => et(t, n)), n.handle("vehicles:update", (e, t, n) => tt(t, n)), n.handle("vehicles:delete", (e, t) => nt(t)), n.handle("vehicles:getStats", () => {
+		let e = I(), t = e.prepare("SELECT COUNT(*) as count FROM psm_vehicles WHERE veh_status = 'P'").get().count, { start: n, end: r } = U(V()), i = 0;
 		try {
 			i = e.prepare("\n        SELECT COALESCE(SUM(CAST(veh_tax AS REAL)), 0) as total \n        FROM psm_vehicles \n        WHERE veh_status = 'S' \n        AND veh_egress_date >= ?\n        AND veh_egress_date < ?\n      ").get(n, r)?.total || 0;
 		} catch {
@@ -1817,56 +1818,56 @@ function tt() {
 			todayRevenue: i,
 			todayVehicles: a
 		};
-	}), n.handle("vehicles:getParkedCount", () => F().prepare("SELECT COUNT(*) as count FROM psm_vehicles WHERE veh_status = 'P'").get().count), n.handle("vehicles:getTodayRevenue", () => {
-		let e = F(), { start: t, end: n } = U(V());
+	}), n.handle("vehicles:getParkedCount", () => I().prepare("SELECT COUNT(*) as count FROM psm_vehicles WHERE veh_status = 'P'").get().count), n.handle("vehicles:getTodayRevenue", () => {
+		let e = I(), { start: t, end: n } = U(V());
 		try {
 			return e.prepare("\n        SELECT COALESCE(SUM(CAST(veh_tax AS REAL)), 0) as total \n        FROM psm_vehicles \n        WHERE veh_status = 'S' \n        AND veh_egress_date >= ?\n        AND veh_egress_date < ?\n      ").get(t, n)?.total || 0;
 		} catch {
 			return 0;
 		}
 	}), n.handle("vehicles:getTodayVehicles", () => {
-		let e = F(), { start: t, end: n } = U(V());
+		let e = I(), { start: t, end: n } = U(V());
 		try {
 			return e.prepare("\n        SELECT COUNT(*) as count \n        FROM psm_vehicles \n        WHERE veh_status = 'S' \n        AND veh_egress_date >= ?\n        AND veh_egress_date < ?\n      ").get(t, n)?.count || 0;
 		} catch {
 			return 0;
 		}
-	}), n.handle("vehicles:getReport", (e, t, n) => $e(et(t) ? t : "daily", H(n)));
+	}), n.handle("vehicles:getReport", (e, t, n) => rt(it(t) ? t : "daily", H(n)));
 }
 //#endregion
 //#region electron/repositories/parameter.repository.ts
-function nt() {
-	return F().prepare("SELECT * FROM psm_parameters ORDER BY par_id ASC").all();
+function ot() {
+	return I().prepare("SELECT * FROM psm_parameters ORDER BY par_id ASC").all();
 }
 function J(e) {
-	return F().prepare("SELECT * FROM psm_parameters WHERE par_id = ?").get(e);
+	return I().prepare("SELECT * FROM psm_parameters WHERE par_id = ?").get(e);
 }
-function rt(e) {
-	return F().prepare("\n      INSERT INTO psm_parameters (par_name, par_amount, par_is_default, version, par_quantity, par_tax)\n      VALUES (@par_name, @par_amount, @par_is_default, @version, @par_amount, @par_amount)\n    ").run(e).lastInsertRowid;
+function st(e) {
+	return I().prepare("\n      INSERT INTO psm_parameters (par_name, par_amount, par_is_default, version, par_quantity, par_tax)\n      VALUES (@par_name, @par_amount, @par_is_default, @version, @par_amount, @par_amount)\n    ").run(e).lastInsertRowid;
 }
-function it(e, t) {
+function ct(e, t) {
 	let n = Object.keys(t).map((e) => `${e} = @${e}`).join(", ");
-	return F().prepare(`UPDATE psm_parameters SET ${n} WHERE par_id = @id`).run({
+	return I().prepare(`UPDATE psm_parameters SET ${n} WHERE par_id = @id`).run({
 		...t,
 		id: e
 	}).changes;
 }
 function Y() {
-	return F().prepare("SELECT * FROM psm_parameters WHERE par_is_default = 1 LIMIT 1").get();
+	return I().prepare("SELECT * FROM psm_parameters WHERE par_is_default = 1 LIMIT 1").get();
 }
 function X(e) {
-	let t = F(), n = t.prepare("UPDATE psm_parameters SET par_is_default = 0 WHERE par_is_default = 1"), r = t.prepare("UPDATE psm_parameters SET par_is_default = 1 WHERE par_id = ?");
+	let t = I(), n = t.prepare("UPDATE psm_parameters SET par_is_default = 0 WHERE par_is_default = 1"), r = t.prepare("UPDATE psm_parameters SET par_is_default = 1 WHERE par_id = ?");
 	return t.transaction((e) => (n.run(), r.run(e).changes))(e);
 }
 //#endregion
 //#region electron/service/parameter.service.ts
-function at() {
-	return nt();
+function lt() {
+	return ot();
 }
-function ot(e) {
+function ut(e) {
 	return J(e);
 }
-function st(e) {
+function dt(e) {
 	let t = e.par_name.trim();
 	if (!t) return {
 		success: !1,
@@ -1877,7 +1878,7 @@ function st(e) {
 		success: !1,
 		message: "El monto de la tarifa debe ser un numero positivo."
 	};
-	let r = rt({
+	let r = st({
 		...e,
 		par_name: t,
 		par_amount: n.toString(),
@@ -1897,7 +1898,7 @@ function st(e) {
 		id: r
 	};
 }
-function ct(e, t) {
+function ft(e, t) {
 	let n = J(e);
 	if (!n) return {
 		success: !1,
@@ -1924,7 +1925,7 @@ function ct(e, t) {
 		};
 		t.par_amount = e.toString();
 	}
-	return Object.keys(t).length > 0 && it(e, t), r && X(e) === 0 ? {
+	return Object.keys(t).length > 0 && ct(e, t), r && X(e) === 0 ? {
 		success: !1,
 		message: "No se pudo actualizar la tarifa general."
 	} : Y() ? { success: !0 } : {
@@ -1932,10 +1933,10 @@ function ct(e, t) {
 		message: "Debe existir una tarifa general valida."
 	};
 }
-function lt() {
+function pt() {
 	return Y();
 }
-function ut(e) {
+function mt(e) {
 	return J(e) ? X(e) === 0 ? {
 		success: !1,
 		message: "No se pudo actualizar la tarifa general."
@@ -1946,20 +1947,20 @@ function ut(e) {
 }
 //#endregion
 //#region electron/handlers/parameter.handler.ts
-function dt() {
-	n.handle("parameters:getAll", () => at()), n.handle("parameters:getOne", (e, t) => ot(t)), n.handle("parameters:create", (e, t) => st(t)), n.handle("parameters:update", (e, t, n) => ct(t, n)), n.handle("parameters:getDefault", () => lt()), n.handle("parameters:setDefault", (e, t) => ut(t));
+function ht() {
+	n.handle("parameters:getAll", () => lt()), n.handle("parameters:getOne", (e, t) => ut(t)), n.handle("parameters:create", (e, t) => dt(t)), n.handle("parameters:update", (e, t, n) => ft(t, n)), n.handle("parameters:getDefault", () => pt()), n.handle("parameters:setDefault", (e, t) => mt(t));
 }
 //#endregion
 //#region electron/handlers/session.handler.ts
-function ft() {
-	F().exec("\n    CREATE TABLE IF NOT EXISTS psm_sessions (\n      id          INTEGER PRIMARY KEY,\n      user_id     INTEGER NOT NULL,\n      user_name   TEXT    NOT NULL,\n      user_lastname TEXT  NOT NULL,\n      user_username TEXT  NOT NULL,\n      user_email   TEXT   NOT NULL,\n      user_status  TEXT   NOT NULL,\n      user_role    TEXT   NOT NULL DEFAULT 'user',\n      user_version INTEGER NOT NULL,\n      saved_at     TEXT   NOT NULL DEFAULT (datetime('now'))\n    );\n  ");
+function gt() {
+	I().exec("\n    CREATE TABLE IF NOT EXISTS psm_sessions (\n      id          INTEGER PRIMARY KEY,\n      user_id     INTEGER NOT NULL,\n      user_name   TEXT    NOT NULL,\n      user_lastname TEXT  NOT NULL,\n      user_username TEXT  NOT NULL,\n      user_email   TEXT   NOT NULL,\n      user_status  TEXT   NOT NULL,\n      user_role    TEXT   NOT NULL DEFAULT 'user',\n      user_version INTEGER NOT NULL,\n      saved_at     TEXT   NOT NULL DEFAULT (datetime('now'))\n    );\n  ");
 }
-function pt() {
-	ft(), n.handle("session:save", (e, t) => {
-		let n = F();
+function _t() {
+	gt(), n.handle("session:save", (e, t) => {
+		let n = I();
 		return n.prepare("DELETE FROM psm_sessions").run(), n.prepare("\n      INSERT INTO psm_sessions\n        (user_id, user_name, user_lastname, user_username, user_email, user_status, user_role, user_version, saved_at)\n      VALUES\n        (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))\n    ").run(t.user_id, t.user_name, t.user_lastname, t.user_username, t.user_email, t.user_status, t.user_role, t.user_version), { success: !0 };
 	}), n.handle("session:restore", () => {
-		let e = F().prepare("\n      SELECT user_id, user_name, user_lastname, user_username, user_email, user_status, user_role, user_version\n      FROM psm_sessions\n      LIMIT 1\n    ").get();
+		let e = I().prepare("\n      SELECT user_id, user_name, user_lastname, user_username, user_email, user_status, user_role, user_version\n      FROM psm_sessions\n      LIMIT 1\n    ").get();
 		return e ? {
 			user_id: e.user_id,
 			user_name: e.user_name,
@@ -1970,99 +1971,135 @@ function pt() {
 			user_role: e.user_role,
 			user_version: e.user_version
 		} : null;
-	}), n.handle("session:clear", () => (F().prepare("DELETE FROM psm_sessions").run(), { success: !0 }));
+	}), n.handle("session:clear", () => (I().prepare("DELETE FROM psm_sessions").run(), { success: !0 }));
 }
 //#endregion
 //#region electron/repositories/setting.repository.ts
-function mt() {
-	return F().prepare("SELECT * FROM psm_settings").all();
+function vt() {
+	return I().prepare("SELECT * FROM psm_settings").all();
 }
 function Z(e) {
-	return F().prepare("SELECT * FROM psm_settings WHERE set_key = ?").get(e);
+	return I().prepare("SELECT * FROM psm_settings WHERE set_key = ?").get(e);
 }
-function ht(e, t) {
-	return Z(e) ? F().prepare("UPDATE psm_settings SET set_value = ?, version = version + 1 WHERE set_key = ?").run(t, e).changes : F().prepare("INSERT INTO psm_settings (set_key, set_value) VALUES (?, ?)").run(e, t).changes;
+function yt(e, t) {
+	return Z(e) ? I().prepare("UPDATE psm_settings SET set_value = ?, version = version + 1 WHERE set_key = ?").run(t, e).changes : I().prepare("INSERT INTO psm_settings (set_key, set_value) VALUES (?, ?)").run(e, t).changes;
 }
 //#endregion
 //#region electron/service/setting.service.ts
-function gt() {
-	return mt();
+function bt() {
+	return vt();
 }
-function _t(e) {
+function xt(e) {
 	return Z(e)?.set_value;
 }
-function vt(e, t) {
+function St(e, t) {
 	try {
-		return ht(e, t), { success: !0 };
+		return yt(e, t), { success: !0 };
 	} catch (e) {
 		return console.error("Error saving setting:", e), { success: !1 };
 	}
 }
 //#endregion
 //#region electron/handlers/setting.handler.ts
-function yt() {
-	n.handle("settings:getAll", () => gt()), n.handle("settings:get", (e, t) => _t(t)), n.handle("settings:save", (e, t, n) => vt(t, n));
+function Ct() {
+	n.handle("settings:getAll", () => bt()), n.handle("settings:get", (e, t) => xt(t)), n.handle("settings:save", (e, t, n) => St(t, n));
 }
 //#endregion
-//#region electron/handlers/receipt.handler.ts
-var bt = 58, xt = 1e3, St = 25400 / 96, Ct = 4;
-function wt() {
-	n.handle("receipts:print", async (t, n) => {
-		let r = new e({
-			show: !1,
-			width: Math.round(bt * 96 / 25.4),
-			height: 800,
-			webPreferences: {
-				contextIsolation: !0,
-				nodeIntegration: !1,
-				sandbox: !0
-			}
-		});
-		try {
-			await r.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(n)}`);
-			let e = await r.webContents.executeJavaScript("document.documentElement.scrollHeight");
-			return await Tt(r, Math.round(e * St) + Ct * xt), { success: !0 };
-		} catch (e) {
-			return {
-				success: !1,
-				message: e instanceof Error ? e.message : String(e)
-			};
-		} finally {
-			r.destroy();
-		}
-	});
-}
-function Tt(e, t) {
-	return new Promise((n, r) => {
-		e.webContents.print({
-			silent: !0,
-			printBackground: !1,
-			margins: { marginType: "none" },
-			pageSize: {
-				width: bt * xt,
-				height: t
-			},
-			scaleFactor: 100,
-			copies: 1
-		}, (e, t) => {
-			if (e) {
-				n();
-				return;
-			}
-			r(Error(t || "No se pudo imprimir el tiquete."));
-		});
-	});
-}
-//#endregion
-//#region electron/main.ts
-var Et = i(o(import.meta.url));
+//#region electron/utils/runtime-log.ts
 function Q(e) {
 	try {
 		let n = t.getPath("userData");
 		l(n, { recursive: !0 }), s(a(n, "runtime.log"), `[${(/* @__PURE__ */ new Date()).toISOString()}] ${e}\n`, "utf8");
 	} catch {}
 }
-function $() {
+//#endregion
+//#region electron/handlers/receipt.handler.ts
+var wt = 58, $ = 1e3, Tt = 25400 / 96, Et = 4, Dt = 150, Ot = 1500, kt = 2e4, At = 18e4;
+function jt() {
+	n.handle("receipts:print", (e, t) => Mt(t));
+}
+async function Mt(t) {
+	let n = u(a(te(), "parkease-receipt-")), r = new e({
+		show: !1,
+		width: Math.round(wt * 96 / 25.4),
+		height: 800,
+		webPreferences: {
+			contextIsolation: !0,
+			nodeIntegration: !1,
+			sandbox: !0
+		}
+	});
+	try {
+		let e = a(n, "receipt.html");
+		f(e, t, "utf8"), await r.loadFile(e);
+		let i = await r.webContents.executeJavaScript("document.fonts.ready.then(function () { return Math.ceil(document.body.getBoundingClientRect().height); })"), o = Math.max(Math.round(i * Tt) + Et * $, Dt * $), s = await r.webContents.getPrintersAsync(), c = Nt(s);
+		if (Q(`print: impresoras=[${s.map((e) => e.name).join(", ")}] destino=${c ?? "(predeterminada del sistema)"} alto=${i}px`), s.length === 0) return Q("print: no hay impresoras instaladas"), {
+			success: !1,
+			message: "No hay impresoras instaladas en el sistema."
+		};
+		try {
+			return await Ft(Pt(r, o, c, !0), kt, "La impresora no respondió al trabajo de impresión."), Q("print: tiquete enviado a la impresora"), {
+				success: !0,
+				message: c
+			};
+		} catch (e) {
+			return Q(`print: falló la impresión silenciosa: ${It(e)}`), await Ft(Pt(r, o, c, !1), At, "El diálogo de impresión no se completó."), Q("print: tiquete enviado desde el diálogo del sistema"), {
+				success: !0,
+				message: c
+			};
+		}
+	} catch (e) {
+		let t = It(e);
+		return Q(`print: error al preparar el tiquete: ${t}`), {
+			success: !1,
+			message: t
+		};
+	} finally {
+		setTimeout(() => {
+			r.isDestroyed() || r.destroy(), d(n, {
+				recursive: !0,
+				force: !0
+			});
+		}, Ot);
+	}
+}
+function Nt(e) {
+	return e.find((e) => e.options?.["printer-is-default"] === "true")?.name;
+}
+function Pt(e, t, n, r) {
+	return new Promise((i, a) => {
+		e.webContents.print({
+			silent: r,
+			...n ? { deviceName: n } : {},
+			printBackground: !1,
+			margins: { marginType: "none" },
+			pageSize: {
+				width: wt * $,
+				height: t
+			},
+			scaleFactor: 100,
+			copies: 1
+		}, (e, t) => {
+			if (e) {
+				i();
+				return;
+			}
+			a(Error(t || "El trabajo de impresión no se pudo enviar."));
+		});
+	});
+}
+function Ft(e, t, n) {
+	return Promise.race([e, new Promise((e, r) => {
+		setTimeout(() => r(Error(n)), t).unref?.();
+	})]);
+}
+function It(e) {
+	return e instanceof Error ? e.message : String(e);
+}
+//#endregion
+//#region electron/main.ts
+var Lt = i(o(import.meta.url));
+function Rt() {
 	let { width: t, height: n } = r.getPrimaryDisplay().workAreaSize, i = new e({
 		width: t,
 		height: n,
@@ -2071,7 +2108,7 @@ function $() {
 		resizable: !0,
 		maximizable: !0,
 		webPreferences: {
-			preload: a(Et, "preload.js"),
+			preload: a(Lt, "preload.js"),
 			contextIsolation: !0,
 			nodeIntegration: !1,
 			sandbox: !1
@@ -2091,15 +2128,15 @@ function $() {
 	let o = process.env.VITE_DEV_SERVER_URL;
 	if (o) i.loadURL(o), i.webContents.openDevTools();
 	else {
-		let e = a(process.env.PORTABLE_EXECUTABLE_DIR || process.cwd(), "resources", "dist", "index.html"), t = a(Et, "../dist/index.html"), n = c(e) ? e : t;
+		let e = a(process.env.PORTABLE_EXECUTABLE_DIR || process.cwd(), "resources", "dist", "index.html"), t = a(Lt, "../dist/index.html"), n = c(e) ? e : t;
 		Q(`Loading production renderer from: ${n} (resourceExists=${c(e)}, bundledExists=${c(t)})`), i.loadFile(n).catch((e) => {
 			Q(`loadFile failed: ${e instanceof Error ? e.message : String(e)}`);
 		});
 	}
 }
 t.whenReady().then(() => {
-	Q(`App ready. version=${t.getVersion()} packaged=${t.isPackaged}`), me(), Me(), tt(), dt(), pt(), yt(), wt(), $(), t.on("activate", () => {
-		e.getAllWindows().length === 0 && $();
+	Q(`App ready. version=${t.getVersion()} packaged=${t.isPackaged}`), _e(), Ie(), at(), ht(), _t(), Ct(), jt(), Rt(), t.on("activate", () => {
+		e.getAllWindows().length === 0 && Rt();
 	});
 }).catch((e) => {
 	Q(`Startup failure: ${e instanceof Error ? e.stack || e.message : String(e)}`), console.error("Failed to start Electron app:", e), t.quit();

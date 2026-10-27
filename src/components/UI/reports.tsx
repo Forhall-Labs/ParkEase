@@ -138,7 +138,7 @@ function createEmptyReport(period: ReportPeriod, selectedDate: string): VehicleR
 }
 
 /** Reimpresión del tiquete de salida de una transacción ya registrada. */
-function printExitTicket(row: VehicleReportRow): void {
+function printExitTicket(row: VehicleReportRow, onFailure: (message: string) => void): void {
   void printExitReceipt({
     plate: row.veh_plate,
     owner: row.veh_owner,
@@ -146,6 +146,10 @@ function printExitTicket(row: VehicleReportRow): void {
     ingressDate: row.veh_ingress_date,
     egressDate: row.veh_egress_date,
     total: row.veh_tax,
+  }).then((outcome) => {
+    if (!outcome.success && outcome.message) {
+      onFailure(outcome.message);
+    }
   });
 }
 
@@ -579,7 +583,7 @@ export function Reports({ theme = 'dark' }: ReportsProps) {
                             type="button"
                             variant="outlined"
                             size="sm"
-                            onClick={() => printExitTicket(row)}
+                            onClick={() => printExitTicket(row, setError)}
                           >
                             {t('reports.printExit')}
                           </Button>
